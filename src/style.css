@@ -258,7 +258,8 @@ p { margin: 0; }
 .card .body.code { font: 11.5px/1.45 var(--mono); color: var(--code); }
 .card .body.link { color: var(--accent); }
 .card .hint { font-size: 11px; line-height: 1.3; color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.card img { width: 100%; height: 66px; object-fit: cover; border-radius: 7px; display: block; background: var(--raised); }
+/* Contain, not cover: a screenshot shows whole, so text in it isn't cut off. */
+.card img { width: 100%; height: 66px; object-fit: contain; border-radius: 7px; display: block; background: var(--raised); }
 .card .swatch-fill { height: 56px; border-radius: 7px; box-shadow: inset 0 0 0 1px var(--line); }
 .card .foot { display: flex; justify-content: space-between; gap: 6px; font-size: 10.5px; color: var(--muted); }
 .card .foot span:first-child { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
