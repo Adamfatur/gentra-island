@@ -570,6 +570,10 @@ button.danger { color: var(--bad); }
 .about-id .note { margin: 0; }
 .about-logo { display: block; color: var(--text); margin-bottom: 3px; }
 .about-logo svg { height: 13px; width: auto; display: block; }
+.about-side { flex: none; display: grid; justify-items: center; gap: 4px; }
+.about-links { display: flex; gap: 12px; }
+.about-links .link-btn { font-size: 11.5px; color: var(--muted); font-weight: 600; }
+.about-links .link-btn:hover { color: var(--text); }
 .coffee { flex: none; display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 17px; background: var(--raised); font-size: 12.5px; font-weight: 650; transition: filter 0.15s; }
 .coffee:hover { filter: brightness(1.12); }
 .coffee svg { width: 15px; height: 15px; color: var(--warn); }

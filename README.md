@@ -5,16 +5,26 @@
   </picture>
 </p>
 
+<h1 align="center">A free Dynamic Island for Mac, Windows, and Linux</h1>
+
 <p align="center">
-  A Dynamic Island for your desktop. macOS, Windows, and Linux.<br>
-  Small at the top of your screen; open it when you need it.
+  Turn your MacBook's notch into something useful. Gentra Island shows what's playing, remembers what you copy, reminds you about it, and tells you when your build is done. Then it gets out of the way.
 </p>
 
 <p align="center">
-  <a href="../../releases/latest">Download</a> |
+  <a href="https://github.com/Adamfatur/gentra-island/releases/latest"><img src="https://img.shields.io/github/v/release/Adamfatur/gentra-island?label=download&color=ec407a" alt="Latest release"></a>
+  <a href="https://github.com/Adamfatur/gentra-island/releases"><img src="https://img.shields.io/github/downloads/Adamfatur/gentra-island/total?color=20c4aa" alt="Downloads"></a>
+  <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-555" alt="macOS, Windows, and Linux">
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/Adamfatur/gentra-island?color=555" alt="GPL-3.0 license"></a>
+  <a href="https://github.com/Adamfatur/gentra-island/actions/workflows/ci.yml"><img src="https://github.com/Adamfatur/gentra-island/actions/workflows/ci.yml/badge.svg" alt="Tests"></a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/Adamfatur/gentra-island/releases/latest"><b>Download</b></a> |
   <a href="INSTALL.md">Install guide</a> |
-  <a href="#system-requirements">Requirements</a> |
-  <a href="#privacy">Privacy</a>
+  <a href="#how-to-use">How to use</a> |
+  <a href="PRIVACY.md">Privacy</a> |
+  <a href="TERMS.md">Terms</a>
 </p>
 
 <p align="center">
@@ -23,7 +33,16 @@
 
 ---
 
-Gentra Island sits at the top of your screen. On a Mac with a notch it grows out of the camera housing; elsewhere it floats as a small pill. Hover, click, or press **⌥⌘G** (**Ctrl+Alt+G** on Windows and Linux) to open it. It opens by itself only when something is worth seeing, like a long build that just finished or a call that started.
+**Free and open source. No account, no tracking, about 1% CPU.**
+
+Gentra Island sits at the top of your screen. On a Mac with a notch it grows out of the camera housing; elsewhere it floats as a small pill. Hover, click, or press **⌥⌘G** (**Ctrl+Alt+G** on Windows and Linux) to open it. It opens by itself only when something is worth seeing, like a long build that just finished, a call that started, or a reminder you set.
+
+- **Now playing** for Spotify, Apple Music, YouTube, and more, with artwork and controls
+- **Clipboard history** that understands what you copied, and keeps secrets out of it
+- **Reminders** from what you copy: copy "meeting Friday at 2 pm" and it offers to remind you
+- **Shelf** for files, **focus timer**, **system monitor**, and a **safe cleaner**
+- **For developers:** see and stop local servers, get told when long commands finish
+- **For calls:** which app has your mic, call time, mute, and a camera mirror
 
 ## Screenshots
 
@@ -162,6 +181,8 @@ Nothing else needs a permission prompt. Seeing which app uses the mic doesn't re
 
 ## Privacy
 
+The full [Privacy Policy](PRIVACY.md) explains what is stored where and how to delete it. In short:
+
 - **Everything stays on your computer.** No accounts, no analytics, no telemetry, no update pings.
 - **No network calls of its own by default.** It reaches the network when you click a link it shows, such as opening a local server in your browser, and, only if you switch on **Show thumbnails** in the Media tab, to load a YouTube video's thumbnail from `i.ytimg.com`.
 - **Reminders** and **clipboard history** are stored in your user's app data folder. Secrets are never written there. Clear it any time from the Clipboard tab.
@@ -208,6 +229,26 @@ pnpm test:all
 
 Work on the interface without Rust: run `pnpm dev` and open `http://localhost:1420/preview.html`. It runs the real UI with the backend mocked, plus buttons that simulate copies, calls, music, and more.
 
+## FAQ
+
+**Is it really free?**
+Yes. Gentra Island is free and open source under the GPL-3.0. There's no paid version and nothing is locked. If you'd like to support it, there's an optional [coffee link](#support).
+
+**Do I need a MacBook with a notch?**
+No. On a Mac with a notch it blends into the camera housing. On other Macs, and on Windows and Linux, it floats as a small pill at the top of the screen.
+
+**Is it a NotchNook or Boring Notch alternative?**
+It covers similar ground (now playing, a file shelf, a notch that does something), and adds clipboard history, reminders, a system monitor, developer tools, and call tools. It's free, and it also runs on Windows and Linux.
+
+**Does it slow my computer down or drain the battery?**
+It's built to stay out of the way: about 1% CPU while you work, and nothing animates while the island is still. Features you switch off stop running. See [How light it is](#how-light-it-is).
+
+**Is my clipboard safe?**
+Everything stays on your computer, and API keys and private keys are never written to disk. See the [Privacy Policy](PRIVACY.md).
+
+**Why does my Mac or Windows warn me when I first open it?**
+The app isn't notarized or code-signed yet, which costs money for a solo, free project. [INSTALL.md](INSTALL.md) shows the one-time steps to open it.
+
 ## Contributing
 
 Issues and pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) first. Security problems go through [SECURITY.md](SECURITY.md), not public issues.
@@ -227,5 +268,7 @@ Built with [Tauri](https://tauri.app). Icons by [Phosphor](https://phosphoricons
 Gentra Island is free software under the **GNU General Public License v3.0 or later**. You may use, study, change, and share it; if you distribute a changed version, it must stay under the same license with its source available. See [LICENSE](LICENSE).
 
 The name "Gentra Island" and its logo are not covered by the license. See [TRADEMARKS.md](TRADEMARKS.md).
+
+Using the app: [Terms of Use](TERMS.md) and [Privacy Policy](PRIVACY.md), in English and Bahasa Indonesia.
 
 Copyright © 2026 Adam Faturahman.

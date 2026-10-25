@@ -42,6 +42,8 @@ export class SettingsPanel {
     this.root.addEventListener("click", async (e) => {
       const target = e.target as HTMLElement;
       if (target.closest("#replayGuide")) return this.hooks?.replayGuide();
+      const doc = target.closest<HTMLElement>("[data-doc]");
+      if (doc) return void invoke("open_doc", { kind: doc.dataset.doc }).catch((err) => this.hooks?.toast(errorText(err)));
       if (target.closest("#coffee")) {
         return void invoke("open_support").catch((err) => this.hooks?.toast(errorText(err)));
       }
@@ -147,7 +149,10 @@ export class SettingsPanel {
           <p>${t("settings.about.version", { version: __APP_VERSION__ })}. ${t("settings.about.madeBy", { author: APP_AUTHOR })}. ${t("settings.about.license")}</p>
           <p class="note">${t("about.coffeeNote")}</p>
         </div>
-        <button class="coffee" id="coffee">${icon.coffee}<span>${t("about.coffee")}</span></button>
+        <div class="about-side">
+          <button class="coffee" id="coffee">${icon.coffee}<span>${t("about.coffee")}</span></button>
+          <span class="about-links"><button class="link-btn" data-doc="privacy">${t("about.privacy")}</button><button class="link-btn" data-doc="terms">${t("about.terms")}</button></span>
+        </div>
       </section>
     </div>`;
     // The login item lives in the OS; read it fresh each time Settings opens.

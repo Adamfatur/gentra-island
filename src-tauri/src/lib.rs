@@ -47,6 +47,17 @@ fn open_support() -> Result<(), String> {
     ports::open_in_browser(SUPPORT_URL)
 }
 
+/// Opens the Privacy Policy or the Terms of Use on GitHub. Fixed addresses only.
+#[tauri::command]
+fn open_doc(kind: String) -> Result<(), String> {
+    let url = match kind.as_str() {
+        "privacy" => "https://github.com/Adamfatur/gentra-island/blob/main/PRIVACY.md",
+        "terms" => "https://github.com/Adamfatur/gentra-island/blob/main/TERMS.md",
+        _ => return Err("bad_action".into()),
+    };
+    ports::open_in_browser(url)
+}
+
 /// Opens the system page where a permission is granted, so the guide can
 /// say "click this" instead of "find it yourself". Only known pages.
 #[tauri::command]
@@ -125,6 +136,7 @@ pub fn run() {
             set_features,
             set_tray_labels,
             open_support,
+            open_doc,
             open_privacy_settings,
             cleaner::cleaner_scan,
             cleaner::cleaner_run,

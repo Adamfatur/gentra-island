@@ -440,4 +440,6 @@ export const id: Record<Key, Msg> = {
   "home.remind.now": "Sekarang",
   "home.remind.remove": "Hapus pengingat ini",
   "home.remind.more": { one: "dan {count} lagi", other: "dan {count} lagi" },
+  "about.privacy": "Privasi",
+  "about.terms": "Ketentuan",
 };

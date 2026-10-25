@@ -1,0 +1,27 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  @font-face { font-family: "Jakarta"; src: url("../node_modules/@fontsource-variable/plus-jakarta-sans/files/plus-jakarta-sans-latin-wght-normal.woff2") format("woff2"); font-weight: 200 800; }
+  html, body { margin: 0; }
+  body { width: 1280px; height: 640px; overflow: hidden; font-family: "Jakarta", system-ui, sans-serif; color: #f4f4f6;
+    background: radial-gradient(45% 70% at 12% 20%, rgba(255,122,89,.55), transparent 60%),
+                radial-gradient(50% 70% at 95% 15%, rgba(42,108,255,.55), transparent 62%),
+                radial-gradient(55% 60% at 70% 110%, rgba(15,181,166,.45), transparent 60%), #0c0d12; }
+  .left { position: absolute; left: 72px; top: 86px; width: 520px; }
+  .left img.logo { height: 34px; display: block; margin-bottom: 40px; }
+  h1 { font-size: 54px; line-height: 1.08; letter-spacing: -0.02em; margin: 0 0 22px; font-weight: 800; }
+  p { font-size: 23px; line-height: 1.4; color: #c8c8d0; margin: 0 0 30px; }
+  .chips { display: flex; gap: 10px; flex-wrap: wrap; }
+  .chips span { font-size: 17px; font-weight: 650; padding: 8px 14px; border-radius: 99px; background: rgba(255,255,255,.1); }
+  .shot-wrap { position: absolute; right: -60px; top: 120px; width: 720px; aspect-ratio: 1280 / 656; overflow: hidden; border-radius: 0 0 28px 28px; box-shadow: 0 30px 80px rgba(0,0,0,.6); }
+  .shot { position: absolute; width: 118.75%; left: -9.375%; top: 0; }
+</style></head>
+<body>
+  <div class="left">
+    <img class="logo" src="../assets/brand/gentra-island-wordmark-white.svg" alt="">
+    <h1>A free Dynamic Island for Mac, Windows, and Linux</h1>
+    <p>Now playing, clipboard history, reminders, and dev tools in your notch.</p>
+    <div class="chips"><span>Free</span><span>Open source</span><span>No tracking</span></div>
+  </div>
+  <div class="shot-wrap"><img class="shot" src="../docs/screenshots/home.png" alt=""></div>
+</body></html>

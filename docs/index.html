@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gentra Island: a free Dynamic Island for Mac, Windows, and Linux</title>
+  <meta name="description" content="Gentra Island turns your MacBook notch into something useful: now playing, clipboard history, reminders from what you copy, a file shelf, focus timer, and developer tools. Free, open source, no tracking. Also on Windows and Linux.">
+  <meta name="keywords" content="Dynamic Island for Mac, Dynamic Island for Windows, Dynamic Island for Linux, MacBook notch app, notch utility, NotchNook alternative, Boring Notch alternative, clipboard manager, clipboard history, now playing, open source, free">
+  <meta name="author" content="Adam Faturahman">
+  <link rel="canonical" href="https://adamfatur.github.io/gentra-island/">
+  <link rel="icon" type="image/png" href="img/icon-256.png">
+  <meta name="theme-color" content="#0c0d12">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Gentra Island">
+  <meta property="og:title" content="Gentra Island: a free Dynamic Island for Mac, Windows, and Linux">
+  <meta property="og:description" content="Now playing, clipboard history, reminders, and dev tools in your notch. Free, open source, no tracking.">
+  <meta property="og:url" content="https://adamfatur.github.io/gentra-island/">
+  <meta property="og:image" content="https://adamfatur.github.io/gentra-island/img/social-preview.png">
+  <meta property="og:image:width" content="1280">
+  <meta property="og:image:height" content="640">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Gentra Island: a free Dynamic Island for Mac, Windows, and Linux">
+  <meta name="twitter:description" content="Now playing, clipboard history, reminders, and dev tools in your notch. Free, open source, no tracking.">
+  <meta name="twitter:image" content="https://adamfatur.github.io/gentra-island/img/social-preview.png">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Gentra Island",
+    "applicationCategory": "UtilitiesApplication",
+    "operatingSystem": "macOS 11 or later, Windows 10 or later, Linux",
+    "description": "A free, open-source Dynamic Island for the desktop: now playing, clipboard history, reminders, file shelf, focus timer, system monitor, and developer tools.",
+    "url": "https://adamfatur.github.io/gentra-island/",
+    "downloadUrl": "https://github.com/Adamfatur/gentra-island/releases/latest",
+    "image": "https://adamfatur.github.io/gentra-island/img/social-preview.png",
+    "screenshot": "https://adamfatur.github.io/gentra-island/screenshots/home.png",
+    "license": "https://www.gnu.org/licenses/gpl-3.0.html",
+    "isAccessibleForFree": true,
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "author": { "@type": "Person", "name": "Adam Faturahman", "url": "https://github.com/Adamfatur" }
+  }
+  </script>
+
+  <style>
+    @font-face { font-family: "Jakarta"; src: url("fonts/plus-jakarta-sans-latin-wght-normal.woff2") format("woff2"); font-weight: 200 800; font-display: swap; }
+    :root { --bg: #0c0d12; --surface: #17171d; --raised: #22222a; --text: #f4f4f6; --muted: #a3a3ad; --accent: #5ac8fa; --line: rgba(255,255,255,.08); }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 17px/1.55 "Jakarta", system-ui, -apple-system, "Segoe UI", sans-serif; }
+    a { color: inherit; }
+    .wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+    header.hero {
+      padding: 64px 0 40px; text-align: center;
+      background: radial-gradient(40% 70% at 15% 0%, rgba(255,122,89,.35), transparent 65%),
+                  radial-gradient(45% 70% at 90% 0%, rgba(42,108,255,.35), transparent 65%);
+    }
+    .hero .logo { height: 30px; }
+    h1 { font-size: clamp(34px, 6vw, 60px); line-height: 1.06; letter-spacing: -0.025em; margin: 28px auto 18px; max-width: 14ch; font-weight: 800; }
+    .lede { font-size: clamp(17px, 2.2vw, 21px); color: #c8c8d0; max-width: 40ch; margin: 0 auto 30px; }
+    .buttons { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 13px 22px; border-radius: 99px; font-weight: 700; text-decoration: none; background: var(--raised); }
+    .btn.primary { background: #f4f4f6; color: #0c0d12; }
+    .btn:hover { filter: brightness(1.08); }
+    .facts { margin-top: 16px; color: var(--muted); font-size: 14px; }
+    .demo { margin: 44px auto 0; max-width: 760px; }
+    .demo img { width: 100%; height: auto; border-radius: 18px; display: block; box-shadow: 0 30px 80px rgba(0,0,0,.5); }
+    section { padding: 64px 0; border-top: 1px solid var(--line); }
+    h2 { font-size: clamp(26px, 3.5vw, 36px); letter-spacing: -0.02em; margin: 0 0 24px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+    .card { background: var(--surface); border-radius: 18px; padding: 20px; }
+    .card h3 { margin: 0 0 6px; font-size: 18px; }
+    .card p { margin: 0; color: var(--muted); font-size: 15.5px; }
+    .shots { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+    figure { margin: 0; }
+    figure img { width: 100%; height: auto; border-radius: 14px; display: block; background: var(--surface); }
+    figcaption { color: var(--muted); font-size: 14px; margin-top: 8px; }
+    table { width: 100%; border-collapse: collapse; font-size: 15.5px; }
+    th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { color: var(--muted); font-weight: 600; }
+    details { background: var(--surface); border-radius: 14px; padding: 16px 18px; margin-bottom: 10px; }
+    summary { cursor: pointer; font-weight: 700; }
+    details p { color: var(--muted); margin: 10px 0 0; }
+    footer { padding: 40px 0 60px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
+    footer nav { display: flex; flex-wrap: wrap; gap: 18px; margin-bottom: 10px; }
+    @media (max-width: 560px) { header.hero { padding-top: 40px; } section { padding: 44px 0; } }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap">
+      <img class="logo" src="img/gentra-island-wordmark-white.svg" alt="Gentra Island">
+      <h1>A free Dynamic Island for Mac, Windows, and Linux</h1>
+      <p class="lede">Turn your MacBook's notch into something useful. It shows what's playing, remembers what you copy, reminds you about it, and tells you when your build is done. Then it gets out of the way.</p>
+      <div class="buttons">
+        <a class="btn primary" href="https://github.com/Adamfatur/gentra-island/releases/latest">Download for free</a>
+        <a class="btn" href="https://github.com/Adamfatur/gentra-island">View on GitHub</a>
+      </div>
+      <p class="facts">macOS 11+ (Intel and Apple silicon), Windows 10+, Linux. Open source, GPL-3.0. No account, no tracking.</p>
+      <div class="demo"><img src="screenshots/demo.gif" width="720" height="330" alt="Gentra Island opening from the notch and switching between Home, Media, Clipboard, and Dev"></div>
+    </div>
+  </header>
+
+  <main>
+    <section id="features">
+      <div class="wrap">
+        <h2>Everything at the top of your screen</h2>
+        <div class="grid">
+          <div class="card"><h3>Now playing</h3><p>Spotify, Apple Music, YouTube, and more. Artwork, play and pause, skip, and a timeline you can drag.</p></div>
+          <div class="card"><h3>Clipboard history</h3><p>Text, links, code, colors, and screenshots. Search, pin, and decode JWTs, timestamps, and JSON.</p></div>
+          <div class="card"><h3>Reminders from what you copy</h3><p>Copy "meeting Friday at 2 pm" or "rapat Jumat jam 14.00" and it offers to remind you, in one click.</p></div>
+          <div class="card"><h3>Secret guard</h3><p>API keys and private keys are never written to disk and leave your clipboard after 60 seconds.</p></div>
+          <div class="card"><h3>Shelf and focus</h3><p>Hold files for later and drag them out anywhere, or AirDrop them. Focus sessions with a countdown in the notch.</p></div>
+          <div class="card"><h3>System and cleaner</h3><p>Memory pressure, CPU, and the apps using the most memory. A cleaner that only touches safe caches and logs.</p></div>
+          <div class="card"><h3>For developers</h3><p>See and stop local servers by port. Get told when a long terminal command finishes.</p></div>
+          <div class="card"><h3>For calls</h3><p>Which app has your mic, the call time, a mute button, and a camera mirror before you join.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="screenshots">
+      <div class="wrap">
+        <h2>Screenshots</h2>
+        <div class="shots">
+          <figure><img src="screenshots/home.png" loading="lazy" alt="Home: what's playing, memory, focus, last copied, and shelf"><figcaption>Home shows what matters right now</figcaption></figure>
+          <figure><img src="screenshots/media.png" loading="lazy" alt="Media player tinted by the album artwork"><figcaption>Media controls whatever is playing</figcaption></figure>
+          <figure><img src="screenshots/reminder-offer.png" loading="lazy" alt="The island offering to remind you about a copied message"><figcaption>Reminders offered from what you copy</figcaption></figure>
+          <figure><img src="screenshots/clipboard.png" loading="lazy" alt="Clipboard history with a decoded JWT and a tracked link"><figcaption>Clipboard history that understands what you copied</figcaption></figure>
+          <figure><img src="screenshots/dev.png" loading="lazy" alt="Local servers and terminal command alerts"><figcaption>Dev tools: local servers and command alerts</figcaption></figure>
+          <figure><img src="screenshots/home-light.png" loading="lazy" alt="Home in the light theme"><figcaption>Light and dark themes, any accent color</figcaption></figure>
+        </div>
+      </div>
+    </section>
+
+    <section id="requirements">
+      <div class="wrap">
+        <h2>Works on</h2>
+        <table>
+          <tr><th></th><th>Minimum</th><th>Recommended</th></tr>
+          <tr><td><b>macOS</b></td><td>macOS 11 Big Sur, Intel or Apple silicon</td><td>macOS 15 or newer</td></tr>
+          <tr><td><b>Windows</b></td><td>Windows 10 version 1809, 64-bit</td><td>Windows 11</td></tr>
+          <tr><td><b>Linux</b></td><td>64-bit with WebKitGTK 4.1 (Ubuntu 22.04, Debian 12, Fedora 37, or newer)</td><td>An X11 session</td></tr>
+          <tr><td><b>Memory</b></td><td>4 GB RAM</td><td>8 GB RAM</td></tr>
+        </table>
+        <p style="color:var(--muted)">About 1% CPU while you work and around 160 MB of memory in total. Step-by-step install help is in the <a href="https://github.com/Adamfatur/gentra-island/blob/main/INSTALL.md">install guide</a>.</p>
+      </div>
+    </section>
+
+    <section id="faq">
+      <div class="wrap">
+        <h2>Questions</h2>
+        <details><summary>Is it really free?</summary><p>Yes. Gentra Island is free and open source under the GPL-3.0. There's no paid version and nothing is locked.</p></details>
+        <details><summary>Do I need a MacBook with a notch?</summary><p>No. With a notch it blends into the camera housing. On other Macs, Windows, and Linux it floats as a small pill at the top of the screen.</p></details>
+        <details><summary>Is it a NotchNook or Boring Notch alternative?</summary><p>It covers similar ground, adds clipboard history, reminders, a system monitor, and developer and call tools, and also runs on Windows and Linux.</p></details>
+        <details><summary>What about my privacy?</summary><p>Everything stays on your computer. No account, analytics, or tracking. Read the <a href="https://github.com/Adamfatur/gentra-island/blob/main/PRIVACY.md">Privacy Policy</a>.</p></details>
+        <details><summary>Why does my computer warn me when I first open it?</summary><p>The app isn't notarized or code-signed yet. The <a href="https://github.com/Adamfatur/gentra-island/blob/main/INSTALL.md">install guide</a> shows the one-time steps.</p></details>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <nav>
+        <a href="https://github.com/Adamfatur/gentra-island">GitHub</a>
+        <a href="https://github.com/Adamfatur/gentra-island/releases/latest">Download</a>
+        <a href="https://github.com/Adamfatur/gentra-island/blob/main/PRIVACY.md">Privacy</a>
+        <a href="https://github.com/Adamfatur/gentra-island/blob/main/TERMS.md">Terms</a>
+        <a href="https://paypal.me/adamfaturahman">Buy me a coffee</a>
+      </nav>
+      Gentra Island by Adam Faturahman. Free software under the GPL-3.0.
+    </div>
+  </footer>
+</body>
+</html>

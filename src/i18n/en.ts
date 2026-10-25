@@ -452,6 +452,8 @@ export const en = {
   "home.remind.now": "Now",
   "home.remind.remove": "Remove this reminder",
   "home.remind.more": { one: "and {count} more", other: "and {count} more" },
+  "about.privacy": "Privacy",
+  "about.terms": "Terms",
 };
 
 export type Key = keyof typeof en;
