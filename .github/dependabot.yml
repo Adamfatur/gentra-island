@@ -1,12 +1,28 @@
-# Weekly checks for updates to Rust crates, npm packages, and CI actions.
+# One grouped pull request per ecosystem each week for minor and patch
+# updates. Major versions change behavior and are upgraded by hand.
 version: 2
 updates:
   - package-ecosystem: cargo
     directory: /src-tauri
     schedule: { interval: weekly }
+    groups:
+      rust: { update-types: [minor, patch] }
+    ignore:
+      - dependency-name: "*"
+        update-types: [version-update:semver-major]
   - package-ecosystem: npm
     directory: /
     schedule: { interval: weekly }
+    groups:
+      npm: { update-types: [minor, patch] }
+    ignore:
+      - dependency-name: "*"
+        update-types: [version-update:semver-major]
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: weekly }
+    groups:
+      actions: { update-types: [minor, patch] }
+    ignore:
+      - dependency-name: "*"
+        update-types: [version-update:semver-major]
