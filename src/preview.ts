@@ -9,6 +9,31 @@ import type { Stats } from "./system";
 const GB = 1024 ** 3;
 const MB = 1024 ** 2;
 
+/** A made-up album cover: soft color fields and a sun, nothing copyrighted. */
+function cover(a: string, b: string, c: string) {
+  const s = 360;
+  const cv = document.createElement("canvas");
+  cv.width = cv.height = s;
+  const x = cv.getContext("2d")!;
+  const g = x.createLinearGradient(0, 0, s, s);
+  g.addColorStop(0, a);
+  g.addColorStop(1, b);
+  x.fillStyle = g;
+  x.fillRect(0, 0, s, s);
+  x.fillStyle = c;
+  x.beginPath();
+  x.arc(s * 0.62, s * 0.42, s * 0.2, 0, Math.PI * 2);
+  x.fill();
+  x.fillStyle = "rgba(10, 8, 30, 0.55)";
+  x.beginPath();
+  x.moveTo(0, s * 0.78);
+  x.bezierCurveTo(s * 0.3, s * 0.6, s * 0.6, s * 0.95, s, s * 0.7);
+  x.lineTo(s, s);
+  x.lineTo(0, s);
+  x.fill();
+  return cv.toDataURL("image/jpeg", 0.9);
+}
+
 function shot(a: string, b: string) {
   const c = document.createElement("canvas");
   c.width = 360;
@@ -160,6 +185,22 @@ mockIPC(
   { shouldMockEvents: true },
 );
 
+// ?scene=home|media|… sets up a ready-made state for screenshots and the demo
+// video (see scripts/capture.mjs). ?shot hides the harness; ?theme=light and
+// ?lang=id switch theme and language.
+const params = new URLSearchParams(location.search);
+const scene = params.get("scene");
+if (scene || params.has("shot")) {
+  document.body.classList.add("shot");
+  localStorage.setItem("gentra:guide", "1");
+  localStorage.setItem("gentra:lang", params.get("lang") ?? "en");
+  localStorage.setItem("gentra:settings", JSON.stringify({ theme: params.get("theme") ?? "dark", accent: null }));
+  localStorage.setItem(
+    "gentra:mode",
+    JSON.stringify({ mode: "kustom", base: "harian", on: ["sistem", "clip", "pintar", "rak", "fokus", "bersih", "port", "perintah", "meeting", "kamera", "musik"] }),
+  );
+}
+
 // The island lives inside a 760×520 box, the same size as the real window.
 const html = await (await fetch("/index.html")).text();
 const doc = new DOMParser().parseFromString(html, "text/html");
@@ -227,7 +268,7 @@ const actions: Record<string, () => void> = {
     void emit("command-done", d);
   },
   "Musik diputar": () => {
-    track = { title: "Kisah Klasik Untuk Masa Depan", artist: "Sheila on 7", album: "Kisah Klasik", app: "Spotify", playing: true, duration: 268, elapsed: 41, at: Date.now(), art: shot("#ff8a5c", "#7a3cff") };
+    track = { title: "Kisah Klasik Untuk Masa Depan", artist: "Sheila on 7", album: "Kisah Klasik", app: "Spotify", playing: true, duration: 268, elapsed: 41, at: Date.now(), art: cover("#ff7a59", "#6a3df0", "#ffd166") };
     void emit("media", track);
   },
   "Lagu berikutnya": () => {
@@ -255,3 +296,91 @@ for (const [label, fn] of Object.entries(actions)) {
   b.onclick = fn;
   bar.appendChild(b);
 }
+
+/* ---------- scenes for screenshots and the demo video ---------- */
+
+const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const play = () => actions["Musik diputar"]();
+const scenes: Record<string, () => Promise<void>> = {
+  compact: async () => {
+    play();
+    await wait(3600);
+  },
+  home: async () => {
+    play();
+    copy({ kind: "text", text: "Meeting moved to 3 pm, same link as last week.", app: "Slack" });
+    actions["Seret file masuk"]();
+    await wait(3400);
+    void emit("open-tab", "home");
+  },
+  media: async () => {
+    play();
+    await wait(3400);
+    void emit("open-tab", "media");
+  },
+  clipboard: async () => {
+    actions["Salin screenshot"]();
+    copy({ kind: "link", text: "https://shop.example.com/running-shoes?utm_source=newsletter&utm_medium=email&fbclid=IwAR3", app: "Mail" });
+    copy({ kind: "text", text: sampleJwt, app: "Postman" });
+    copy({ kind: "text", text: "Meeting moved to 3 pm, same link as last week.", app: "Slack" });
+    await wait(3000);
+    void emit("open-tab", "clipboard");
+  },
+  dev: async () => {
+    actions["Build selesai"]();
+    await wait(200);
+    actions["Tes gagal"]();
+    await wait(4200);
+    void emit("open-tab", "dev");
+  },
+  calls: async () => {
+    mic = { inUse: true, app: "Zoom", muted: false, since: Math.floor(Date.now() / 1000) - 1325 };
+    void emit("mic", mic);
+    await wait(3800);
+    void emit("open-tab", "call");
+  },
+  system: async () => {
+    await wait(2500);
+    void emit("open-tab", "system");
+  },
+  settings: async () => {
+    await wait(300);
+    void emit("open-tab", "settings");
+  },
+  peek: async () => {
+    await wait(300);
+    actions["Build selesai"]();
+  },
+  // A short tour for the README video: small island, open, a few tabs, close, an alert.
+  demo: async () => {
+    copy({ kind: "text", text: "Meeting moved to 3 pm, same link as last week.", app: "Slack" });
+    document.body.dataset.ready = "1";
+    await wait(1200);
+    play();
+    await wait(3800);
+    void emit("open-tab", "home");
+    await wait(2600);
+    void emit("open-tab", "media");
+    await wait(2600);
+    void emit("open-tab", "clipboard");
+    await wait(2600);
+    void emit("open-tab", "dev");
+    await wait(2400);
+    void emit("open-tab", "toggle");
+    await wait(1500);
+    actions["Build selesai"]();
+    await wait(4000);
+    document.body.dataset.done = "1";
+  },
+};
+if (scene === "demo") {
+  await wait(400);
+  await scenes.demo();
+} else if (scene && scenes[scene]) {
+  await wait(400);
+  await scenes[scene]();
+  // Lets the capture script know the scene is ready.
+  await wait(1200);
+  document.body.dataset.ready = "1";
+}
+

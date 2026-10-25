@@ -5,7 +5,7 @@
 The first version published on GitHub.
 
 - **Home**: a simple first screen with what's playing, memory, focus, the last thing you copied, your shelf, and a live call.
-- **Now playing**: see and control music and video from any app, with artwork-tinted controls and a draggable timeline.
+- **Now playing**: see and control music and video from any app, with artwork-tinted controls and a draggable timeline. On macOS, YouTube thumbnails for browser playback, when you switch them on.
 - **Clipboard history** with search, pins, image support, decoders, clean paste, and a secret guard that never writes keys to disk.
 - **Shelf** for holding files, with drag out and AirDrop on macOS.
 - **Focus timer** with the countdown on the small island.
@@ -16,4 +16,5 @@ The first version published on GitHub.
 - **Modes**: Compact, Everyday, Dev, Meetings, and Focus, or your own mix. Switched-off features stop their background work.
 - **English and Bahasa Indonesia.**
 - Themes that follow the system, plus a custom accent color.
+- An app icon and a menu bar icon drawn from the Gentra Island lettering.
 - Installers for macOS (universal), Windows, and Linux (AppImage, deb, rpm), with SHA-256 checksums.

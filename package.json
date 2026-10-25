@@ -21,6 +21,7 @@
   "devDependencies": {
     "@phosphor-icons/core": "2.1.1",
     "@tauri-apps/cli": "^2.5.0",
+    "playwright-core": "1.56.1",
     "typescript": "^5.8.3",
     "vite": "^6.3.5",
     "vitest": "^3.2.7"

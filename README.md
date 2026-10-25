@@ -17,9 +17,28 @@
   <a href="#privacy">Privacy</a>
 </p>
 
+<p align="center">
+  <img src="docs/screenshots/demo.gif" alt="Gentra Island opening from the notch: now playing, Home, Media, Clipboard, and Dev tabs, then a build-finished alert" width="720">
+</p>
+
 ---
 
 Gentra Island sits at the top of your screen. On a Mac with a notch it grows out of the camera housing; elsewhere it floats as a small pill. Hover, click, or press **⌥⌘G** (**Ctrl+Alt+G** on Windows and Linux) to open it. It opens by itself only when something is worth seeing, like a long build that just finished or a call that started.
+
+## Screenshots
+
+| | |
+|---|---|
+| ![Home: what's playing, memory, focus, last copied, and shelf](docs/screenshots/home.png) | ![Media: artwork-tinted player with a timeline and controls](docs/screenshots/media.png) |
+| **Home** shows what matters right now | **Media** controls whatever is playing |
+| ![Clipboard history with a decoded JWT, a tracked link, and an image](docs/screenshots/clipboard.png) | ![Dev: local servers and terminal command alerts](docs/screenshots/dev.png) |
+| **Clipboard** remembers and understands what you copy | **Dev** watches your local servers and long commands |
+| ![Calls: which app uses the mic, with the call time](docs/screenshots/calls.png) | ![Settings: theme, accent color, language, startup, and About](docs/screenshots/settings.png) |
+| **Calls** shows who has your mic | **Settings** with themes and languages |
+| ![The small island with album artwork and a level meter](docs/screenshots/compact.png) | ![Home in the light theme](docs/screenshots/home-light.png) |
+| The small island while music plays | Light theme |
+
+A higher-quality version of the video is in [docs/screenshots/demo.mp4](docs/screenshots/demo.mp4).
 
 ## What it does
 
@@ -66,17 +85,57 @@ If you run it on something not marked as tested, an issue saying how it went hel
 
 ## Install
 
-Download the file for your system from the [latest release](../../releases/latest):
+Get the file for your system from the [latest release](../../releases/latest). No terminal needed.
 
-| System | File |
-|---|---|
-| macOS (Intel and Apple silicon) | `.dmg` |
-| Windows | `-setup.exe` |
-| Linux, any distro | `.AppImage` |
-| Ubuntu, Debian, Mint | `.deb` |
-| Fedora, openSUSE | `.rpm` |
+### macOS
 
-Step-by-step instructions, including the first-open security prompts on macOS and Windows, are in [INSTALL.md](INSTALL.md). Each release lists SHA-256 checksums so you can check your download.
+1. Download the file ending in `.dmg`. It runs on Intel and Apple silicon Macs.
+2. Open it and drag **Gentra Island** into **Applications**.
+3. Open Gentra Island from Applications.
+4. If the Mac says it can't check the app for malware: open **System Settings**, go to **Privacy & Security**, scroll down, and click **Open Anyway**. This happens once, because the app isn't notarized by Apple yet.
+
+### Windows
+
+1. Download the file ending in `-setup.exe`.
+2. Double-click it and click **Install**. No admin password needed.
+3. If Windows shows "Windows protected your PC", click **More info**, then **Run anyway**. This happens once, because the app isn't code-signed yet.
+
+### Linux
+
+- **Any distro**: download the `.AppImage`, right-click it, open **Properties**, switch on **Allow executing as program**, then double-click it.
+- **Ubuntu, Debian, Mint**: download the `.deb` and double-click it to open it in your software center.
+- **Fedora, openSUSE**: download the `.rpm` and double-click it.
+
+To check your download, compare it with `SHA256SUMS.txt` on the release page. More detail, including uninstalling, is in [INSTALL.md](INSTALL.md).
+
+## How to use
+
+**The basics**
+
+1. After you open it, the island sits at the top center of your screen, small. A short guide shows up the first time.
+2. **Hover** over it, **click** it, or press **⌥⌘G** (**Ctrl+Alt+G**) to open it. Move away, press **Esc**, or press the shortcut again to close it.
+3. The tabs along the top switch sections. **⌘1** to **⌘9** (**Ctrl+1** to **Ctrl+9**) jump straight to one.
+4. The **mode** button at the top right picks which features are on. Choose **Compact** if you only want memory and the clipboard, or switch features one by one.
+5. The **gear** opens Settings: theme, accent color, language, open at login, and About.
+
+**Everyday things**
+
+- **Paste something you copied earlier**: press **⌥⌘V** (**Ctrl+Alt+V**), type to search, use the arrow keys, and press **Enter** to copy it back. **P** pins an item so it stays.
+- **Understand what you copied**: hover a clipboard card. A JWT shows who it's for and when it expires, a timestamp shows the date, a tracking link offers a clean copy.
+- **Control music or a video**: open **Media**, or use the buttons on **Home**. Drag the bar to jump; **Space** plays and pauses.
+- **Hold files for later**: drag files onto the island. They wait on the **Shelf** until you drag them out to another app, or send them with **AirDrop** on a Mac.
+- **Focus for a while**: on **Home**, click **Start 25 min**, or pick a length in **Focus**. The countdown stays on the small island.
+- **Free up space**: open **Cleaner**, review what it found, and click the button to move it to the Trash. Nothing outside the safe list is touched.
+
+**For developers**
+
+- **See and stop local servers**: open **Dev**. Each server shows its port, folder, and how long it has run; **Open** opens it in your browser, **Stop** asks once more, then stops it.
+- **Get told when a long command finishes**: in **Dev**, pick your shell, click **Copy line**, paste it at the end of your shell config, and open a new terminal. Commands of 10 seconds or more show up on the island when they finish.
+
+**In calls**
+
+- When an app starts using your mic, the small island shows the call time. Open **Calls** to see which app it is, and on a Mac, mute the mic for every app at once.
+- **Check camera** in **Calls** shows a mirror before you join. If the camera is blocked, the island walks you through allowing it.
 
 ## Permissions
 
@@ -85,13 +144,14 @@ Gentra Island asks for as little as possible. When something needs your OK, the 
 | Permission | Used for | When it's asked |
 |---|---|---|
 | Camera | The camera mirror in the Calls tab | Only when you click **Check camera** |
+| Automation (macOS) | Asking your browser which tab is playing, to show a YouTube thumbnail | Only if you switch on **Show thumbnails** in the Media tab |
 
 Nothing else needs a permission prompt. Seeing which app uses the mic doesn't record audio, and the clipboard, shelf, and system monitor use access every app already has.
 
 ## Privacy
 
 - **Everything stays on your computer.** No accounts, no analytics, no telemetry, no update pings.
-- **No network calls of its own.** It only reaches the network when you click a link it shows, such as opening a local server in your browser.
+- **No network calls of its own by default.** It reaches the network when you click a link it shows, such as opening a local server in your browser, and, only if you switch on **Show thumbnails** in the Media tab, to load a YouTube video's thumbnail from `i.ytimg.com`.
 - **Clipboard history** is stored in your user's app data folder. Secrets are never written there. Clear it any time from the Clipboard tab.
 - **The mic is never opened.** The meeting guard only asks the system whether an app is using it.
 - **The camera** is on only while the mirror is visible, and nothing is recorded.
@@ -107,7 +167,7 @@ Measured on a Mac with the release build:
 
 ## Known limitations
 
-- **Artwork from browsers on macOS.** Since macOS 15.4, apps other than Apple's may not read what's playing; Gentra Island reads it through a small built-in `osascript` helper. Titles, artists, and controls work, including YouTube in Chrome, but browser artwork doesn't come through yet.
+- **Artwork from browsers on macOS.** Since macOS 15.4, apps other than Apple's may not read what's playing; Gentra Island reads it through a small built-in `osascript` helper. Titles, artists, and controls work, including YouTube in Chrome, but browsers don't share their artwork. For YouTube, you can switch on **Show thumbnails** in the Media tab: Gentra Island then asks your browser (Chrome, Safari, Brave, Edge, Arc, Vivaldi, Opera) which tab is playing and loads the video's thumbnail. Other sites stay without artwork.
 - **Now playing on older macOS.** The reader relies on parts of macOS that may not exist before macOS 15. On macOS 11 to 14 the Media tab may stay empty.
 - **Muting the mic** from the island works on macOS only for now.
 - **Linux on Wayland** decides window positions itself, so the island may not sit exactly at the top. X11 works fully.

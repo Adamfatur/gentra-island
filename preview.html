@@ -18,6 +18,10 @@
       .stagebox { position: relative; width: 760px; height: 520px; margin: 0 auto; outline: 1px dashed rgba(255,255,255,.25); }
       .harness { position: fixed; left: 16px; bottom: 16px; display: flex; flex-wrap: wrap; gap: 6px; max-width: 760px; }
       .harness button { background: rgba(0,0,0,.6); color: #fff; padding: 7px 11px; border-radius: 9px; font-size: 12px; cursor: pointer; }
+      /* Screenshot mode: no harness, no outline. */
+      body.shot .harness { display: none; }
+      body.shot .stagebox { outline: none; }
+      body.shot :focus-visible { outline: none !important; }
     </style>
   </head>
   <body class="preview">
