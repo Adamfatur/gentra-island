@@ -1,0 +1,105 @@
+name: Release
+
+# Push a tag like v0.5.0 and this builds the installers and attaches them to a
+# draft GitHub release. Check the draft, then publish it.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # One .dmg that runs natively on both Intel and Apple silicon Macs.
+          - os: macos-latest
+            target: universal-apple-darwin
+            args: --target universal-apple-darwin
+          - os: windows-latest
+            target: ""
+            args: ""
+          # 22.04 keeps the AppImage and .deb working on older distros too.
+          - os: ubuntu-22.04
+            target: ""
+            args: ""
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Linux system libraries for Tauri
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libxdo-dev
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ runner.os == 'macOS' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - run: pnpm install --frozen-lockfile
+
+      # Signing is optional. Without these secrets the Mac build is signed
+      # ad hoc and shows an "unknown developer" warning on first open. Only
+      # values that exist are exported: an empty APPLE_CERTIFICATE would make
+      # the bundler try to import a certificate that isn't there.
+      - name: Apple signing, when configured
+        if: runner.os == 'macOS'
+        shell: bash
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          for v in APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_SIGNING_IDENTITY APPLE_ID APPLE_PASSWORD APPLE_TEAM_ID; do
+            if [ -n "${!v}" ]; then
+              { echo "$v<<__GATE_EOF__"; echo "${!v}"; echo "__GATE_EOF__"; } >> "$GITHUB_ENV"
+            fi
+          done
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: Gentra Island ${{ github.ref_name }}
+          releaseBody: |
+            See CHANGELOG.md for what's new and INSTALL.md for step-by-step installation on macOS, Windows, and Linux.
+            Check your download against SHA256SUMS.txt below.
+          releaseDraft: true
+          args: ${{ matrix.args }}
+
+  # One checksum file for every installer, so people can verify their download.
+  checksums:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add SHA-256 checksums to the draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          mkdir assets && cd assets
+          gh release download "$TAG" --repo "$REPO" --pattern '*'
+          rm -f SHA256SUMS.txt
+          sha256sum -- * > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+          gh release upload "$TAG" SHA256SUMS.txt --repo "$REPO" --clobber

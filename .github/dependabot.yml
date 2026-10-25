@@ -1,0 +1,12 @@
+# Weekly checks for updates to Rust crates, npm packages, and CI actions.
+version: 2
+updates:
+  - package-ecosystem: cargo
+    directory: /src-tauri
+    schedule: { interval: weekly }
+  - package-ecosystem: npm
+    directory: /
+    schedule: { interval: weekly }
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly }

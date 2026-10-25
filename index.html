@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gentra Island</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <!-- Visible text comes from src/i18n via the data-i18n* attributes. -->
+    <div class="shell" id="shell">
+      <span class="ear l"></span><span class="ear r"></span>
+      <div class="island" id="island">
+        <!-- compact: always-on summary either side of the notch -->
+        <div class="v on" id="v-compact">
+          <div class="row compact-row">
+            <span class="side art-side" id="cArt" hidden></span>
+            <span class="side" id="cLeft" data-i18n-title="compact.memory">
+              <svg class="mini-ring" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.5" class="track" /><circle cx="10" cy="10" r="7.5" class="fill" id="miniRing" /></svg>
+              <span class="num" id="cRam">–</span>
+            </span>
+            <span class="side" id="cRight"></span>
+          </div>
+        </div>
+
+        <!-- peek: the island widens briefly to show what just happened -->
+        <div class="v" id="v-peek" role="status" aria-live="polite">
+          <div class="row compact-row ghost"></div>
+          <div class="peek-body" id="peekBody"></div>
+        </div>
+
+        <!-- expanded -->
+        <div class="v" id="v-exp">
+          <div class="head">
+            <div class="tabs" role="tablist" id="tabs" data-i18n-aria="tabs.label">
+              <span class="tab-pill" id="tabPill"></span>
+              <button class="tab" role="tab" data-tab="home" aria-selected="true" data-i18n="tab.home"></button>
+              <button class="tab" role="tab" data-tab="system" aria-selected="false" tabindex="-1" data-i18n="tab.system"></button>
+              <button class="tab" role="tab" data-tab="clipboard" aria-selected="false" tabindex="-1" data-i18n="tab.clipboard"></button>
+              <button class="tab" role="tab" data-tab="shelf" aria-selected="false" tabindex="-1" data-i18n="tab.shelf"></button>
+              <button class="tab" role="tab" data-tab="focus" aria-selected="false" tabindex="-1" data-i18n="tab.focus"></button>
+              <button class="tab" role="tab" data-tab="cleaner" aria-selected="false" tabindex="-1" data-i18n="tab.cleaner"></button>
+              <button class="tab" role="tab" data-tab="dev" aria-selected="false" tabindex="-1" data-i18n="tab.dev"></button>
+              <button class="tab" role="tab" data-tab="call" aria-selected="false" tabindex="-1" data-i18n="tab.call"></button>
+              <button class="tab" role="tab" data-tab="media" aria-selected="false" tabindex="-1" data-i18n="tab.media"></button>
+            </div>
+            <div class="head-meta" id="headMeta"></div>
+            <button class="mode-btn" id="modeBtn" data-i18n-aria="header.mode"></button>
+            <button class="icon-btn" id="settingsBtn" data-i18n-aria="header.settings"></button>
+          </div>
+
+          <div class="panels">
+            <section class="panel on" data-panel="home" role="tabpanel" data-i18n-aria="tab.home"><div id="homePanel"></div></section>
+            <section class="panel" data-panel="system" role="tabpanel" data-i18n-aria="tab.system">
+              <div class="sys" id="sysReady" hidden>
+                <div class="mem">
+                  <svg class="ring" viewBox="0 0 120 120" aria-hidden="true">
+                    <circle cx="60" cy="60" r="50" class="track" />
+                    <circle cx="60" cy="60" r="50" class="fill" id="ramRing" />
+                  </svg>
+                  <div class="mem-text">
+                    <p class="mem-big"><b class="num" id="ramUsed">–</b> <span id="ramTotal"></span></p>
+                    <p class="pressure" id="pressure"><i></i><span></span></p>
+                    <p class="muted num" id="swap"></p>
+                  </div>
+                </div>
+                <div class="side-stats">
+                  <div class="cpu-line"><span data-i18n="compact.cpu"></span><b class="num" id="cpuNow">–</b></div>
+                  <svg class="spark" viewBox="0 0 240 56" preserveAspectRatio="none" aria-hidden="true">
+                    <path class="grid" d="M0 14H240M0 28H240M0 42H240" />
+                    <path class="area" id="sparkArea" />
+                    <path class="line" id="sparkLine" />
+                  </svg>
+                  <p class="net num"><span id="netRxIcon" data-i18n-title="system.download"></span><span id="netRx">–</span><span id="netTxIcon" data-i18n-title="system.upload"></span><span id="netTx">–</span></p>
+                </div>
+                <div class="apps">
+                  <p class="list-title" data-i18n="system.topApps"></p>
+                  <ol class="procs" id="procs"></ol>
+                </div>
+              </div>
+              <div class="state" id="sysWaiting"><b data-i18n="system.waiting.title"></b><span data-i18n="system.waiting.body"></span></div>
+              <div class="state" id="sysError" hidden><b data-i18n="system.stalled.title"></b><span data-i18n="system.stalled.body"></span></div>
+            </section>
+
+            <section class="panel" data-panel="clipboard" role="tabpanel" data-i18n-aria="tab.clipboard">
+              <div class="clip-top">
+                <label class="search">
+                  <span class="search-ic" id="searchIcon"></span>
+                  <input id="clipQ" autocomplete="off" spellcheck="false" data-i18n-aria="clip.searchLabel" />
+                </label>
+                <div class="filters" id="filters" role="group" data-i18n-aria="clip.filters">
+                  <button data-f="all" aria-pressed="true" data-i18n="clip.filter.all"></button>
+                  <button data-f="text" aria-pressed="false" data-i18n="clip.filter.text"></button>
+                  <button data-f="image" aria-pressed="false" data-i18n="clip.filter.image"></button>
+                  <button data-f="link" aria-pressed="false" data-i18n="clip.filter.link"></button>
+                  <button data-f="pinned" aria-pressed="false" data-i18n="clip.filter.pinned"></button>
+                </div>
+                <span class="clip-clear" id="clipClear"></span>
+              </div>
+              <div class="strip" id="strip" role="listbox" data-i18n-aria="clip.history"></div>
+              <div class="inspector" id="inspector" hidden></div>
+            </section>
+
+            <section class="panel" data-panel="shelf" role="tabpanel" data-i18n-aria="tab.shelf"><div id="shelfPanel"></div></section>
+            <section class="panel" data-panel="focus" role="tabpanel" data-i18n-aria="tab.focus"><div id="focusPanel"></div></section>
+            <section class="panel" data-panel="cleaner" role="tabpanel" data-i18n-aria="tab.cleaner"><div id="cleanerPanel"></div></section>
+            <section class="panel" data-panel="dev" role="tabpanel" data-i18n-aria="tab.dev"><div id="devPanel"></div></section>
+            <section class="panel" data-panel="call" role="tabpanel" data-i18n-aria="tab.call"><div id="callPanel"></div></section>
+            <section class="panel" data-panel="media" role="tabpanel" data-i18n-aria="tab.media"><div id="mediaPanel"></div></section>
+            <section class="panel" data-panel="settings" data-i18n-aria="header.settings"><div id="settingsPanel"></div></section>
+            <section class="panel" data-panel="mode" data-i18n-aria="header.mode"><div id="modePanel"></div></section>
+            <section class="panel" data-panel="guide" data-i18n-aria="guide.label"><div id="guidePanel"></div></section>
+          </div>
+        </div>
+
+        <div class="toast" id="toast" role="status" aria-live="polite"></div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

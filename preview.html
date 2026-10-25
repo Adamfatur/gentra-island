@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gentra Island: pratinjau UI</title>
+    <link rel="stylesheet" href="/src/style.css" />
+    <style>
+      /* Browser-only harness: a fake desktop behind the island and a few
+         buttons that fire the same events the Rust backend would. */
+      html, body { overflow: auto; }
+      body.preview {
+        background: radial-gradient(40% 60% at 20% 30%, #ff8a3d, transparent 60%),
+          radial-gradient(45% 55% at 80% 25%, #2a6cff, transparent 62%),
+          radial-gradient(50% 60% at 60% 90%, #0fb5a6, transparent 60%), #10131c;
+        min-height: 100vh;
+      }
+      .stagebox { position: relative; width: 760px; height: 520px; margin: 0 auto; outline: 1px dashed rgba(255,255,255,.25); }
+      .harness { position: fixed; left: 16px; bottom: 16px; display: flex; flex-wrap: wrap; gap: 6px; max-width: 760px; }
+      .harness button { background: rgba(0,0,0,.6); color: #fff; padding: 7px 11px; border-radius: 9px; font-size: 12px; cursor: pointer; }
+    </style>
+  </head>
+  <body class="preview">
+    <div class="stagebox" id="stagebox"></div>
+    <div class="harness" id="harness"></div>
+    <script type="module" src="/src/preview.ts"></script>
+  </body>
+</html>

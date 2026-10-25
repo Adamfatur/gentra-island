@@ -1,0 +1,19 @@
+# Changelog
+
+## 0.6.0, first public release
+
+The first version published on GitHub.
+
+- **Home**: a simple first screen with what's playing, memory, focus, the last thing you copied, your shelf, and a live call.
+- **Now playing**: see and control music and video from any app, with artwork-tinted controls and a draggable timeline.
+- **Clipboard history** with search, pins, image support, decoders, clean paste, and a secret guard that never writes keys to disk.
+- **Shelf** for holding files, with drag out and AirDrop on macOS.
+- **Focus timer** with the countdown on the small island.
+- **System monitor** with real memory pressure on macOS.
+- **Safe cleaner** that only moves allow-listed caches, logs, and installers to the Trash or Recycle Bin.
+- **Dev tools**: a port watcher and terminal command alerts for zsh, bash, fish, and PowerShell.
+- **Calls**: which app uses the mic, call time, system mute on macOS, and a camera mirror with step-by-step permission help.
+- **Modes**: Compact, Everyday, Dev, Meetings, and Focus, or your own mix. Switched-off features stop their background work.
+- **English and Bahasa Indonesia.**
+- Themes that follow the system, plus a custom accent color.
+- Installers for macOS (universal), Windows, and Linux (AppImage, deb, rpm), with SHA-256 checksums.

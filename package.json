@@ -1,0 +1,28 @@
+{
+  "name": "gentra-island",
+  "private": true,
+  "version": "0.6.0",
+  "author": "Adam Faturahman",
+  "license": "GPL-3.0-or-later",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "tauri": "tauri",
+    "test": "vitest run",
+    "test:all": "vitest run && cd src-tauri && cargo test"
+  },
+  "dependencies": {
+    "@crabnebula/tauri-plugin-drag": "2.1.0",
+    "@fontsource-variable/plus-jakarta-sans": "5.3.0",
+    "@tauri-apps/api": "^2.5.0",
+    "@tauri-apps/plugin-autostart": "^2.7.0"
+  },
+  "devDependencies": {
+    "@phosphor-icons/core": "2.1.1",
+    "@tauri-apps/cli": "^2.5.0",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5",
+    "vitest": "^3.2.7"
+  }
+}

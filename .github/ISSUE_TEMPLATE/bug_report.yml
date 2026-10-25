@@ -1,0 +1,31 @@
+name: Bug report
+description: Something doesn't work as it should
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Gentra Island version
+      description: Settings, About.
+      placeholder: "0.6.0"
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: System
+      placeholder: "macOS 15.3 on Apple silicon / Windows 11 23H2 / Ubuntu 24.04 on Wayland"
+    validations:
+      required: true
+  - type: textarea
+    id: more
+    attributes:
+      label: Anything else
+      description: Screenshots, steps to reproduce, which mode you use.
