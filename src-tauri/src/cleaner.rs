@@ -440,7 +440,16 @@ mod tests {
     }
 
     fn age_dir(path: &Path, age: Duration) {
-        File::open(path).unwrap().set_modified(SystemTime::now() - age).unwrap();
+        let mut options = File::options();
+        // Windows opens a folder as a handle only with write access and FILE_FLAG_BACKUP_SEMANTICS.
+        #[cfg(windows)]
+        {
+            options.write(true);
+            std::os::windows::fs::OpenOptionsExt::custom_flags(&mut options, 0x0200_0000);
+        }
+        #[cfg(not(windows))]
+        options.read(true);
+        options.open(path).unwrap().set_modified(SystemTime::now() - age).unwrap();
     }
 
     fn category<'a>(plan: &'a [Category], id: &str) -> Option<&'a Category> {

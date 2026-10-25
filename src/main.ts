@@ -376,10 +376,13 @@ function applyMode(s: ModeState, announce = false) {
     b.hidden = !tabOn(s, b.dataset.tab as Tab);
   });
   $("#tabs").classList.toggle("many", visibleTabs().length > 6);
+  // With every feature on, the mode button keeps its icon and shows its name on hover.
+  $("#v-exp .head").classList.toggle("crowded", visibleTabs().length > 7);
   document.body.classList.toggle("no-sistem", !isOn(s, "sistem"));
   document.body.classList.toggle("mode-ringkas", s.mode === "ringkas");
   if (!isOn(s, "fokus")) focus.stop();
   $("#modeBtn").innerHTML = `${modeIcon(s)}<span>${modeName(s)}</span>`;
+  $("#modeBtn").title = modeName(s);
   clips.render();
   if (mode === "open") setTab(allowed(tab));
   else if (mode === "compact") go(compactSize(), "shrink");
@@ -641,6 +644,7 @@ await listen<NowPlaying | null>("media", ({ payload }) => {
     peek(peekLine(art, "var(--accent)", esc(payload.title), esc(payload.artist || payload.app)), 3000);
   }
 });
+media.syncYoutube();
 const mediaNow = await invoke<NowPlaying | null>("media_now");
 if (mediaNow) media.set(mediaNow);
 syncMeter();

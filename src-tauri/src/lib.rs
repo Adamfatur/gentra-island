@@ -51,6 +51,14 @@ fn open_support() -> Result<(), String> {
 /// say "click this" instead of "find it yourself". Only known pages.
 #[tauri::command]
 fn open_privacy_settings(kind: String) -> Result<(), String> {
+    if kind == "automation" {
+        // Only macOS asks before one app may ask another (here: a browser for its tabs).
+        return if cfg!(target_os = "macos") {
+            ports::open_in_browser("x-apple.systempreferences:com.apple.preference.security?Privacy_Automation")
+        } else {
+            Err("bad_action".into())
+        };
+    }
     if kind != "camera" {
         return Err("bad_action".into());
     }
@@ -123,6 +131,7 @@ pub fn run() {
             hooks::hook_info,
             media::media_now,
             media::media_control,
+            media::media_youtube_art,
             meeting::mic_now,
             meeting::mic_set_muted,
             ports::ports_list,

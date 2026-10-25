@@ -5,6 +5,7 @@ import { errorText, t } from "./i18n";
 import { icon } from "./icons";
 import { readableAccent, onAccentText } from "./theme";
 import { artTint } from "./tint";
+import { automationGuide, guideHtml } from "./permission";
 
 export interface NowPlaying {
   title: string;
@@ -19,6 +20,20 @@ export interface NowPlaying {
   /** Unix ms when `elapsed` was read. */
   at: number;
   art: string | null;
+  /** "automation:<browser>" when macOS blocked asking the browser for its tab. */
+  artHelp?: string | null;
+}
+
+/** Browsers whose tabs can be asked for a YouTube thumbnail (macOS). */
+const BROWSERS = ["Google Chrome", "Safari", "Brave Browser", "Microsoft Edge", "Arc", "Vivaldi", "Opera", "Chromium"];
+const YT_KEY = "gentra:ytArt";
+
+function savedYt(): boolean {
+  try {
+    return localStorage.getItem(YT_KEY) === "1";
+  } catch {
+    return false;
+  }
 }
 
 /** Where playback is now, counted on from the last reading while it plays. */
@@ -43,6 +58,8 @@ export class MediaPanel {
   private tick = 0;
   /** Seconds under the pointer while dragging the bar. */
   private dragging: number | null = null;
+  /** YouTube thumbnails for browser playback, opt-in because they load from YouTube. */
+  ytOn = savedYt();
 
   constructor(
     private toast: (msg: string) => void,
@@ -93,10 +110,32 @@ export class MediaPanel {
     }
   }
 
+  /** Tells the backend whether to look up thumbnails; called at start and on change. */
+  syncYoutube() {
+    void invoke("media_youtube_art", { on: this.ytOn }).catch(() => {});
+  }
+
+  private setYoutube(on: boolean) {
+    this.ytOn = on;
+    try {
+      localStorage.setItem(YT_KEY, on ? "1" : "0");
+    } catch {
+      /* remembered until the app quits */
+    }
+    this.syncYoutube();
+    this.render();
+  }
+
   private async click(e: Event) {
-    const act = (e.target as HTMLElement).closest<HTMLElement>("[data-act]")?.dataset.act;
+    const el = (e.target as HTMLElement).closest<HTMLElement>("[data-act]");
+    const act = el?.dataset.act;
     const n = this.now;
     if (!act || !n) return;
+    if (act === "yt-on" || act === "yt-retry") return this.setYoutube(true);
+    if (act === "yt-off") return this.setYoutube(false);
+    if (act === "perm-open") {
+      return void invoke("open_privacy_settings", { kind: el!.dataset.kind }).catch((err) => this.toast(errorText(err)));
+    }
     if (!(await this.send(act))) return;
     // Show the new state right away; the player confirms within a second.
     if (act === "toggle") this.now = { ...n, playing: !n.playing, elapsed: position(n), at: Date.now() };
@@ -176,7 +215,13 @@ export class MediaPanel {
       return;
     }
     const by = [n.artist, n.album].filter(Boolean).join(", ");
-    const art = n.art ? `<img class="media-art" src="${esc(n.art)}" alt="">` : `<span class="media-art blank">${icon.music}</span>`;
+    // Browser playback has no artwork; the empty cover itself offers the YouTube thumbnail.
+    const offer = !n.art && !this.ytOn && BROWSERS.includes(n.app);
+    const art = n.art
+      ? `<img class="media-art" src="${esc(n.art)}" alt="">`
+      : offer
+        ? `<button class="media-art blank yt-tile" data-act="yt-on" title="${esc(t("media.yt.body", { browser: n.app }))}">${icon.image}<span>${t("media.yt.tile")}</span></button>`
+        : `<span class="media-art blank">${icon.music}</span>`;
     const p = position(n);
     const pct = n.duration > 0 ? (p / n.duration) * 100 : 0;
     const timeline =
@@ -197,6 +242,20 @@ export class MediaPanel {
           <button data-act="next" aria-label="${t("media.next")}">${icon.next}</button>
         </div>
       </div>
-    </div>`;
+    </div>${this.thumbnailHtml(n)}`;
+    // The panel scrolls when it is tall; bring the permission steps into view.
+    this.root.querySelector("#ytGuide")?.scrollIntoView({ block: "nearest" });
+  }
+
+  /** For browser playback without artwork: offer YouTube thumbnails, or guide through the permission. */
+  private thumbnailHtml(n: NowPlaying) {
+    if (!BROWSERS.includes(n.app)) return "";
+    if (n.artHelp?.startsWith("automation:")) {
+      return `<div class="player-extra" id="ytGuide">${guideHtml(automationGuide(n.artHelp.slice(11)), "yt-retry", "automation")}</div>`;
+    }
+    if (this.ytOn) {
+      return `<p class="player-note">${t("media.yt.note")} <button class="link-btn" data-act="yt-off">${t("media.yt.off")}</button></p>`;
+    }
+    return "";
   }
 }

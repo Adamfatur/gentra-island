@@ -402,4 +402,13 @@ export const id: Record<Key, Msg> = {
   "perm.open.camera": "Buka pengaturan Kamera",
   "perm.retry": "Coba lagi",
   "error.no_settings_app": "Settings tidak bisa dibuka otomatis. Buka lewat menu aplikasi sistem.",
+  "perm.automation.title": "Izinkan Gentra Island bertanya ke {browser} soal tab yang diputar",
+  "perm.automation.1": "Klik Buka pengaturan Automation di bawah. System Settings akan terbuka di Privacy & Security, Automation.",
+  "perm.automation.2": "Cari Gentra Island di daftar, lalu nyalakan {browser} di bawahnya.",
+  "perm.automation.3": "Kembali ke sini, lalu klik Coba lagi.",
+  "perm.open.automation": "Buka pengaturan Automation",
+  "media.yt.body": "Browser tidak membagikan gambarnya. Gentra Island bisa bertanya ke {browser} tab mana yang diputar, lalu memuat thumbnail dari YouTube. macOS akan meminta izinmu sekali.",
+  "media.yt.off": "Berhenti menampilkan thumbnail",
+  "media.yt.note": "Selama fitur ini menyala, thumbnail dimuat dari YouTube.",
+  "media.yt.tile": "Tampilkan thumbnail",
 };

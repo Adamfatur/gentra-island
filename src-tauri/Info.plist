@@ -4,5 +4,7 @@
 <dict>
   <key>NSCameraUsageDescription</key>
   <string>The camera mirror shows you how you look before a call. Nothing is recorded or saved.</string>
+  <key>NSAppleEventsUsageDescription</key>
+  <string>To show a video's thumbnail, Gentra Island asks your browser which tab is playing. It doesn't read or change anything else.</string>
 </dict>
 </plist>

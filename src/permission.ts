@@ -64,10 +64,22 @@ export function cameraGuide(problem: Problem, platform: Platform): Guide {
   };
 }
 
+/** macOS blocked asking the browser for its tabs; walk the user to the Automation switch. */
+export function automationGuide(browser: string): Guide {
+  return {
+    title: t("perm.automation.title", { browser }),
+    steps: [t("perm.automation.1"), t("perm.automation.2", { browser }), t("perm.automation.3")],
+    openSettings: true,
+    retry: true,
+  };
+}
+
 /** The guide as a card. Buttons carry data-act="perm-open" and the given retry action. */
-export function guideHtml(g: Guide, retryAct: string): string {
+export function guideHtml(g: Guide, retryAct: string, settings: "camera" | "automation" = "camera"): string {
   const steps = g.steps.map((s, i) => `<li><span class="perm-n num">${i + 1}</span><span>${esc(s)}</span></li>`).join("");
-  const open = g.openSettings ? `<button class="primary" data-act="perm-open">${icon.gear}<span>${t("perm.open.camera")}</span></button>` : "";
+  const open = g.openSettings
+    ? `<button class="primary" data-act="perm-open" data-kind="${settings}">${icon.gear}<span>${t(settings === "camera" ? "perm.open.camera" : "perm.open.automation")}</span></button>`
+    : "";
   const retry = g.retry ? `<button data-act="${retryAct}">${t("perm.retry")}</button>` : "";
   return `<div class="perm" role="group" aria-label="${esc(g.title)}">
     <b class="perm-title">${icon.warning}${esc(g.title)}</b>

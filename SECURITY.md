@@ -18,4 +18,4 @@ Only the latest release gets security fixes.
 - Command alerts listen on a random port on `127.0.0.1` only, and accept a request only with a random token stored in the user's app data folder.
 - The cleaner moves files only from a fixed allow-list of cache, log, and installer locations, and only to the Trash or Recycle Bin.
 - Stopping a local server checks that the process is still the one listening on that port before it is stopped.
-- The app makes no network requests of its own.
+- The app makes no network requests of its own, except loading YouTube thumbnails from `i.ytimg.com` when the user switches that on. Video IDs are checked to be 11 safe characters before they are used in a URL, and only HTTPS is allowed.

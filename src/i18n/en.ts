@@ -414,6 +414,15 @@ export const en = {
   "perm.open.camera": "Open Camera settings",
   "perm.retry": "Try again",
   "error.no_settings_app": "Couldn't open Settings automatically. Open it from your app menu instead.",
+  "perm.automation.title": "Let Gentra Island ask {browser} for the playing tab",
+  "perm.automation.1": "Click Open Automation settings below. System Settings opens on Privacy & Security, Automation.",
+  "perm.automation.2": "Find Gentra Island in the list and switch on {browser} under it.",
+  "perm.automation.3": "Come back here and click Try again.",
+  "perm.open.automation": "Open Automation settings",
+  "media.yt.body": "Your browser doesn't share the picture. Gentra Island can ask {browser} which tab is playing and load the thumbnail from YouTube. macOS asks you once to allow it.",
+  "media.yt.off": "Stop showing thumbnails",
+  "media.yt.note": "Thumbnails load from YouTube while this is on.",
+  "media.yt.tile": "Show thumbnail",
 };
 
 export type Key = keyof typeof en;

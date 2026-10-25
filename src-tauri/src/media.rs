@@ -43,6 +43,10 @@ pub struct NowPlaying {
     /// A small JPEG as a data URL.
     #[serde(default)]
     pub art: Option<String>,
+    /// Set when artwork needs the user's help, e.g. "automation:Google Chrome"
+    /// when macOS blocked asking the browser for its tab.
+    #[serde(default)]
+    pub art_help: Option<String>,
 }
 
 pub fn set_enabled(on: bool) {
@@ -56,6 +60,20 @@ fn enabled() -> bool {
 #[tauri::command]
 pub fn media_now() -> Option<NowPlaying> {
     LAST.lock().unwrap().clone()
+}
+
+/// Switches YouTube thumbnails for browser playback on or off (macOS), and
+/// tries again right away for what is playing now.
+#[tauri::command]
+pub fn media_youtube_art(app: AppHandle, on: bool) {
+    platform::set_youtube_art(on);
+    let now = LAST.lock().unwrap().clone();
+    if let Some(n) = now {
+        std::thread::spawn(move || {
+            let n = platform::enrich(n);
+            publish(&app, Some(n));
+        });
+    }
 }
 
 /// `toggle`, `next`, `previous`, or `seek` with `position` in seconds.
@@ -105,6 +123,46 @@ pub fn thumbnail(bytes: &[u8]) -> Option<String> {
     Some(format!("data:image/jpeg;base64,{}", base64::engine::general_purpose::STANDARD.encode(out.into_inner())))
 }
 
+/// The 11-character video ID from a YouTube address; None for any other site
+/// or anything that isn't a clean ID, so it is always safe to put in a URL.
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+pub fn youtube_id(address: &str) -> Option<String> {
+    let u = url::Url::parse(address).ok()?;
+    let host = u.host_str()?;
+    let host = host.strip_prefix("www.").or_else(|| host.strip_prefix("m.")).unwrap_or(host);
+    let id = match host {
+        "youtube.com" | "music.youtube.com" => match u.query_pairs().find(|(k, _)| k == "v") {
+            Some((_, v)) => v.into_owned(),
+            None => {
+                let mut parts = u.path_segments()?;
+                match parts.next()? {
+                    "shorts" | "live" | "embed" => parts.next()?.to_string(),
+                    _ => return None,
+                }
+            }
+        },
+        "youtu.be" => u.path_segments()?.next()?.to_string(),
+        _ => return None,
+    };
+    (id.len() == 11 && id.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_')).then_some(id)
+}
+
+/// From "title<TAB>address" lines, the address of the YouTube tab whose title
+/// contains what is playing. Spacing and case are ignored; YouTube adds
+/// "(2) " and " - YouTube" around the video title.
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+pub fn tab_for(lines: &str, playing: &str) -> Option<String> {
+    let norm = |s: &str| s.split_whitespace().collect::<Vec<_>>().join(" ").to_lowercase();
+    let want = norm(playing);
+    if want.is_empty() {
+        return None;
+    }
+    lines.lines().find_map(|line| {
+        let (title, address) = line.split_once('\t')?;
+        (norm(title).contains(&want) && youtube_id(address.trim()).is_some()).then(|| address.trim().to_string())
+    })
+}
+
 /// One line from the macOS helper: `{}` when nothing plays, `art` as base64.
 pub fn parse_line(line: &str) -> Option<Option<NowPlaying>> {
     let mut v: serde_json::Value = serde_json::from_str(line).ok()?;
@@ -131,8 +189,10 @@ pub fn shutdown() {
 
 #[cfg(target_os = "macos")]
 mod platform {
+    use std::collections::HashMap;
     use std::ffi::c_void;
     use std::io::{BufRead, BufReader};
+    use std::sync::atomic::{AtomicBool, Ordering};
     use std::process::{Child, Command, Stdio};
     use std::sync::Mutex;
     use std::thread;
@@ -140,9 +200,89 @@ mod platform {
 
     use tauri::AppHandle;
 
-    use super::{enabled, parse_line, publish, Action};
+    use super::{enabled, parse_line, publish, Action, NowPlaying};
 
     static CHILD: Mutex<Option<Child>> = Mutex::new(None);
+    static YOUTUBE: AtomicBool = AtomicBool::new(false);
+    /// Artwork found per song title, and titles already tried, so a song is
+    /// looked up once rather than on every update.
+    static FOUND: Mutex<Option<HashMap<String, Option<String>>>> = Mutex::new(None);
+
+    /// Browsers that answer AppleScript, and the property that holds a tab's title.
+    const BROWSERS: &[(&str, &str)] = &[
+        ("Google Chrome", "title"),
+        ("Safari", "name"),
+        ("Brave Browser", "title"),
+        ("Microsoft Edge", "title"),
+        ("Arc", "title"),
+        ("Vivaldi", "title"),
+        ("Opera", "title"),
+        ("Chromium", "title"),
+    ];
+
+    pub fn set_youtube_art(on: bool) {
+        YOUTUBE.store(on, Ordering::Relaxed);
+        // Switching on, or "Try again", forgets earlier misses.
+        *FOUND.lock().unwrap() = None;
+    }
+
+    /// Lists the browser's tabs as "title<TAB>address" lines. Err when macOS
+    /// hasn't allowed Gentra Island to ask that browser.
+    fn browser_tabs(browser: &str, title_prop: &str) -> Result<String, ()> {
+        let script = format!(
+            "if application \"{browser}\" is running then\n\
+             tell application \"{browser}\"\n\
+             set out to \"\"\n\
+             repeat with w in windows\n\
+             repeat with t in tabs of w\n\
+             set out to out & ({title_prop} of t) & (character id 9) & (URL of t) & (character id 10)\n\
+             end repeat\n\
+             end repeat\n\
+             return out\n\
+             end tell\n\
+             end if"
+        );
+        let out = Command::new("/usr/bin/osascript").args(["-e", &script]).output().map_err(|_| ())?;
+        if out.status.success() {
+            return Ok(String::from_utf8_lossy(&out.stdout).into_owned());
+        }
+        let err = String::from_utf8_lossy(&out.stderr);
+        // -1743: the user (or macOS) said no to Automation for this browser.
+        if err.contains("-1743") || err.contains("Not authorized") {
+            Err(())
+        } else {
+            Ok(String::new())
+        }
+    }
+
+    fn thumbnail_for(id: &str) -> Option<String> {
+        // youtube_id() guarantees `id` is 11 safe characters.
+        let url = format!("https://i.ytimg.com/vi/{id}/mqdefault.jpg");
+        let out = Command::new("/usr/bin/curl").args(["-sf", "--max-time", "6", "--proto", "=https", &url]).output().ok()?;
+        out.status.success().then_some(())?;
+        super::thumbnail(&out.stdout)
+    }
+
+    /// Adds a YouTube thumbnail to browser playback that came without artwork.
+    pub fn enrich(mut n: NowPlaying) -> NowPlaying {
+        if n.art.is_some() || !YOUTUBE.load(Ordering::Relaxed) {
+            return n;
+        }
+        let Some(&(browser, prop)) = BROWSERS.iter().find(|(b, _)| *b == n.app) else { return n };
+        if let Some(found) = FOUND.lock().unwrap().get_or_insert_with(HashMap::new).get(&n.title) {
+            n.art = found.clone();
+            return n;
+        }
+        match browser_tabs(browser, prop) {
+            Err(()) => n.art_help = Some(format!("automation:{browser}")),
+            Ok(tabs) => {
+                let art = super::tab_for(&tabs, &n.title).and_then(|a| super::youtube_id(&a)).and_then(|id| thumbnail_for(&id));
+                FOUND.lock().unwrap().get_or_insert_with(HashMap::new).insert(n.title.clone(), art.clone());
+                n.art = art;
+            }
+        }
+        n
+    }
 
     /// Runs inside `osascript`, an Apple program that may still read now-playing
     /// info. Prints a JSON line on every change and quits with the app.
@@ -225,7 +365,7 @@ function run() {
             if let Some(stdout) = stdout {
                 for line in BufReader::new(stdout).lines().map_while(Result::ok) {
                     if let Some(state) = parse_line(&line) {
-                        publish(&app, state);
+                        publish(&app, state.map(enrich));
                     }
                 }
             }
@@ -367,6 +507,13 @@ mod platform {
         });
     }
 
+    /// Windows and Linux players hand over artwork themselves.
+    pub fn set_youtube_art(_on: bool) {}
+
+    pub fn enrich(n: NowPlaying) -> NowPlaying {
+        n
+    }
+
     pub fn shutdown() {}
 
     pub fn control(action: Action) -> Option<()> {
@@ -495,6 +642,13 @@ mod platform {
         });
     }
 
+    /// Windows and Linux players hand over artwork themselves.
+    pub fn set_youtube_art(_on: bool) {}
+
+    pub fn enrich(n: NowPlaying) -> NowPlaying {
+        n
+    }
+
     pub fn shutdown() {}
 
     pub fn control(action: Action) -> Option<()> {
@@ -518,6 +672,33 @@ mod platform {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn finds_the_youtube_video_id_in_a_tab_address() {
+        let id = |u: &str| youtube_id(u);
+        assert_eq!(id("https://www.youtube.com/watch?v=dQw4w9WgXcQ").as_deref(), Some("dQw4w9WgXcQ"));
+        assert_eq!(id("https://www.youtube.com/watch?list=PL1&v=dQw4w9WgXcQ&t=42s").as_deref(), Some("dQw4w9WgXcQ"));
+        assert_eq!(id("https://youtu.be/dQw4w9WgXcQ?si=abc").as_deref(), Some("dQw4w9WgXcQ"));
+        assert_eq!(id("https://www.youtube.com/shorts/dQw4w9WgXcQ").as_deref(), Some("dQw4w9WgXcQ"));
+        assert_eq!(id("https://music.youtube.com/watch?v=dQw4w9WgXcQ&list=RD").as_deref(), Some("dQw4w9WgXcQ"));
+        assert_eq!(id("https://www.youtube.com/live/dQw4w9WgXcQ").as_deref(), Some("dQw4w9WgXcQ"));
+    }
+
+    #[test]
+    fn ignores_other_sites_and_malformed_ids() {
+        assert_eq!(youtube_id("https://evil.example/watch?v=dQw4w9WgXcQ"), None);
+        assert_eq!(youtube_id("https://www.youtube.com/watch?v=short"), None);
+        assert_eq!(youtube_id("https://www.youtube.com/watch?v=dQw4w9WgXcQ%22;rm"), None);
+        assert_eq!(youtube_id("https://www.youtube.com/"), None);
+    }
+
+    #[test]
+    fn picks_the_tab_whose_title_matches_what_plays() {
+        let tabs = "Inbox - Gmail\thttps://mail.google.com/\n\
+                    (2) JANJI SETIA  | TIARA ANDINI - YouTube\thttps://www.youtube.com/watch?v=abcdefghijk\n";
+        assert_eq!(tab_for(tabs, "JANJI SETIA | TIARA ANDINI").as_deref(), Some("https://www.youtube.com/watch?v=abcdefghijk"));
+        assert_eq!(tab_for(tabs, "Something else"), None);
+    }
+
 
     #[test]
     fn nothing_playing_is_none() {

@@ -6,3 +6,4 @@ src-tauri/gen/
 
 # Internal notes and design work; kept locally, never published.
 _internal/
+docs/screenshots/.video/
