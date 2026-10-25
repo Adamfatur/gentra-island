@@ -483,6 +483,7 @@ mod platform {
             elapsed,
             at: SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_millis() as u64).unwrap_or(0),
             art: if with_art { art(&s, &props) } else { None },
+            art_help: None,
         })
     }
 
@@ -611,6 +612,7 @@ mod platform {
             elapsed,
             at: SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_millis() as u64).unwrap_or(0),
             art: if with_art { art(&text(&meta, "mpris:artUrl")) } else { None },
+            art_help: None,
         })
     }
 
