@@ -35,8 +35,12 @@ Gentra Island sits at the top of your screen. On a Mac with a notch it grows out
 | **Clipboard** remembers and understands what you copy | **Dev** watches your local servers and long commands |
 | ![Calls: which app uses the mic, with the call time](docs/screenshots/calls.png) | ![Settings: theme, accent color, language, startup, and About](docs/screenshots/settings.png) |
 | **Calls** shows who has your mic | **Settings** with themes and languages |
-| ![The small island with album artwork and a level meter](docs/screenshots/compact.png) | ![Home in the light theme](docs/screenshots/home-light.png) |
-| The small island while music plays | Light theme |
+| ![Copying a message with a time in it: the island offers to remind you](docs/screenshots/reminder-offer.png) | ![A reminder that is due, with Copy again, In 10 min, and Done](docs/screenshots/reminder-due.png) |
+| **Reminders** offered when what you copy has a time in it | A reminder when it's due |
+| ![Reminder times for a clipboard item: as written, in an hour, tonight, tomorrow, or any time](docs/screenshots/reminder-pick.png) | ![The small island with album artwork and a level meter](docs/screenshots/compact.png) |
+| Remind yourself about anything you copied | The small island while music plays |
+| ![Home in the light theme](docs/screenshots/home-light.png) | |
+| Light theme | |
 
 A higher-quality version of the video is in [docs/screenshots/demo.mp4](docs/screenshots/demo.mp4).
 
@@ -47,6 +51,7 @@ A higher-quality version of the video is in [docs/screenshots/demo.mp4](docs/scr
 | **Home** | One glance: what's playing, memory, a focus timer, what you copied last, files on your shelf, and a call if one is live. |
 | **Now playing** | Music or video from Spotify, Apple Music, YouTube, and other players. Play, pause, skip, and drag to seek. Artwork and a level meter on the small island. |
 | **Clipboard** | History of text, links, code, colors, and screenshots. Search, pin, filter. Press **⌥⌘V** (**Ctrl+Alt+V**). |
+| **Reminders** | Copy "rapat Jumat jam 14.00" or "meeting moved to 3 pm" and the island offers to remind you, in one click. Any clipboard item can get a reminder: in an hour, tonight, tomorrow morning, or any time. Times are understood in English and Indonesian, on your computer. |
 | **Smart paste** | Decodes JWTs, timestamps, base64, JSON, URL encoding, and cron. Strips link trackers. Masks ID and card numbers on request. |
 | **Secret guard** | API keys and private keys are never written to disk, shown only masked, and leave history and the clipboard after 60 seconds. |
 | **Shelf** | Drop files on the island to hold them, drag them out to any app, or send them with AirDrop on macOS. |
@@ -127,6 +132,13 @@ To check your download, compare it with `SHA256SUMS.txt` on the release page. Mo
 - **Focus for a while**: on **Home**, click **Start 25 min**, or pick a length in **Focus**. The countdown stays on the small island.
 - **Free up space**: open **Cleaner**, review what it found, and click the button to move it to the Trash. Nothing outside the safe list is touched.
 
+**Reminders**
+
+- **When you copy something with a time in it**, like "rapat Jumat jam 14.00" or "call at 3 pm", the island asks "Remind you Friday at 2:00 PM?". Click **Remind me**, or ignore it.
+- **For anything else you copied**, hover its card in **Clipboard** and click the bell (or press **R**). Pick **As written** (when the text has a time), **In 1 hour**, **Tonight**, **Tomorrow morning**, or any date and time.
+- **When it's due**, the island opens a little with the text: **Copy again**, **In 10 min**, or **Done**. Upcoming reminders are listed on **Home**, where you can cancel them.
+- A reminder that came due while Gentra Island was closed shows as soon as it starts again.
+
 **For developers**
 
 - **See and stop local servers**: open **Dev**. Each server shows its port, folder, and how long it has run; **Open** opens it in your browser, **Stop** asks once more, then stops it.
@@ -152,7 +164,7 @@ Nothing else needs a permission prompt. Seeing which app uses the mic doesn't re
 
 - **Everything stays on your computer.** No accounts, no analytics, no telemetry, no update pings.
 - **No network calls of its own by default.** It reaches the network when you click a link it shows, such as opening a local server in your browser, and, only if you switch on **Show thumbnails** in the Media tab, to load a YouTube video's thumbnail from `i.ytimg.com`.
-- **Clipboard history** is stored in your user's app data folder. Secrets are never written there. Clear it any time from the Clipboard tab.
+- **Reminders** and **clipboard history** are stored in your user's app data folder. Secrets are never written there. Clear it any time from the Clipboard tab.
 - **The mic is never opened.** The meeting guard only asks the system whether an app is using it.
 - **The camera** is on only while the mirror is visible, and nothing is recorded.
 

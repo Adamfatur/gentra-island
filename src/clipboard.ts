@@ -1,8 +1,9 @@
 import { invoke } from "@tauri-apps/api/core";
 import { cleanText, hasTracking, maskSensitive } from "./clean";
-import { ago, esc } from "./format";
+import { ago, esc, whenLabel } from "./format";
 import { t, type Key } from "./i18n";
 import { icon } from "./icons";
+import { findTime, quickTimes } from "./timeparse";
 import { analyze, type Insight } from "./insight";
 
 export interface ClipItem {
@@ -86,6 +87,9 @@ const PIN = icon.pin;
 
 export const secondsLeft = (item: ClipItem) => Math.max(0, Math.ceil(((item.expires ?? 0) - Date.now()) / 1000));
 
+/** Text worth a reminder: not secrets (masked anyway) and not images. */
+export const remindable = (i: ClipItem) => !i.secret && i.kind !== "image" && !!i.text?.trim();
+
 export class ClipboardPanel {
   items: ClipItem[] = [];
   private filter: Filter = "all";
@@ -96,10 +100,15 @@ export class ClipboardPanel {
   private strip = document.getElementById("strip")!;
   private inspector = document.getElementById("inspector")!;
   private input = document.getElementById("clipQ") as HTMLInputElement;
+  /** Reminders are on in the current mode. */
+  remindOn = true;
+  /** The item whose reminder times are showing in the inspector. */
+  private choosing: number | null = null;
 
   constructor(
     private onCopied: (item: ClipItem) => void,
     private toast: (msg: string) => void,
+    private remind: (item: ClipItem, at: Date) => void,
   ) {
     this.input.addEventListener("input", () => {
       this.query = this.input.value.trim().toLowerCase();
@@ -118,6 +127,8 @@ export class ClipboardPanel {
       const t = e.target as HTMLElement;
       const pin = t.closest<HTMLElement>("[data-pin]");
       if (pin) return void this.pin(Number(pin.dataset.pin));
+      const bell = t.closest<HTMLElement>("[data-remind]");
+      if (bell) return this.chooseTime(Number(bell.dataset.remind));
       const card = t.closest<HTMLElement>(".card");
       if (card) this.copy(Number(card.dataset.id));
     });
@@ -145,6 +156,8 @@ export class ClipboardPanel {
     });
     this.strip.addEventListener("mouseleave", () => this.strip.classList.remove("navigating"));
     this.inspector.addEventListener("click", (e) => {
+      const r = (e.target as HTMLElement).closest<HTMLElement>("[data-r]");
+      if (r) return this.reminderAction(r.dataset.r!);
       const b = (e.target as HTMLElement).closest<HTMLButtonElement>("button[data-act]");
       const cur = this.visible[this.sel];
       if (!b || !cur) return;
@@ -170,8 +183,44 @@ export class ClipboardPanel {
     this.input.select();
   }
 
-  /** Arrow keys move the selection, Enter copies, P pins, Backspace deletes. */
+  /** Shows the reminder times for an item in the inspector. */
+  chooseTime(id: number) {
+    const n = this.visible.findIndex((i) => i.id === id);
+    if (n < 0 || !this.remindOn) return;
+    this.sel = n;
+    this.choosing = id;
+    this.markSelected(false);
+    this.renderInspector();
+    this.inspector.querySelector<HTMLButtonElement>("[data-r]")?.focus();
+  }
+
+  private reminderAction(act: string) {
+    const item = this.items.find((i) => i.id === this.choosing);
+    if (act === "cancel" || !item) {
+      this.choosing = null;
+      return this.renderInspector();
+    }
+    let at: Date | null = null;
+    if (act === "set") {
+      const v = this.inspector.querySelector<HTMLInputElement>("#remindAt")?.value;
+      at = v ? new Date(v) : null;
+    } else {
+      at = new Date(Number(act));
+    }
+    if (!at || Number.isNaN(at.getTime()) || at.getTime() <= Date.now()) return this.toast(t("remind.past"));
+    this.choosing = null;
+    this.remind(item, at);
+    this.renderInspector();
+  }
+
+  /** Arrow keys move the selection, Enter copies, P pins, R reminds, Backspace deletes. */
   key(e: KeyboardEvent): boolean {
+    // Keys inside the reminder picker (the time field, its buttons) belong to it.
+    if (this.inspector.contains(document.activeElement)) {
+      if (e.key === "Escape" && this.choosing !== null) return this.reminderAction("cancel"), true;
+      if (e.key === "Enter" && (document.activeElement as HTMLElement).id === "remindAt") return this.reminderAction("set"), true;
+      return false;
+    }
     const typing = document.activeElement === this.input;
     if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
       // While the caret is inside the search text, arrows move the caret.
@@ -191,6 +240,7 @@ export class ClipboardPanel {
     }
     if (e.key === "Enter") return void this.copy(cur.id), true;
     if (!typing && e.key.toLowerCase() === "p") return void this.pin(cur.id), true;
+    if (!typing && e.key.toLowerCase() === "r" && remindable(cur) && this.remindOn) return this.chooseTime(cur.id), true;
     if (!typing && (e.key === "Backspace" || e.key === "Delete")) return void this.remove(cur.id), true;
     return false;
   }
@@ -293,12 +343,15 @@ export class ClipboardPanel {
       ${kind}${body}${hint}
       <span class="foot"><span>${esc(i.app ?? "")}</span>${right}</span>
       ${i.secret ? "" : `<button class="pin${i.pinned ? " on" : ""}" data-pin="${i.id}" aria-label="${t(i.pinned ? "clip.unpin" : "clip.pin")}">${PIN}</button>`}
+      ${this.remindOn && remindable(i) ? `<button class="bell" data-remind="${i.id}" aria-label="${t("remind.button")}" title="${t("remind.button")}">${icon.bell}</button>` : ""}
     </div>`;
   }
 
   private renderInspector() {
     const cur = this.visible[this.sel];
     if (!cur) return void (this.inspector.hidden = true);
+    if (this.choosing !== null && this.choosing !== cur.id) this.choosing = null;
+    if (this.choosing === cur.id) return this.renderChooser(cur);
     if (cur.secret) {
       this.inspector.hidden = false;
       this.inspector.className = "inspector warn";
@@ -321,6 +374,25 @@ export class ClipboardPanel {
       : `<b>${t(`clip.clean.${which}.title` as Key)}</b><span>${t(`clip.clean.${which}.body` as Key)}</span>`;
     this.inspector.innerHTML = `<div class="ins-text">${title}${preview ? `<pre>${esc(preview)}</pre>` : ""}</div>
       <div class="ins-actions">${s.actions.map((a, n) => `<button data-act="${n}">${esc(a.label)}</button>`).join("")}</div>`;
+  }
+
+  /** Reminder times: what the text says (if anything), quick picks, or any time. */
+  private renderChooser(cur: ClipItem) {
+    const now = new Date();
+    const found = findTime(cur.text ?? "", now);
+    const pick = (at: Date, label: string, primary = false) =>
+      `<button class="${primary ? "primary" : ""}" data-r="${at.getTime()}"><b>${esc(label)}</b><span>${esc(whenLabel(at, now))}</span></button>`;
+    const quick = quickTimes(now).map((q) => pick(q.at, t(`remind.${q.id}` as Key)));
+    const first = found ? pick(found, t("remind.found"), true) : "";
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const min = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    this.inspector.hidden = false;
+    this.inspector.className = "inspector remind";
+    this.inspector.innerHTML = `<div class="remind-head"><b>${icon.bell}${t("remind.title")}</b>
+        <button class="link-btn" data-r="cancel">${t("remind.cancel")}</button></div>
+      <div class="remind-picks">${first}${quick.join("")}</div>
+      <label class="remind-own"><span>${t("remind.pick")}</span><input type="datetime-local" id="remindAt" min="${min}">
+        <button data-r="set">${t("remind.set")}</button></label>`;
   }
 
   /** Counts down secrets; reloads once one has expired. */

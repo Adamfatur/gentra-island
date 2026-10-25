@@ -15,7 +15,7 @@ function read(): Timer | null {
 }
 
 /** A short two-note chime, made on the fly so no audio file ships. */
-function chime() {
+export function chime() {
   try {
     const ctx = new AudioContext();
     [880, 1320].forEach((f, i) => {

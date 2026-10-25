@@ -195,9 +195,16 @@ if (scene || params.has("shot")) {
   localStorage.setItem("gentra:guide", "1");
   localStorage.setItem("gentra:lang", params.get("lang") ?? "en");
   localStorage.setItem("gentra:settings", JSON.stringify({ theme: params.get("theme") ?? "dark", accent: null }));
+  localStorage.removeItem("gentra:reminders");
+  if (scene === "reminder-due") {
+    localStorage.setItem(
+      "gentra:reminders",
+      JSON.stringify([{ id: "d1", text: "Send the Q3 report to Dita before the 3 pm review", at: Date.now() - 30_000, created: Date.now() - 3_600_000, app: "Slack", fired: false }]),
+    );
+  }
   localStorage.setItem(
     "gentra:mode",
-    JSON.stringify({ mode: "kustom", base: "harian", on: ["sistem", "clip", "pintar", "rak", "fokus", "bersih", "port", "perintah", "meeting", "kamera", "musik"] }),
+    JSON.stringify({ mode: "kustom", base: "harian", on: ["sistem", "clip", "pintar", "rak", "fokus", "bersih", "port", "perintah", "meeting", "kamera", "musik", "ingat"] }),
   );
 }
 
@@ -257,6 +264,7 @@ const actions: Record<string, () => void> = {
     pressure = 0;
   },
   "Pintasan clipboard": () => void emit("open-tab", "clipboard"),
+  "Salin jadwal": () => copy({ kind: "text", text: "Rapat evaluasi Jumat jam 14.00 di ruang 3, bawa laporan Q3 ya", app: "WhatsApp" }),
   "Build selesai": () => {
     const d = { cmd: "pnpm build", code: 0, secs: 42, place: "toko-online" };
     doneList.unshift(d);
@@ -350,6 +358,21 @@ const scenes: Record<string, () => Promise<void>> = {
   peek: async () => {
     await wait(300);
     actions["Build selesai"]();
+  },
+  "reminder-offer": async () => {
+    await wait(300);
+    actions["Salin jadwal"]();
+    await wait(600);
+  },
+  "reminder-pick": async () => {
+    actions["Salin jadwal"]();
+    await wait(9000);
+    void emit("open-tab", "clipboard");
+    await wait(600);
+    document.querySelector<HTMLElement>("#strip [data-remind]")?.click();
+  },
+  "reminder-due": async () => {
+    await wait(900);
   },
   // A short tour for the README video: small island, open, a few tabs, close, an alert.
   demo: async () => {

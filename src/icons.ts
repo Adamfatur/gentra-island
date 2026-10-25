@@ -48,6 +48,8 @@ import music from "@phosphor-icons/core/assets/fill/music-notes-fill.svg?raw";
 import prev from "@phosphor-icons/core/assets/fill/skip-back-fill.svg?raw";
 import next from "@phosphor-icons/core/assets/fill/skip-forward-fill.svg?raw";
 import coffee from "@phosphor-icons/core/assets/fill/coffee-fill.svg?raw";
+import bell from "@phosphor-icons/core/assets/fill/bell-fill.svg?raw";
+import bellRing from "@phosphor-icons/core/assets/fill/bell-ringing-fill.svg?raw";
 
 export const icon = {
   memory,
@@ -98,6 +100,8 @@ export const icon = {
   prev,
   next,
   coffee,
+  bell,
+  bellRing,
 };
 
 export type IconName = keyof typeof icon;

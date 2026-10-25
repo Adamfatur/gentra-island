@@ -23,6 +23,9 @@ const SHOTS = [
   ["settings", "settings"],
   ["compact", "compact"],
   ["peek", "peek"],
+  ["reminder-offer", "reminder-offer"],
+  ["reminder-pick", "reminder-pick"],
+  ["reminder-due", "reminder-due"],
 ];
 
 /** The stage around the island, trimmed below the island's bottom edge. */

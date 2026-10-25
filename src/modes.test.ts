@@ -7,7 +7,7 @@ describe("pick", () => {
   test("turns on exactly the ready features of the preset", () => {
     const s = pick("ringkas");
     expect(s.mode).toBe("ringkas");
-    expect(s.on.sort()).toEqual(["clip", "pintar", "sistem"]);
+    expect(s.on.sort()).toEqual(["clip", "ingat", "pintar", "sistem"]);
   });
 
   test("Dev turns on the port watcher and command alerts", () => {

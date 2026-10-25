@@ -130,6 +130,8 @@ p { margin: 0; }
 
 /* ---------- peek ---------- */
 #v-peek { width: 380px; }
+#v-peek.wide { width: 460px; }
+#v-peek.wide .peek-body .s { max-width: 380px; }
 .peek-body { display: flex; align-items: center; gap: 10px; padding: 2px 14px 12px; }
 .peek-body .ic { width: 34px; height: 34px; border-radius: 9px; background: #222228; display: grid; place-items: center; flex: none; overflow: hidden; }
 .peek-body .ic img { width: 100%; height: 100%; object-fit: cover; }
@@ -137,6 +139,15 @@ p { margin: 0; }
 .peek-body .t { font-weight: 650; }
 .peek-body .s { color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 290px; }
 .notched .peek-body .s { color: #8d8d96; }
+/* Peeks with buttons: a reminder that's due, or an offer to set one. */
+.peek-main { min-width: 0; flex: 1; display: grid; gap: 2px; }
+.peek-body .clamp1 { max-width: 360px; }
+.peek-body .clamp2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; }
+.peek-acts { display: flex; gap: 6px; margin-top: 6px; }
+.peek-acts button { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 8px; background: #2a2a31; color: #f4f4f6; font-size: 12px; font-weight: 650; }
+.peek-acts button svg { width: 13px; height: 13px; }
+.peek-acts button:hover { filter: brightness(1.15); }
+.peek-acts button.primary { background: var(--accent-on-black, var(--accent)); color: #08080a; }
 
 /* ---------- expanded ---------- */
 #v-exp { width: 640px; padding: calc(var(--notch-pad) + 10px) 14px 14px; }
@@ -260,6 +271,15 @@ p { margin: 0; }
 .card .pin svg { width: 12px; height: 12px; }
 .card:hover .pin, .card.sel .pin, .card .pin.on, .card .pin:focus-visible { opacity: 1; }
 .card .pin.on { color: var(--warn); }
+/* The bell sits left of the pin and, like it, shows on hover. */
+.card .bell {
+  position: absolute; top: 6px; right: 34px; width: 24px; height: 24px; border-radius: 50%;
+  display: grid; place-items: center; background: var(--island); color: var(--muted);
+  opacity: 0; transition: opacity 0.15s, color 0.15s;
+}
+.card .bell svg { width: 12px; height: 12px; }
+.card:hover .bell, .card.sel .bell, .card .bell:focus-visible { opacity: 1; }
+.card .bell:hover { color: var(--accent); }
 .card.is-secret { background: var(--secret-bg); }
 .card.is-secret .body { color: var(--secret-text); font: 11.5px/1.45 var(--mono); }
 .card.is-secret .ttl { color: var(--bad); font-variant-numeric: tabular-nums; }
@@ -268,6 +288,21 @@ p { margin: 0; }
 
 .inspector { margin-top: 8px; padding: 10px 12px; border-radius: 12px; background: var(--surface); display: flex; gap: 12px; align-items: flex-start; }
 .inspector.warn { background: var(--secret-bg); }
+/* Reminder times for a clipboard item. */
+.inspector.remind { flex-direction: column; align-items: stretch; gap: 8px; }
+.remind-head { display: flex; align-items: center; justify-content: space-between; }
+.remind-head b { display: flex; align-items: center; gap: 6px; font-weight: 650; }
+.remind-head svg { width: 14px; height: 14px; color: var(--accent); }
+.remind-picks { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 6px; }
+.remind-picks button { display: grid; gap: 1px; text-align: left; padding: 7px 10px; border-radius: 10px; background: var(--raised); transition: filter 0.15s; }
+.remind-picks button:hover { filter: brightness(1.1); }
+.remind-picks button b { font-size: 12.5px; font-weight: 650; }
+.remind-picks button span { color: var(--muted); font-size: 11.5px; }
+.remind-picks button.primary { background: var(--accent); color: var(--on-accent); }
+.remind-picks button.primary span { color: inherit; opacity: 0.85; }
+.remind-own { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
+.remind-own input { flex: 1; min-width: 0; height: 30px; padding: 0 8px; border-radius: 8px; border: 0; background: var(--raised); color: var(--text); font: inherit; color-scheme: dark light; }
+.remind-own button { padding: 6px 12px; border-radius: 8px; background: var(--raised); color: var(--text); font-weight: 650; }
 .inspector.warn b { color: var(--bad); }
 .ins-text { flex: 1; min-width: 0; display: grid; gap: 2px; font-size: 12.5px; }
 .ins-text b { font-weight: 650; }
@@ -473,7 +508,12 @@ button.danger { color: var(--bad); }
 /* ---------- home ----------
    Three columns; the live thing (a call, a song) spans two. Cards are quiet
    surfaces; the only color is status and the song's tint. */
-.home { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.home { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; grid-auto-flow: row dense; }
+.remind-card { cursor: default; }
+.remind-list { list-style: none; margin: 2px 0 0; padding: 0; width: 100%; display: grid; gap: 6px; }
+.remind-list li { display: flex; align-items: center; gap: 8px; }
+.remind-list li.due b { color: var(--warn); }
+.remind-list .pill.text { margin-top: 0; }
 .home > section { border-radius: 16px; background: var(--surface); padding: 12px; cursor: pointer; transition: background 0.15s, transform 0.15s; min-width: 0; }
 .home > section:hover { background: var(--raised); }
 .home > section:active { transform: scale(0.985); }

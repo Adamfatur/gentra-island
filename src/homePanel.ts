@@ -6,7 +6,9 @@ import { t } from "./i18n";
 import { icon } from "./icons";
 import type { NowPlaying } from "./mediaPanel";
 import type { FeatureId } from "./modes";
+import type { Reminder } from "./reminders";
 import type { Stats } from "./system";
+import { whenLabel } from "./format";
 
 /** What Home reads from the rest of the island, and what it can ask it to do. */
 export interface HomeSource {
@@ -17,6 +19,7 @@ export interface HomeSource {
   focus: () => { running: boolean; label: string; paused: boolean };
   latestClip: () => ClipItem | null;
   shelfCount: () => number;
+  reminders: () => Reminder[];
   go: (tab: string) => void;
   act: (action: string) => void;
 }
@@ -84,10 +87,32 @@ export class HomePanel {
   }
 
   render() {
-    const cards = [this.callCard(), this.mediaCard(), this.systemCard(), this.focusCard(), this.clipCard(), this.shelfCard()].filter(Boolean);
+    const cards = [this.callCard(), this.remindCard(), this.mediaCard(), this.systemCard(), this.focusCard(), this.clipCard(), this.shelfCard()].filter(Boolean);
     this.root.innerHTML = cards.length
       ? `<div class="home">${cards.join("")}</div>`
       : `<div class="state"><b>${t("home.empty.title")}</b><span>${t("home.empty.body")}</span></div>`;
+  }
+
+  /** Upcoming reminders; one that is due now carries Copy and Done. */
+  private remindCard() {
+    if (!this.src.on("ingat")) return "";
+    const list = this.src.reminders();
+    if (!list.length) return "";
+    const rows = list
+      .slice(0, 2)
+      .map((r) => {
+        const when = r.fired ? t("home.remind.now") : whenLabel(new Date(r.at));
+        const acts = r.fired
+          ? `<button class="pill text" data-act="rem:copy:${r.id}">${icon.copy}<span>${t("due.copy")}</span></button><button class="pill text" data-act="rem:done:${r.id}">${t("due.done")}</button>`
+          : `<button class="pill" data-act="rem:del:${r.id}" aria-label="${t("home.remind.remove")}">${icon.x}</button>`;
+        return `<li class="${r.fired ? "due" : ""}"><span class="card-text"><b>${esc(r.text)}</b><span>${esc(when)}</span></span>${acts}</li>`;
+      })
+      .join("");
+    const more = list.length > 2 ? `<span class="card-sub">${t("home.remind.more", { count: list.length - 2 })}</span>` : "";
+    return `<section class="card-v wide remind-card">
+      <span class="card-label">${icon.bell}${t("home.remind")}</span>
+      <ul class="remind-list">${rows}</ul>${more}
+    </section>`;
   }
 
   private callCard() {

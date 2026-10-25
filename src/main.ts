@@ -9,15 +9,17 @@ import { CallPanel, callTime, type Mic } from "./callPanel";
 import { CleanerPanel } from "./cleaner";
 import { DevPanel, doneMeta, doneTitle, type Done } from "./devPanel";
 import { MediaPanel, sameTrack, type NowPlaying } from "./mediaPanel";
-import { ClipboardPanel, ICON, secondsLeft, secretName, setSmart, smart, type ClipItem } from "./clipboard";
-import { FocusPanel } from "./focusPanel";
-import { esc } from "./format";
+import { ClipboardPanel, ICON, remindable, secondsLeft, secretName, setSmart, smart, type ClipItem } from "./clipboard";
+import { FocusPanel, chime } from "./focusPanel";
+import { esc, whenLabel } from "./format";
 import { APP_AUTHOR, errorText, initLanguage, lang, onLanguageChange, t, type Key } from "./i18n";
 import { icon } from "./icons";
 import { GuidePanel, savedGuide } from "./guidePanel";
 import { HomePanel } from "./homePanel";
 import { ModePanel, modeIcon, modeName } from "./modePanel";
 import { needsGuide } from "./onboarding";
+import { Reminders, type Reminder } from "./reminders";
+import { findTime } from "./timeparse";
 import { isOn, type FeatureId, type ModeState } from "./modes";
 import { SettingsPanel } from "./settings";
 import { ShelfPanel } from "./shelf";
@@ -247,15 +249,22 @@ const resize = new ResizeObserver(() => {
 document.querySelectorAll(".panel").forEach((p) => resize.observe(p));
 
 /** A short-lived wider island that says what just happened, then tucks back. */
-function peek(html: string, ms = 1800) {
+function peek(html: string, ms = 1800, wide = false) {
   if (mode === "open") return;
   mode = "peek";
+  $("#v-peek").classList.toggle("wide", wide);
   $("#peekBody").innerHTML = html;
   show("v-peek");
   const body = $("#peekBody");
-  go({ w: Math.max(CW + 40, 380), h: CH + body.offsetHeight, r: attached ? 22 : 24 }, "grow");
+  go({ w: Math.max(CW + 40, wide ? 460 : 380), h: CH + body.offsetHeight, r: attached ? 22 : 24 }, "grow");
   clearTimeout(peekTimer);
-  peekTimer = window.setTimeout(() => mode === "peek" && compact(), ms);
+  // A peek with buttons stays while the pointer is on it.
+  const close = () => {
+    if (mode !== "peek") return;
+    if (hovering && body.querySelector("button")) peekTimer = window.setTimeout(close, 800);
+    else compact();
+  };
+  peekTimer = window.setTimeout(close, ms);
 }
 
 const peekLine = (glyph: string, color: string, title: string, sub: string) =>
@@ -274,11 +283,62 @@ function toast(msg: string) {
 
 /* ---------- panels ---------- */
 
+/* ---------- reminders ---------- */
+
+/** A copy with a time in it, waiting for "Remind me" in the peek. */
+let offer: { text: string; app?: string; at: Date } | null = null;
+
+const reminders = new Reminders(
+  (r, late) => reminderDue(r, late),
+  () => home.refresh(),
+);
+
+function reminderDue(r: Reminder, late: boolean) {
+  chime();
+  if (mode === "open") {
+    toast(t("due.toast", { text: r.text.slice(0, 60) }));
+    return;
+  }
+  const sub = late ? t("due.late", { when: whenLabel(new Date(r.at)) }) : r.app || t("due.title");
+  peek(
+    `<span class="ic" style="color:var(--warn)">${icon.bellRing}</span>
+     <div class="peek-main"><div class="t clamp2">${esc(r.text)}</div><div class="s">${esc(sub)}</div>
+       <div class="peek-acts" data-rem="${r.id}">
+         <button data-rem-act="copy">${icon.copy}<span>${t("due.copy")}</span></button>
+         <button data-rem-act="snooze">${t("due.snooze")}</button>
+         <button class="primary" data-rem-act="done">${t("due.done")}</button>
+       </div></div>`,
+    20_000,
+    true,
+  );
+}
+
+async function reminderAct(id: string, act: string) {
+  const r = reminders.get(id);
+  if (!r) return;
+  if (act === "copy") {
+    await invoke("clip_write", { text: r.text }).catch(() => {});
+    toast(t("clip.copied", { key: pasteKey }));
+    reminders.remove(id);
+  } else if (act === "snooze") {
+    reminders.snooze(id, 10);
+    toast(t("due.snoozed"));
+  } else {
+    reminders.remove(id);
+  }
+  if (mode === "peek") compact();
+}
+
+function remindAt(text: string, at: Date, app?: string) {
+  reminders.add(text, at, app);
+  toast(t("remind.saved", { when: whenLabel(at) }));
+}
+
 const pasteKey = mac ? "⌘V" : "Ctrl+V";
 const clips = new ClipboardPanel(() => {
   toast(t("clip.copied", { key: pasteKey }));
   window.setTimeout(compact, 700);
-}, toast);
+}, toast, (item, at) => remindAt(item.text ?? "", at, item.app));
 await clips.load();
 
 const cleaner = new CleanerPanel();
@@ -317,6 +377,7 @@ const home = new HomePanel({
   focus: () => ({ running: focus.running, label: focus.label, paused: focus.paused }),
   latestClip: () => newestClip(),
   shelfCount: () => shelf.items.length,
+  reminders: () => reminders.upcoming,
   go: (t) => setTab(t as Tab),
   act: (a) => void homeAct(a),
 });
@@ -331,6 +392,10 @@ async function homeAct(a: string) {
       await invoke("mic_set_muted", { muted });
       call.setMic({ ...call.mic, muted });
       toast(t(muted ? "call.muted" : "call.unmuted"));
+    } else if (a.startsWith("rem:")) {
+      const [, act, id] = a.split(":");
+      if (act === "del") reminders.remove(id);
+      else await reminderAct(id, act);
     } else if (a === "focus:25") {
       focus.begin(25);
     } else if (a === "clip:again") {
@@ -372,6 +437,8 @@ function applyMode(s: ModeState, announce = false) {
   call.mirror = isOn(s, "kamera");
   if (!call.meeting) call.mic = null;
   setSmart(isOn(s, "pintar"));
+  clips.remindOn = isOn(s, "ingat");
+  reminders.setEnabled(isOn(s, "ingat"));
   tabs.forEach((b) => {
     b.hidden = !tabOn(s, b.dataset.tab as Tab);
   });
@@ -437,7 +504,20 @@ await listen("clips-changed", async () => {
   const top = items[0];
   const isNew = top && top.id !== topId;
   topId = top?.id;
-  if (isNew && Date.now() - top.created < 3000 && (top.secret || !quiet())) peek(describe(top), top.secret ? 3500 : 2400);
+  const fresh = isNew && Date.now() - top.created < 3000;
+  // Text with a time in it ("rapat Jumat jam 14.00") gets a one-tap reminder offer.
+  const when = fresh && !quiet() && isOn(modes.state, "ingat") && remindable(top) ? findTime(top.text ?? "") : null;
+  if (when) {
+    offer = { text: top.text ?? "", app: top.app, at: when };
+    peek(
+      `<span class="ic" style="color:var(--accent)">${icon.bell}</span>
+       <div class="peek-main"><div class="t">${esc(t("offer.title", { when: whenLabel(when) }))}</div><div class="s clamp1">${esc(top.text ?? "")}</div>
+         <div class="peek-acts"><button class="primary" data-offer="yes">${icon.bell}<span>${t("offer.yes")}</span></button>
+           <button data-offer="no">${t("offer.no")}</button></div></div>`,
+      8000,
+      true,
+    );
+  } else if (fresh && (top.secret || !quiet())) peek(describe(top), top.secret ? 3500 : 2400);
   if (mode === "open" && tab === "clipboard") renderHeadMeta();
   home.refresh();
 });
@@ -514,6 +594,16 @@ await win.onFocusChanged(({ payload: focused }) => {
 });
 
 shell.addEventListener("click", (e) => {
+  const el = e.target as HTMLElement;
+  // Buttons inside a peek act in place instead of opening the island.
+  const rem = el.closest<HTMLElement>("[data-rem-act]");
+  if (rem) return void reminderAct(rem.closest<HTMLElement>("[data-rem]")!.dataset.rem!, rem.dataset.remAct!);
+  const off = el.closest<HTMLElement>("[data-offer]");
+  if (off) {
+    if (off.dataset.offer === "yes" && offer) remindAt(offer.text, offer.at, offer.app);
+    offer = null;
+    return compact();
+  }
   if (mode === "compact") open(focus.running ? "focus" : tab === "settings" || tab === "mode" ? "home" : tab);
   else if (mode === "peek") open((e.target as HTMLElement).closest(".peek-body") ? "clipboard" : "home");
 });
@@ -648,3 +738,6 @@ media.syncYoutube();
 const mediaNow = await invoke<NowPlaying | null>("media_now");
 if (mediaNow) media.set(mediaNow);
 syncMeter();
+
+// Reminders start last: one missed while the app was closed shows right away.
+reminders.start();

@@ -40,3 +40,14 @@ export function took(secs: number): string {
   if (m) return r ? t("dur.minSec", { m, s: r }) : t("dur.min", { m });
   return t("dur.sec", { s: r });
 }
+
+/** When a reminder is due, the way a person says it: "today at 2:00 PM", "besok pukul 09.00", "Friday at 2:00 PM". */
+export function whenLabel(at: Date, now: Date = new Date()): string {
+  const time = new Intl.DateTimeFormat(lang(), { hour: "numeric", minute: "2-digit" }).format(at);
+  const startOf = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const days = Math.round((startOf(at) - startOf(now)) / 86_400_000);
+  if (days === 0) return t("when.today", { time });
+  if (days === 1) return t("when.tomorrow", { time });
+  const day = new Intl.DateTimeFormat(lang(), days < 7 ? { weekday: "long" } : { weekday: "short", day: "numeric", month: "short" }).format(at);
+  return t("when.day", { day, time });
+}
