@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.7.0
 
 - **Reminders from what you copy.** Copy text with a time in it ("rapat Jumat jam 14.00", "meeting moved to 3 pm") and the island offers to remind you in one click. Any clipboard item gets a bell: in an hour, tonight, tomorrow morning, or any time. When it's due: Copy again, In 10 min, or Done. Upcoming reminders show on Home. Times are read in English and Indonesian, on your computer, with no network.
 - Wider peeks for messages with buttons.
