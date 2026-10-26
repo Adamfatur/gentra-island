@@ -49,6 +49,10 @@ Gentra Island makes no network requests of its own, with one optional exception:
 
 Links you click in the app (opening a local server, the PayPal page in About, these documents) open in your browser and are then governed by that site's own policy.
 
+## The website
+
+This policy is about the app. The website at [adamfatur.github.io/gentra-island](https://adamfatur.github.io/gentra-island/) counts visits with [GoatCounter](https://www.goatcounter.com), which uses no cookies and stores no personal information: it records the page, where the visit came from (for example a search engine), the browser and screen size, the country, and which download button was clicked. The counts are [public](https://gentra-island.goatcounter.com) for anyone to see. The site is hosted by GitHub Pages under [GitHub's privacy statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement).
+
 ## Children
 
 Gentra Island doesn't collect personal information from anyone, including children.
@@ -109,6 +113,10 @@ Gentra Island tidak membuat permintaan jaringan sendiri, kecuali satu yang opsio
 - **Thumbnail YouTube**, hanya kalau kamu menyalakannya: aplikasi mengunduh thumbnail video yang diputar dari `i.ytimg.com`. Seperti unduhan lain, Google menerima alamat IP dan ID videonya sesuai [Kebijakan Privasi Google](https://policies.google.com/privacy?hl=id).
 
 Tautan yang kamu klik di aplikasi (membuka server lokal, halaman PayPal di Tentang, dokumen ini) terbuka di browser dan mengikuti kebijakan situs tersebut.
+
+### Website
+
+Kebijakan ini tentang aplikasinya. Website di [adamfatur.github.io/gentra-island](https://adamfatur.github.io/gentra-island/) menghitung kunjungan dengan [GoatCounter](https://www.goatcounter.com), tanpa cookie dan tanpa menyimpan informasi pribadi: yang dicatat hanya halaman, asal kunjungan (misalnya mesin pencari), browser dan ukuran layar, negara, dan tombol unduh mana yang diklik. Hitungannya [terbuka untuk umum](https://gentra-island.goatcounter.com). Website di-hosting GitHub Pages sesuai [pernyataan privasi GitHub](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement).
 
 ### Anak-anak
 
