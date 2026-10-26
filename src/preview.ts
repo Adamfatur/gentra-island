@@ -166,6 +166,18 @@ mockIPC(
           ],
           recent: doneList,
         };
+      case "shot_text":
+        return "Rapat evaluasi Jumat jam 14.00\nRuang 3, bawa laporan Q3";
+      case "download_open":
+      case "download_reveal":
+        return null;
+      case "shot_copy":
+        return null;
+      case "agents_answer":
+        setTimeout(() => void emit("agent-ask-done", a.id), 50);
+        return null;
+      case "agents_set_ask":
+        return null;
       case "idle_secs":
         return 3;
       case "agents_status":
@@ -212,7 +224,7 @@ if (scene || params.has("shot")) {
   }
   localStorage.setItem(
     "gentra:mode",
-    JSON.stringify({ mode: "kustom", base: "harian", on: ["sistem", "clip", "pintar", "rak", "fokus", "bersih", "port", "perintah", "meeting", "kamera", "musik", "ingat", "ai", "jaga"] }),
+    JSON.stringify({ mode: "kustom", base: "harian", on: ["sistem", "clip", "pintar", "rak", "fokus", "bersih", "port", "perintah", "meeting", "kamera", "musik", "ingat", "ai", "jaga", "tangkap", "unduh"] }),
   );
 }
 
@@ -244,12 +256,14 @@ const agentStatus = () => [
     agent: "claude",
     installed: true,
     connected: connected.claude,
+    canAsk: connected.claude,
     usage: { windowTokens: 2_955_318, windowStart, windowEnd: windowStart + 5 * H, todayTokens: 3_129_806, weekTokens: 95_368_831, lastActive: Date.now(), primary: null, secondary: null },
   },
   {
     agent: "codex",
     installed: true,
     connected: connected.codex,
+    canAsk: false,
     usage: {
       windowTokens: 412_000, windowStart, windowEnd: windowStart + 5 * H, todayTokens: 412_000, weekTokens: 1_840_000, lastActive: Date.now(),
       primary: { usedPercent: 42, windowMinutes: 300, resetsAt: windowStart + 5 * H },
@@ -322,6 +336,15 @@ const actions: Record<string, () => void> = {
   "Claude mulai": () => agentEvent("claude", "start"),
   "Claude butuh izin": () => agentEvent("claude", "notify", "Claude needs your permission to use Bash"),
   "Claude selesai": () => agentEvent("claude", "stop"),
+  "Unduh berjalan": () => void emit("downloads", [{ name: "Gentra.Island_0.8.1_universal.dmg", bytes: 3_400_000, total: 6_850_000, speed: 1_200_000 }]),
+  "Unduh selesai": () => {
+    void emit("downloads", []);
+    void emit("download-done", { path: "/Users/kamu/Downloads/Gentra.Island_0.8.1_universal.dmg", name: "Gentra.Island_0.8.1_universal.dmg", bytes: 6_850_000 });
+  },
+  "Screenshot baru": () =>
+    void emit("screenshot", { path: "/Users/kamu/Desktop/Screenshot 2026-10-26 at 09.41.12.png", name: "Screenshot 2026-10-26 at 09.41.12.png", thumb: shot("#5ac8fa", "#b18cff"), size: [2940, 1912] }),
+  "Claude minta izin": () =>
+    void emit("agent-ask", { id: `ask-${n++}`, agent: "claude", place: "gentra-island", session: "claude-1", tool: "Bash", summary: "npm test -- --coverage && git push origin main" }),
   "Codex mulai": () => agentEvent("codex", "start", "", "gentra-island"),
   "Codex selesai": () => agentEvent("codex", "stop", "", "gentra-island"),
   "Codex 85%": () => {
@@ -427,6 +450,15 @@ const scenes: Record<string, () => Promise<void>> = {
     agentEvent("claude", "start", "", "gentra-island");
     await wait(300);
     agentEvent("claude", "notify", "Claude needs your permission to use Bash", "gentra-island");
+  },
+  "agent-ask": async () => {
+    agentEvent("claude", "start", "", "gentra-island");
+    await wait(300);
+    actions["Claude minta izin"]();
+  },
+  screenshot: async () => {
+    await wait(300);
+    actions["Screenshot baru"]();
   },
   care: async () => {
     await wait(300);

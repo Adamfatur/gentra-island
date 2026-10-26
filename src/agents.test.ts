@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Agents, elapsed, tokens, type AgentEvent } from "./agents";
+import { Agents, askVerb, elapsed, tokens, type AgentEvent } from "./agents";
 
 const ev = (event: AgentEvent["event"], extra: Partial<AgentEvent> = {}): AgentEvent => ({
   agent: "claude",
@@ -50,6 +50,15 @@ describe("Agents", () => {
     a.apply(ev("notify", { message: "Approve?" }), 1000);
     a.apply(ev("start", { session: "s2", agent: "codex" }), 2000);
     expect(a.lead(3000)?.id).toBe("claude:s1");
+  });
+});
+
+describe("askVerb", () => {
+  it("says what the agent wants to do", () => {
+    expect(askVerb("Bash")).toBe("ask.run");
+    expect(askVerb("Write")).toBe("ask.edit");
+    expect(askVerb("WebFetch")).toBe("ask.web");
+    expect(askVerb("mcp__github__create_issue")).toBe("ask.use");
   });
 });
 

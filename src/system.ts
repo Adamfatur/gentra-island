@@ -26,7 +26,7 @@ let lastRight = "";
 
 /** What the right side of the compact island shows instead of CPU. */
 export interface Badge {
-  kind: "focus" | "call" | "media" | "agent";
+  kind: "focus" | "call" | "media" | "agent" | "download";
   label: string;
   /** Focus paused, mic muted during a call, or media paused. */
   dim: boolean;
@@ -39,6 +39,7 @@ const BADGE = {
   focus: { cls: "timer", on: () => icon.timer, off: () => icon.pause, title: ["compact.focusLeft", "compact.focusPaused"] as Key[] },
   call: { cls: "call", on: () => icon.mic, off: () => icon.micOff, title: ["compact.call", "compact.callMuted"] as Key[] },
   media: { cls: "media", on: () => "", off: () => "", title: ["compact.media", "compact.mediaPaused"] as Key[] },
+  download: { cls: "download", on: () => icon.down, off: () => icon.down, title: ["compact.download", "compact.download"] as Key[] },
   // For agents, "dim" means it is waiting for you.
   agent: { cls: "agent", on: () => `<i class="pulse"></i>`, off: () => icon.hand, title: ["compact.agent", "compact.agentWaiting"] as Key[] },
 };

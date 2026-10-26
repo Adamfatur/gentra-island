@@ -178,6 +178,8 @@ p { margin: 0; }
 /* The window is 520 px tall: a panel never grows past what fits under the header; longer ones scroll. */
 .panel { max-height: calc(520px - 68px - var(--top) - var(--notch-pad)); overflow-y: auto; scrollbar-width: thin; }
 .panel.on { opacity: 1; translate: 0 0; pointer-events: auto; transition-delay: 0.05s; }
+/* A panel stays .on while the island is closed; its hidden view must not take the clicks meant for a peek drawn over it. */
+.v:not(.on) .panel.on { pointer-events: none; }
 .muted-title, .list-title { color: var(--muted); font-size: 12px; margin-bottom: 6px; }
 
 .state { min-height: 120px; display: grid; place-content: center; text-align: center; gap: 4px; padding: 16px; border-radius: 16px; background: var(--surface); }
@@ -702,3 +704,17 @@ body[data-look="tucked"] #v-compact .side { opacity: 0; }
 body[data-look="slim"] .compact-row { padding: 0 8px; }
 body[data-look="slim"] #v-compact .num { display: none; }
 body[data-look="slim"] #v-compact .side svg, body[data-look="slim"] .mini-art { width: 16px; height: 16px; }
+
+/* Permission requests: the command in full, so you know what you allow. */
+.ask-code { display: block; font: 500 12px/1.45 var(--mono); color: #f4f4f6; background: #1c1c22; border-radius: 8px; padding: 7px 9px; margin-top: 4px; max-height: 66px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; }
+.ask-acts { margin-top: 8px; }
+.ask-card { display: grid; gap: 6px; padding: 12px; border-radius: 14px; background: color-mix(in srgb, var(--warn) 10%, var(--surface)); }
+.ask-card .card-label { color: var(--text); }
+.ask-card .card-label svg { color: var(--warn); }
+.ask-card .ask-code { background: var(--raised); color: var(--text); }
+.ask-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.ask-row small { display: block; color: var(--muted); font-size: 11.5px; font-weight: 500; }
+.ask-row .note { margin: 0; }
+.peek-body .shot-thumb { width: 64px; height: 42px; flex: none; border-radius: 7px; object-fit: cover; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12); align-self: center; }
+.side.download { color: var(--accent); gap: 5px; }
+.peek-body .note-peek { padding: 4px 4px 2px; text-align: center; }

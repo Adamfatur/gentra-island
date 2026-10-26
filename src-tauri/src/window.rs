@@ -27,7 +27,16 @@ impl Rect {
     fn contains(&self, x: f64, y: f64) -> bool {
         x >= self.x && x <= self.x + self.w && y >= self.y && y <= self.y + self.h
     }
+
+    fn grown(&self, by: f64) -> Rect {
+        Rect { x: self.x - by, y: self.y - by, w: self.w + 2.0 * by, h: self.h + 2.0 * by }
+    }
 }
+
+/// macOS applies a change to click-through only at the next mouse movement.
+/// Switching while the pointer is still on its way, this far out, means a
+/// click right after it stops lands on the island, not the app behind it.
+const CATCH_MARGIN: f64 = 16.0;
 
 #[derive(Default)]
 pub struct HitState(pub Mutex<Rect>);
@@ -81,6 +90,7 @@ pub fn setup(win: &WebviewWindow) -> tauri::Result<()> {
 pub fn spawn_hit_tester(app: AppHandle) {
     thread::spawn(move || {
         let mut inside = false;
+        let mut accepting = false;
         let mut wait = Duration::from_millis(100);
         let mut last = (f64::NAN, f64::NAN);
         let mut still = Duration::ZERO;
@@ -117,10 +127,14 @@ pub fn spawn_hit_tester(app: AppHandle) {
                 (false, true) => 200,
             };
             wait = Duration::from_millis(ms);
+            let catching = rect.grown(CATCH_MARGIN).contains(x, y);
+            if catching != accepting {
+                accepting = catching;
+                let _ = win.set_ignore_cursor_events(!catching);
+            }
             let now = rect.contains(x, y);
             if now != inside {
                 inside = now;
-                let _ = win.set_ignore_cursor_events(!now);
                 let _ = app.emit("island-hover", now);
             }
         }
@@ -244,5 +258,18 @@ mod platform {
             notch_height: 0.0,
             menubar_height: 0.0,
         }
+    }
+}
+
+#[cfg(test)]
+mod catch_tests {
+    use super::*;
+
+    #[test]
+    fn clicks_are_caught_a_little_before_the_edge() {
+        let r = Rect { x: 100.0, y: 0.0, w: 200.0, h: 40.0 };
+        assert!(!r.contains(90.0, 20.0));
+        assert!(r.grown(CATCH_MARGIN).contains(90.0, 20.0));
+        assert!(!r.grown(CATCH_MARGIN).contains(80.0, 20.0));
     }
 }

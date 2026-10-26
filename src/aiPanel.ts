@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { AGENT_NAME, elapsed, tokens, type AgentId, type Agents, type Session } from "./agents";
+import { AGENT_NAME, askVerb, elapsed, tokens, type AgentId, type Agents, type Ask, type Session } from "./agents";
 import { esc, pct, took, whenLabel } from "./format";
 import { errorText, lang, t } from "./i18n";
 import { icon } from "./icons";
@@ -24,6 +24,7 @@ export interface Usage {
 export interface AgentStatus {
   agent: AgentId;
   installed: boolean;
+  canAsk: boolean;
   connected: boolean;
   usage: Usage;
 }
@@ -33,6 +34,12 @@ const FILE: Record<AgentId, string> = { claude: "~/.claude/settings.json", codex
 /** "today at 2:00 PM", "Friday at 9:00 AM". */
 export const resetLabel = (ms: number) => t("ai.usage.resets", { time: whenLabel(new Date(ms)) });
 const level = (p: number) => (p >= 90 ? "var(--bad)" : p >= 75 ? "var(--warn)" : "var(--ok)");
+
+/** Allow, Deny, and In terminal, for the peek and the AI tab alike. */
+export const askButtons = (id: string) =>
+  `<div class="peek-acts ask-acts"><button class="primary" data-act="answer" data-answer="allow" data-id="${esc(id)}">${t("ask.allow")}</button>
+    <button data-act="answer" data-answer="deny" data-id="${esc(id)}">${t("ask.deny")}</button>
+    <button data-act="answer" data-answer="terminal" data-id="${esc(id)}">${t("ask.terminal")}</button></div>`;
 
 export function sessionLine(s: Session, now = Date.now()): string {
   if (s.state === "waiting") return s.message || t("ai.waiting");
@@ -49,10 +56,15 @@ export class AiPanel {
   private confirm: AgentId | null = null;
   private justConnected: AgentId | null = null;
   private tick = 0;
+  /** Permission requests waiting for an answer, newest last. */
+  asks: Ask[] = [];
+  askOn = true;
 
   constructor(
     private agents: Agents,
     private toast: (msg: string) => void,
+    private answer: (id: string, answer: string) => void,
+    private setAskOn: (on: boolean) => void,
   ) {
     this.root.addEventListener("click", (e) => void this.click(e));
   }
@@ -114,6 +126,11 @@ export class AiPanel {
           this.justConnected = agent;
           this.toast(t("ai.connected.toast", { agent: AGENT_NAME[agent] }));
           break;
+        case "answer":
+          return this.answer(b.dataset.id!, b.dataset.answer!);
+        case "ask-switch":
+          this.setAskOn(!this.askOn);
+          break;
         case "disconnect":
           await invoke("agents_disconnect", { agent });
           this.justConnected = null;
@@ -131,9 +148,22 @@ export class AiPanel {
 
   render() {
     const sessions = this.agents.list();
-    const now = sessions.length ? this.sessionsHtml(sessions) : "";
+    const now = this.asksHtml() + (sessions.length ? this.sessionsHtml(sessions) : "");
     const cards = (["claude", "codex"] as AgentId[]).map((a) => this.agentHtml(a)).join("");
     this.root.innerHTML = `<div class="ai">${now}${cards}</div>`;
+  }
+
+  /** Requests stay here too, in case another message covered the peek. */
+  private asksHtml() {
+    if (!this.asks.length) return "";
+    return this.asks
+      .map(
+        (a) => `<section class="ask-card"><span class="card-label">${icon.hand}${esc(t(askVerb(a.tool), { agent: AGENT_NAME[a.agent] }))}</span>
+          ${a.place ? `<span class="card-sub">${esc(a.place)}</span>` : ""}
+          <code class="ask-code">${esc(a.summary || a.tool)}</code>
+          ${askButtons(a.id)}</section>`,
+      )
+      .join("");
   }
 
   private sessionsHtml(list: Session[]) {
@@ -174,7 +204,14 @@ export class AiPanel {
       : `<button class="agent-btn primary" data-act="ask" data-agent="${agent}">${icon.plug}<span>${t("ai.connect")}</span></button>`;
     const sub = connected ? t("ai.state.on") : t("ai.state.off");
     const fresh = this.justConnected === agent && connected ? `<p class="note">${t("ai.connected.note", { agent: name })}</p>` : "";
-    return `<section class="agent-card">${head(button, sub)}${st ? this.usageHtml(agent, st.usage) : ""}${fresh}</section>`;
+    // Claude Code's permission requests: a switch once connected, or a way to add it.
+    const asks =
+      agent !== "claude" || !connected
+        ? ""
+        : st?.canAsk
+          ? `<div class="setting-row ask-row"><span>${t("ask.switch")}<small>${t("ask.switch.note")}</small></span><button class="switch" role="switch" data-act="ask-switch" data-agent="claude" aria-checked="${this.askOn}" aria-label="${t("ask.switch")}"></button></div>`
+          : `<div class="ask-row"><p class="note">${t("ask.reconnect")}</p><button class="agent-btn" data-act="connect" data-agent="claude">${t("ask.reconnect.button")}</button></div>`;
+    return `<section class="agent-card">${head(button, sub)}${st ? this.usageHtml(agent, st.usage) : ""}${asks}${fresh}</section>`;
   }
 
   private usageHtml(agent: AgentId, u: Usage) {

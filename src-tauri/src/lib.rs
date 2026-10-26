@@ -4,6 +4,8 @@
 mod cleaner;
 mod agents;
 mod idle;
+mod screenshots;
+mod downloads;
 mod clipboard;
 mod hooks;
 mod media;
@@ -21,7 +23,9 @@ use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut,
 
 /// The user's mode decides which background work runs at all.
 #[tauri::command]
-fn set_features(sistem: bool, clip: bool, perintah: bool, meeting: bool, musik: bool, ai: bool) {
+fn set_features(sistem: bool, clip: bool, perintah: bool, meeting: bool, musik: bool, ai: bool, tangkap: bool, unduh: bool) {
+    screenshots::set_enabled(tangkap);
+    downloads::set_enabled(unduh);
     agents::set_enabled(ai);
     media::set_enabled(musik);
     stats::set_enabled(sistem);
@@ -148,7 +152,13 @@ pub fn run() {
             agents::agents_connect,
             agents::agents_disconnect,
             agents::agents_set_offset,
+            agents::agents_answer,
+            agents::agents_set_ask,
             idle::idle_secs,
+            screenshots::shot_text,
+            screenshots::shot_copy,
+            downloads::download_open,
+            downloads::download_reveal,
             media::media_now,
             media::media_control,
             media::media_youtube_art,
@@ -192,6 +202,8 @@ pub fn run() {
             meeting::spawn(app.handle().clone());
             media::spawn(app.handle().clone());
             agents::spawn(app.handle().clone());
+            screenshots::spawn(app.handle().clone());
+            downloads::spawn(app.handle().clone());
 
             for code in [Code::KeyV, Code::KeyG] {
                 if let Err(e) = app.global_shortcut().register(shortcut(code)) {

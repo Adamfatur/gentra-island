@@ -37,7 +37,9 @@
 
 Gentra Island sits at the top of your screen. On a Mac with a notch it hides inside the camera housing until something is happening, so your menus stay visible; elsewhere it floats as a small pill. Hover, click, or press **⌥⌘G** (**Ctrl+Alt+G** on Windows and Linux) to open it. It speaks up by itself only when something is worth seeing: Claude Code waiting for your answer, a long build that finished, a call that started, or an hour without a break.
 
-- **AI agents:** see when Claude Code or Codex is working, needs you, or is done, and how many tokens you've used in this 5-hour window
+- **AI agents:** see when Claude Code or Codex is working, needs you, or is done, **allow or deny Claude Code's permission requests from the notch**, and see how many tokens you've used in this 5-hour window
+- **Smart screenshots:** take a screenshot and copy the text in it with one click, read on your computer
+- **Download progress** in the notch, with Open when it's done
 - **Gentle care:** a warm nudge to take a break, drink water, eat, and stop when it gets late, never more than 8 a day
 - **Now playing** for Spotify, Apple Music, YouTube, and more, with artwork and controls
 - **Clipboard history** that understands what you copied, and keeps secrets out of it
@@ -84,6 +86,9 @@ A higher-quality version of the video is in [docs/screenshots/demo.mp4](docs/scr
 | **System** | Memory (with real memory pressure on macOS), CPU, network, swap, and the apps using the most memory. |
 | **Cleaner** | Moves safe-to-delete caches, old logs, and old installers to the Trash or Recycle Bin. Never touches documents, photos, or settings. |
 | **Dev** | Local servers by port, with their folder: open or stop them. Alerts when a terminal command of 10 seconds or more finishes. |
+| **Approve from the notch** | When Claude Code asks for permission, the notch shows the command in full with **Allow**, **Deny**, and **In terminal**. Unanswered after 30 seconds, Claude Code asks in its own window as usual. |
+| **Smart screenshots** | A new screenshot shows on the island: **Copy text** reads the text in it on your computer (Vision on macOS, the built-in OCR on Windows, tesseract on Linux), or copy the image, or put it on the shelf. |
+| **Downloads** | Files your browser is downloading show in the notch, then **Open**, **Show in Finder**, or **Shelf** when they're done. |
 | **Gentle care** | Warm reminders for the small things that matter: a break after about 50 minutes of real activity, water every hour and a half, lunch and dinner, and a word when it's past eleven. Five minutes away from the keyboard counts as a break. Never during a call, a focus session, or Focus mode, at least 20 minutes apart, and no more than 8 a day. Every reminder has **Later** and **Not today**. |
 | **AI agents** | Claude Code and Codex on the island: a clock while they work, a nudge when they need you, and a note when a long task is done. Usage from their local logs: tokens per 5-hour window, today, and the last 7 days, plus Codex's own 5-hour and weekly limits when it reports them. |
 | **Calls** | Which app is using your mic, the call time on the small island, a system mute button on macOS, and a camera mirror. |
@@ -255,6 +260,12 @@ It covers similar ground (now playing, a file shelf, a notch that does something
 
 **Can it tell me when Claude Code or Codex needs me?**
 Yes. Open the **AI** tab and click **Connect**. When Claude Code asks for permission, the notch shows its question; when a task of 15 seconds or more finishes, it tells you how long it took. It also shows the tokens you've used in the current 5-hour window, today, and this week, read from the logs on your computer. Codex's own 5-hour and weekly limits show as bars.
+
+**Can I approve Claude Code's requests from the notch?**
+Yes. Connect Claude Code in the AI tab. When it asks for permission, the notch shows the exact command with Allow, Deny, and In terminal. Only your click decides, and an unanswered request goes back to Claude Code's own prompt after 30 seconds.
+
+**Can it copy the text from a screenshot?**
+Yes. Take a screenshot as usual and click **Copy text** on the island. The text is read on your computer, with no upload.
 
 **Can it remind me to take breaks and drink water?**
 Yes, that's **Gentle care**. It counts real keyboard and mouse activity, so time away counts as a break. It suggests a break after about 50 minutes, water every hour and a half, lunch, dinner, and bed when it's late. Never during calls or focus sessions, and at most 8 a day.

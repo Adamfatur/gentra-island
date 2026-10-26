@@ -1,7 +1,7 @@
 // Modes are presets over one list of switched-on features. Changing a single
 // feature turns the mode into "kustom" without losing what the user chose.
 
-export type FeatureId = "sistem" | "clip" | "pintar" | "rak" | "fokus" | "bersih" | "port" | "perintah" | "meeting" | "kamera" | "musik" | "ingat" | "ai" | "jaga";
+export type FeatureId = "sistem" | "clip" | "pintar" | "rak" | "fokus" | "bersih" | "port" | "perintah" | "meeting" | "kamera" | "musik" | "ingat" | "ai" | "jaga" | "tangkap" | "unduh";
 export type ModeId = "ringkas" | "harian" | "dev" | "rapat" | "fokus";
 
 export interface ModeState {
@@ -30,13 +30,15 @@ export const FEATURES: { id: FeatureId; ready: boolean }[] = [
   { id: "ingat", ready: true },
   { id: "ai", ready: true },
   { id: "jaga", ready: true },
+  { id: "tangkap", ready: true },
+  { id: "unduh", ready: true },
 ];
 
 /** Names and descriptions live in the i18n dictionaries as mode.<id> and mode.line.<id>. */
 export const MODES: Record<ModeId, { features: FeatureId[] }> = {
   ringkas: { features: ["sistem", "clip", "pintar", "ingat", "jaga"] },
-  harian: { features: ["sistem", "clip", "pintar", "rak", "fokus", "bersih", "musik", "ingat", "jaga"] },
-  dev: { features: ["sistem", "clip", "pintar", "rak", "fokus", "bersih", "port", "perintah", "musik", "ingat", "ai", "jaga"] },
+  harian: { features: ["sistem", "clip", "pintar", "rak", "fokus", "bersih", "musik", "ingat", "jaga", "tangkap", "unduh"] },
+  dev: { features: ["sistem", "clip", "pintar", "rak", "fokus", "bersih", "port", "perintah", "musik", "ingat", "ai", "jaga", "tangkap", "unduh"] },
   rapat: { features: ["sistem", "clip", "fokus", "meeting", "kamera", "ingat", "jaga"] },
   fokus: { features: ["fokus", "sistem"] },
 };

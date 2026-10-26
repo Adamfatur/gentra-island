@@ -28,6 +28,8 @@ const SHOTS = [
   ["reminder-due", "reminder-due"],
   ["ai", "ai"],
   ["agent-peek", "agent-peek"],
+  ["agent-ask", "agent-ask"],
+  ["screenshot", "screenshot"],
   ["care", "care"],
   ["care-water", "care-water"],
 ];

@@ -5,8 +5,8 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { AiPanel, resetLabel, sessionTitle, type AgentStatus } from "./aiPanel";
-import { AGENT_NAME, Agents, DONE_PEEK_SECS, elapsed, type AgentEvent } from "./agents";
+import { AiPanel, askButtons, resetLabel, sessionTitle, type AgentStatus } from "./aiPanel";
+import { AGENT_NAME, Agents, DONE_PEEK_SECS, askVerb, elapsed, type AgentEvent, type Ask } from "./agents";
 import { CallPanel, callTime, type Mic } from "./callPanel";
 import { Care, careHtml } from "./carePanel";
 import type { CareKind } from "./care";
@@ -15,7 +15,7 @@ import { DevPanel, doneMeta, doneTitle, type Done } from "./devPanel";
 import { MediaPanel, sameTrack, type NowPlaying } from "./mediaPanel";
 import { ClipboardPanel, ICON, remindable, secondsLeft, secretName, setSmart, smart, type ClipItem } from "./clipboard";
 import { FocusPanel, chime } from "./focusPanel";
-import { esc, pct, took, whenLabel } from "./format";
+import { bytes, esc, pct, took, whenLabel } from "./format";
 import { APP_AUTHOR, errorText, initLanguage, lang, onLanguageChange, t, type Key } from "./i18n";
 import { icon } from "./icons";
 import { GuidePanel, savedGuide } from "./guidePanel";
@@ -100,6 +100,14 @@ const visibleTabs = () => tabs.filter((b) => !b.hidden);
 $("#settingsBtn").innerHTML = icon.gear;
 $("#searchIcon").innerHTML = icon.search;
 
+/** Files the browser is still downloading; declared early: badge() runs during start-up. */
+interface Download {
+  name: string;
+  bytes: number;
+  total: number | null;
+  speed: number;
+}
+let downloads: Download[] = [];
 let mode: Mode = "compact";
 let tab: Tab = "home";
 let hovering = false;
@@ -296,6 +304,12 @@ const peekLine = (glyph: string, color: string, title: string, sub: string) =>
 
 let toastTimer = 0;
 function toast(msg: string) {
+  // The toast lives at the bottom of the open island; a closed island is too
+  // small to show it, so the message gets a short peek of its own instead.
+  if (mode !== "open") {
+    peek(`<div class="peek-main note-peek"><div class="t">${esc(msg)}</div></div>`, 2200);
+    return;
+  }
   const t = $("#toast");
   t.textContent = msg;
   t.classList.add("show");
@@ -384,7 +398,41 @@ const focus = new FocusPanel(
 const dev = new DevPanel(info.platform, toast);
 const call = new CallPanel(toast, info.platform);
 const agents = new Agents();
-const ai = new AiPanel(agents, toast);
+const ASK_KEY = "gentra:ask";
+const ai = new AiPanel(
+  agents,
+  toast,
+  (id, answer) => void answerAsk(id, answer),
+  (on) => {
+    ai.askOn = on;
+    try {
+      localStorage.setItem(ASK_KEY, on ? "1" : "0");
+    } catch {
+      /* this session only */
+    }
+    void invoke("agents_set_ask", { on });
+    ai.refresh();
+  },
+);
+try {
+  ai.askOn = localStorage.getItem(ASK_KEY) !== "0";
+} catch {
+  /* on by default */
+}
+void invoke("agents_set_ask", { on: ai.askOn });
+
+/** Sends your answer to a waiting permission request. */
+async function answerAsk(id: string, answer: string) {
+  try {
+    await invoke("agents_answer", { id, answer });
+    toast(t(answer === "allow" ? "ask.allowed" : answer === "deny" ? "ask.denied" : "ask.toTerminal"));
+  } catch (err) {
+    toast(errorText(err) === "ask_gone" ? t("ask.gone") : errorText(err));
+  }
+  ai.asks = ai.asks.filter((a) => a.id !== id);
+  ai.refresh();
+  if (mode === "peek" && $("#peekBody").querySelector(`[data-id="${CSS.escape(id)}"]`)) compact();
+}
 const media = new MediaPanel(toast, (tint) => {
   if (tint) root.style.setProperty("--media-tint", tint);
   else root.style.removeProperty("--media-tint");
@@ -434,6 +482,7 @@ async function homeAct(a: string) {
   home.refresh();
 }
 
+
 /** A live call outranks the focus timer on the compact island. */
 function badge(): Badge | null {
   const m = call.mic;
@@ -443,6 +492,8 @@ function badge(): Badge | null {
   if (lead?.state === "waiting") return { kind: "agent", label: AGENT_NAME[lead.agent].split(" ")[0], dim: true, title: AGENT_NAME[lead.agent] };
   if (focus.running) return { kind: "focus", label: focus.label, dim: focus.paused };
   if (lead) return { kind: "agent", label: elapsed(Date.now() - lead.started), dim: false, title: AGENT_NAME[lead.agent] };
+  const d = downloads[0];
+  if (d) return { kind: "download", label: d.total ? pct((d.bytes / d.total) * 100) : bytes(d.bytes), dim: false, title: d.name };
   // Music only while it plays; a paused song gives the spot back to CPU.
   const n = media.now;
   if (n?.playing) return { kind: "media", label: n.title, dim: false };
@@ -459,7 +510,7 @@ const quiet = () => modes.state.mode === "fokus";
 
 function applyMode(s: ModeState, announce = false) {
   // Switched-off features stop their background work, not just their UI.
-  void invoke("set_features", { sistem: isOn(s, "sistem"), clip: isOn(s, "clip"), perintah: isOn(s, "perintah"), meeting: isOn(s, "meeting"), musik: isOn(s, "musik"), ai: isOn(s, "ai") });
+  void invoke("set_features", { sistem: isOn(s, "sistem"), clip: isOn(s, "clip"), perintah: isOn(s, "perintah"), meeting: isOn(s, "meeting"), musik: isOn(s, "musik"), ai: isOn(s, "ai"), tangkap: isOn(s, "tangkap"), unduh: isOn(s, "unduh") });
   // "Today" in AI usage starts at local midnight.
   void invoke("agents_set_offset", { minutes: -new Date().getTimezoneOffset() });
   if (!isOn(s, "musik")) media.set(null); // the backend's empty "media" event then stops the meter
@@ -648,6 +699,12 @@ shell.addEventListener("click", (e) => {
     if (said) window.setTimeout(() => peek(peekLine(icon.check, "var(--ok)", esc(said), ""), 1600), 450);
     return;
   }
+  const dlBtn = el.closest<HTMLElement>("[data-dl]");
+  if (dlBtn) return void downloadAct(dlBtn.dataset.dl!);
+  const shotBtn = el.closest<HTMLElement>("[data-shot]");
+  if (shotBtn) return void shotAct(shotBtn.dataset.shot!);
+  const ans = el.closest<HTMLElement>("[data-act=answer]");
+  if (ans) return void answerAsk(ans.dataset.id!, ans.dataset.answer!);
   const to = el.closest<HTMLElement>("[data-open]");
   if (to) return open(to.dataset.open as Tab);
   const off = el.closest<HTMLElement>("[data-offer]");
@@ -794,6 +851,94 @@ syncMeter();
 // Reminders start last: one missed while the app was closed shows right away.
 reminders.start();
 
+/* ---------- downloads ---------- */
+
+let lastDone: { path: string; name: string; bytes: number } | null = null;
+
+await listen<Download[]>("downloads", ({ payload }) => {
+  downloads = isOn(modes.state, "unduh") ? payload : [];
+  renderCompact(lastStats, badge(), playingArt());
+  if (mode === "compact") go(compactSize(), "hover");
+});
+
+await listen<{ path: string; name: string; bytes: number }>("download-done", ({ payload: f }) => {
+  lastDone = f;
+  if (quiet() || mode === "open") return;
+  const shelfBtn = isOn(modes.state, "rak") ? `<button data-dl="shelf">${icon.tray}<span>${t("shot.shelf")}</span></button>` : "";
+  peek(
+    `<span class="ic" style="color:var(--ok)">${icon.ok}</span>
+     <div class="peek-main"><div class="t clamp1">${esc(f.name)}</div><div class="s">${esc(t("dl.done", { size: bytes(f.bytes) }))}</div>
+       <div class="peek-acts"><button class="primary" data-dl="open">${t("dl.open")}</button>
+         <button data-dl="reveal">${t(mac ? "dl.revealMac" : "dl.reveal")}</button>${shelfBtn}</div></div>`,
+    8000,
+    true,
+  );
+});
+
+async function downloadAct(act: string) {
+  const f = lastDone;
+  if (!f) return;
+  compact();
+  try {
+    if (act === "open") await invoke("download_open", { path: f.path });
+    else if (act === "reveal") await invoke("download_reveal", { path: f.path });
+    else if (act === "shelf") {
+      await shelf.add([f.path]);
+      home.refresh();
+      toast(t("shot.onShelf"));
+    }
+  } catch (err) {
+    toast(errorText(err));
+  }
+}
+
+/* ---------- smart screenshots ---------- */
+
+interface Shot {
+  path: string;
+  name: string;
+  thumb: string | null;
+  size: [number, number] | null;
+}
+let lastShot: Shot | null = null;
+
+await listen<Shot>("screenshot", ({ payload: s }) => {
+  lastShot = s;
+  if (quiet() || mode === "open") return;
+  const pic = s.thumb ? `<img class="shot-thumb" alt="" src="${s.thumb}">` : `<span class="ic">${icon.image}</span>`;
+  const shelfBtn = isOn(modes.state, "rak") ? `<button data-shot="shelf">${icon.tray}<span>${t("shot.shelf")}</span></button>` : "";
+  peek(
+    `${pic}<div class="peek-main"><div class="t">${t("shot.title")}</div>${s.size ? `<div class="s num">${s.size[0]} × ${s.size[1]} px</div>` : ""}
+       <div class="peek-acts"><button class="primary" data-shot="text">${icon.text}<span>${t("shot.text")}</span></button>
+         <button data-shot="image">${icon.copy}<span>${t("shot.image")}</span></button>${shelfBtn}</div></div>`,
+    9000,
+    true,
+  );
+});
+
+async function shotAct(act: string) {
+  const s = lastShot;
+  if (!s) return;
+  compact();
+  try {
+    if (act === "text") {
+      const text = await invoke<string>("shot_text", { path: s.path });
+      if (!text.trim()) return toast(t("shot.noText"));
+      await invoke("clip_write", { text });
+      toast(t("shot.textCopied", { key: pasteKey }));
+    } else if (act === "image") {
+      await invoke("shot_copy", { path: s.path });
+      toast(t("shot.imageCopied", { key: pasteKey }));
+    } else if (act === "shelf") {
+      await shelf.add([s.path]);
+      home.refresh();
+      toast(t("shot.onShelf"));
+    }
+  } catch (err) {
+    toast(errorText(err));
+  }
+}
+
 /** A paused player that ignored Play (its tab closed, or a page that can't resume). */
 await listen<string>("media-gone", ({ payload }) => toast(t("media.gone", { app: payload || t("media.player") })));
 
@@ -815,6 +960,8 @@ await listen<AgentEvent>("agent-event", ({ payload }) => {
   syncAgents();
   if (!n || mode === "open") return;
   const s = n.session;
+  // Claude Code also notifies about a permission request the island is already showing.
+  if (n.kind === "waiting" && ai.asks.some((a) => a.agent === s.agent)) return;
   if (n.kind === "waiting") {
     // A question blocks the agent, so it speaks even in Focus mode.
     chime();
@@ -829,6 +976,29 @@ await listen<AgentEvent>("agent-event", ({ payload }) => {
     const sub = s.place ? t("peek.agent.doneSub", { place: s.place, time: took(n.secs) }) : t("peek.agent.doneSubNoPlace", { time: took(n.secs) });
     peek(peekLine(icon.ok, "var(--ok)", esc(t("peek.agent.done", { agent: AGENT_NAME[s.agent] })), esc(sub)), 4500);
   }
+});
+
+/** A permission request: the command in full, and three answers. It waits 30 seconds. */
+await listen<Ask>("agent-ask", ({ payload: a }) => {
+  ai.asks = [...ai.asks, a];
+  ai.refresh();
+  if (mode === "open" && tab === "ai") return;
+  if (mode === "open") compact();
+  chime();
+  peek(
+    `<span class="ic" style="color:var(--warn)">${icon.hand}</span>
+     <div class="peek-main"><div class="t">${esc(t(askVerb(a.tool), { agent: AGENT_NAME[a.agent] }))}</div>
+       <code class="ask-code">${esc(a.summary || a.tool)}</code>
+       ${a.place ? `<div class="s">${esc(a.place)}</div>` : ""}
+       ${askButtons(a.id)}</div>`,
+    30_000,
+    true,
+  );
+});
+await listen<string>("agent-ask-done", ({ payload: id }) => {
+  ai.asks = ai.asks.filter((a) => a.id !== id);
+  ai.refresh();
+  if (mode === "peek" && $("#peekBody").querySelector(`[data-id="${CSS.escape(id)}"]`)) compact();
 });
 
 /** Codex limit warnings already shown, by window and threshold. */

@@ -12,6 +12,25 @@ export interface AgentEvent {
   session: string;
 }
 
+/** A permission request the island can answer. */
+export interface Ask {
+  id: string;
+  agent: AgentId;
+  place: string;
+  session: string;
+  tool: string;
+  summary: string;
+}
+
+/** What the agent wants to do, in words: the i18n key for the peek title. */
+export function askVerb(tool: string): "ask.run" | "ask.edit" | "ask.read" | "ask.web" | "ask.use" {
+  if (tool === "Bash") return "ask.run";
+  if (["Edit", "Write", "MultiEdit", "NotebookEdit"].includes(tool)) return "ask.edit";
+  if (["Read", "Glob", "Grep"].includes(tool)) return "ask.read";
+  if (["WebFetch", "WebSearch"].includes(tool)) return "ask.web";
+  return "ask.use";
+}
+
 export interface Session {
   id: string;
   agent: AgentId;

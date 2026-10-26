@@ -233,28 +233,42 @@ pub fn init(app: &AppHandle) -> tauri::Result<()> {
 
     let app = app.clone();
     thread::spawn(move || {
+        // One thread per connection: a permission request waits for an
+        // answer, and nothing else should wait behind it.
         for stream in listener.incoming().flatten() {
-            let done = match handle(stream, &token) {
-                Some(Request::Done(d)) => d,
-                Some(Request::Agent(e)) => {
-                    crate::agents::deliver(&app, e);
-                    continue;
-                }
-                None => continue,
-            };
-            {
-                if !ENABLED.load(Ordering::Relaxed) {
-                    continue;
-                }
-                if let Some(h) = STATE.lock().unwrap().as_mut() {
-                    h.recent.insert(0, done.clone());
-                    h.recent.truncate(8);
-                }
-                let _ = app.emit("command-done", done);
-            }
+            let (app, token) = (app.clone(), token.clone());
+            thread::spawn(move || serve(stream, &token, &app));
         }
     });
     Ok(())
+}
+
+fn serve(mut stream: TcpStream, token: &str, app: &AppHandle) {
+    let Some(raw) = read_request(&mut stream) else { return };
+    if let Some(ask) = crate::agents::parse_ask_request(&raw, token) {
+        let body = crate::agents::ask(app, ask);
+        let _ = stream.write_all(
+            format!("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}", body.len()).as_bytes(),
+        );
+        return;
+    }
+    let req = match crate::agents::parse_agent_request(&raw, token) {
+        Some(e) => Some(Request::Agent(e)),
+        None => parse_request(&raw, token).and_then(|f| to_done(&f)).map(Request::Done),
+    };
+    let status = if req.is_some() { "204 No Content" } else { "403 Forbidden" };
+    let _ = stream.write_all(format!("HTTP/1.1 {status}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n").as_bytes());
+    match req {
+        Some(Request::Agent(e)) => crate::agents::deliver(app, e),
+        Some(Request::Done(done)) if ENABLED.load(Ordering::Relaxed) => {
+            if let Some(h) = STATE.lock().unwrap().as_mut() {
+                h.recent.insert(0, done.clone());
+                h.recent.truncate(8);
+            }
+            let _ = app.emit("command-done", done);
+        }
+        _ => {}
+    }
 }
 
 enum Request {
@@ -262,7 +276,15 @@ enum Request {
     Agent(crate::agents::AgentEvent),
 }
 
+#[cfg(test)]
 fn handle(mut stream: TcpStream, token: &str) -> Option<Request> {
+    let raw = read_request(&mut stream)?;
+    let req = crate::agents::parse_agent_request(&raw, token).map(Request::Agent);
+    let _ = stream.write_all(b"HTTP/1.1 204 No Content\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
+    req
+}
+
+fn read_request(stream: &mut TcpStream) -> Option<String> {
     let _ = stream.set_read_timeout(Some(Duration::from_secs(2)));
     // Agent hooks send the whole prompt; anything past this is cut off, and
     // the fields we use come before it.
@@ -288,14 +310,7 @@ fn handle(mut stream: TcpStream, token: &str) -> Option<Request> {
             }
         }
     }
-    let raw = String::from_utf8_lossy(&buf[..len]).into_owned();
-    let req = match crate::agents::parse_agent_request(&raw, token) {
-        Some(e) => Some(Request::Agent(e)),
-        None => parse_request(&raw, token).and_then(|f| to_done(&f)).map(Request::Done),
-    };
-    let status = if req.is_some() { "204 No Content" } else { "403 Forbidden" };
-    let _ = stream.write_all(format!("HTTP/1.1 {status}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n").as_bytes());
-    req
+    Some(String::from_utf8_lossy(&buf[..len]).into_owned())
 }
 
 #[tauri::command]
@@ -399,6 +414,38 @@ mod agent_hook {
         assert_eq!(e.place, "My Shop");
         assert_eq!(e.session, "s9");
         assert_eq!(e.event, "notify");
+        let _ = std::fs::remove_dir_all(dir);
+    }
+}
+
+#[cfg(all(test, unix))]
+mod agent_ask {
+    use std::io::Write;
+    use std::net::TcpListener;
+    use std::process::{Command, Stdio};
+
+    /// The real ask script sends the request and prints whatever the island answers.
+    #[test]
+    fn ask_script_prints_the_answer() {
+        let dir = std::env::temp_dir().join(format!("gentra-agent-ask-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let port = listener.local_addr().unwrap().port();
+        std::fs::write(dir.join("endpoint"), format!("{port} tok9\n")).unwrap();
+        for (name, body) in crate::agents::hook_scripts() {
+            std::fs::write(dir.join(name), body).unwrap();
+        }
+        let mut child = Command::new("/bin/sh").arg(dir.join("agent-ask.sh")).arg("claude").stdin(Stdio::piped()).stdout(Stdio::piped()).spawn().unwrap();
+        child.stdin.take().unwrap().write_all(br#"{"tool_name":"Bash","tool_input":{"command":"ls"},"cwd":"/x/y"}"#).unwrap();
+        let (mut stream, _) = listener.accept().unwrap();
+        let raw = super::read_request(&mut stream).unwrap();
+        let req = crate::agents::parse_ask_request(&raw, "tok9").expect("a readable request");
+        assert_eq!(req.summary, "ls");
+        let body = crate::agents::answer_json(crate::agents::Answer::Allow);
+        stream.write_all(format!("HTTP/1.1 200 OK\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}", body.len()).as_bytes()).unwrap();
+        drop(stream);
+        let out = child.wait_with_output().unwrap();
+        assert_eq!(String::from_utf8_lossy(&out.stdout), body);
         let _ = std::fs::remove_dir_all(dir);
     }
 }

@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- **Approve from the notch.** When Claude Code asks for permission, the notch shows the command in full with Allow, Deny, and In terminal. Only your click decides; unanswered after 30 seconds, Claude Code asks in its own window. Connected before? Click Connect again in the AI tab once.
+- **Smart screenshots.** A new screenshot shows on the island with Copy text, Copy image, and Shelf. The text is read on your computer, with no upload.
+- **Download progress.** Files your browser is downloading show in the notch, with Open, Show in Finder, and Shelf when they finish.
+- Both new features are on in the Everyday and Dev modes.
+- **Fixed: buttons in the small island's messages could do nothing,** or something else. The last tab you had open stayed clickable underneath, even while the island was closed.
+- Messages after a click ("Text copied", errors) now show on the small island too, instead of only when it's open.
+
 ## 0.8.1
 
 - **Fixed: a browser video stuck on the island.** After you close the tab that was playing, a paused video on another open page (a Threads or Instagram post, say) no longer shows as now playing. Browser videos show once they have actually played, and a player that doesn't respond to Play within 3 seconds is hidden until it plays again.

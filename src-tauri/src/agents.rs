@@ -13,8 +13,8 @@ use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::io::{BufRead, BufReader, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicBool, AtomicI64, Ordering};
-use std::sync::Mutex;
+use std::sync::atomic::{AtomicBool, AtomicI64, AtomicU64, Ordering};
+use std::sync::{mpsc, Mutex};
 use std::thread;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
@@ -56,7 +56,7 @@ impl Agent {
     /// Hook events we listen to, and what each one means for the island.
     fn events(self) -> &'static [(&'static str, &'static str)] {
         match self {
-            Agent::Claude => &[("UserPromptSubmit", "start"), ("Notification", "notify"), ("Stop", "stop")],
+            Agent::Claude => &[("UserPromptSubmit", "start"), ("Notification", "notify"), ("Stop", "stop"), ("PermissionRequest", "ask")],
             Agent::Codex => &[("UserPromptSubmit", "start"), ("Stop", "stop")],
         }
     }
@@ -177,6 +177,135 @@ pub fn deliver(app: &AppHandle, e: AgentEvent) {
     }
 }
 
+/* ---------- permission requests, answered from the island ---------- */
+
+/// How long the island waits for your answer before the agent asks in the terminal instead.
+const ASK_WAIT: Duration = Duration::from_secs(30);
+const ASK_CURL_SECS: u64 = 40;
+const ASK_HOOK_TIMEOUT: u64 = 45;
+
+static ASK_ON: AtomicBool = AtomicBool::new(true);
+static ASK_ID: AtomicU64 = AtomicU64::new(1);
+static ASKS: Mutex<Option<HashMap<String, mpsc::Sender<Answer>>>> = Mutex::new(None);
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum Answer {
+    Allow,
+    Deny,
+    /// Leave it to the agent's own prompt.
+    Terminal,
+}
+
+#[derive(Serialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct AskRequest {
+    pub id: String,
+    pub agent: Agent,
+    pub place: String,
+    pub session: String,
+    /// "Bash", "Edit", "WebFetch", an MCP tool...
+    pub tool: String,
+    /// The part that matters: the command, the file, the address. Secrets masked.
+    pub summary: String,
+}
+
+/// `POST /ask?agent=claude` with the PermissionRequest hook's JSON.
+pub fn parse_ask_request(raw: &str, token: &str) -> Option<AskRequest> {
+    let (head, body) = raw.split_once("\r\n\r\n")?;
+    let mut lines = head.lines();
+    let mut start = lines.next()?.split_whitespace();
+    if start.next()? != "POST" {
+        return None;
+    }
+    let (path, query) = start.next()?.split_once('?')?;
+    if path != "/ask" {
+        return None;
+    }
+    let sent = lines
+        .filter_map(|l| l.split_once(':'))
+        .find(|(k, _)| k.trim().eq_ignore_ascii_case("x-gate-token"))
+        .map(|(_, v)| v.trim())?;
+    if sent != token {
+        return None;
+    }
+    let q: HashMap<String, String> = url::form_urlencoded::parse(query.as_bytes()).into_owned().collect();
+    let agent = Agent::from_id(q.get("agent")?)?;
+    // Unlike other events, a request we can't read in full isn't shown: you'd
+    // be approving something you can't see. The agent then asks as usual.
+    let v: Value = serde_json::from_str(body).ok()?;
+    let tool = v.get("tool_name")?.as_str()?.to_string();
+    let text = |k: &str| v.get(k).and_then(Value::as_str).unwrap_or("").to_string();
+    let place = text("cwd").trim_end_matches(['/', '\\']).rsplit(['/', '\\']).next().unwrap_or("").to_string();
+    Some(AskRequest {
+        id: format!("ask-{}", ASK_ID.fetch_add(1, Ordering::Relaxed)),
+        agent,
+        place,
+        session: text("session_id").chars().take(64).collect(),
+        summary: ask_summary(&tool, v.get("tool_input").unwrap_or(&Value::Null)),
+        tool,
+    })
+}
+
+/// What a person needs to see to decide: the command for Bash, the file for
+/// edits, the address for fetches, otherwise the input itself.
+pub fn ask_summary(tool: &str, input: &Value) -> String {
+    let field = |k: &str| input.get(k).and_then(Value::as_str).map(str::to_string);
+    let text = match tool {
+        "Bash" => field("command"),
+        _ => ["file_path", "notebook_path", "path", "url", "pattern", "query", "prompt"].iter().find_map(|k| field(k)),
+    }
+    .unwrap_or_else(|| if input.is_null() { String::new() } else { input.to_string() });
+    let text = crate::secret::redact(&text);
+    let mut out: String = text.chars().take(600).collect();
+    if text.chars().count() > 600 {
+        out.push('…');
+    }
+    out
+}
+
+/// The hook's reply for an answer; an empty reply keeps the agent's own prompt.
+pub fn answer_json(answer: Answer) -> String {
+    let decision = match answer {
+        Answer::Allow => json!({ "behavior": "allow" }),
+        Answer::Deny => json!({ "behavior": "deny", "message": "Denied from Gentra Island." }),
+        Answer::Terminal => return String::new(),
+    };
+    json!({ "hookSpecificOutput": { "hookEventName": "PermissionRequest", "decision": decision } }).to_string()
+}
+
+/// Shows the request on the island and waits for your answer, or gives up
+/// after ASK_WAIT so the agent asks in its own window.
+pub fn ask(app: &AppHandle, req: AskRequest) -> String {
+    if !ENABLED.load(Ordering::Relaxed) || !ASK_ON.load(Ordering::Relaxed) {
+        return String::new();
+    }
+    let (tx, rx) = mpsc::channel();
+    let id = req.id.clone();
+    ASKS.lock().unwrap().get_or_insert_with(HashMap::new).insert(id.clone(), tx);
+    let _ = app.emit("agent-ask", &req);
+    let answer = rx.recv_timeout(ASK_WAIT).unwrap_or(Answer::Terminal);
+    ASKS.lock().unwrap().get_or_insert_with(HashMap::new).remove(&id);
+    let _ = app.emit("agent-ask-done", &id);
+    answer_json(answer)
+}
+
+#[tauri::command]
+pub fn agents_answer(id: String, answer: String) -> Result<(), String> {
+    let answer = match answer.as_str() {
+        "allow" => Answer::Allow,
+        "deny" => Answer::Deny,
+        "terminal" => Answer::Terminal,
+        _ => return Err("bad_action".into()),
+    };
+    let tx = ASKS.lock().unwrap().get_or_insert_with(HashMap::new).remove(&id).ok_or("ask_gone")?;
+    tx.send(answer).map_err(|_| "ask_gone".to_string())
+}
+
+#[tauri::command]
+pub fn agents_set_ask(on: bool) {
+    ASK_ON.store(on, Ordering::Relaxed);
+}
+
 /* ---------- connecting the hooks ---------- */
 
 /// Adds our hook to each event, once. Everything else in the file stays as it was.
@@ -200,7 +329,9 @@ pub fn merge_hooks(mut settings: Value, events: &[(&str, &str)], command: impl F
             continue;
         }
         let (cmd, windows) = command(meaning);
-        let mut entry = json!({ "type": "command", "command": cmd, "timeout": 5 });
+        // A permission request waits for your answer; everything else is instant.
+        let timeout = if *meaning == "ask" { ASK_HOOK_TIMEOUT } else { 5 };
+        let mut entry = json!({ "type": "command", "command": cmd, "timeout": timeout });
         if let Some(w) = windows {
             entry["commandWindows"] = json!(w);
         }
@@ -234,6 +365,11 @@ pub fn is_connected(settings: &Value) -> bool {
     settings.get("hooks").is_some_and(|h| h.to_string().contains(MARKER))
 }
 
+/// Connected before permission requests existed: Connect again adds just that hook.
+pub fn can_ask(settings: &Value) -> bool {
+    settings.pointer("/hooks/PermissionRequest").is_some_and(|h| h.to_string().contains(MARKER))
+}
+
 /// The scripts each hook runs: they forward the event and never block the agent.
 pub fn hook_scripts() -> Vec<(&'static str, String)> {
     vec![
@@ -244,6 +380,26 @@ pub fn hook_scripts() -> Vec<(&'static str, String)> {
                  dir=\"$(cd \"$(dirname \"$0\")\" && pwd)\"\n\
                  read -r port token < \"$dir/endpoint\" 2>/dev/null || exit 0\n\
                  curl -s -m 1 -o /dev/null -X POST -H \"X-Gate-Token: $token\" -H \"Content-Type: application/json\" --data-binary @- \"http://127.0.0.1:$port/agent?agent=$1&event=$2\" >/dev/null 2>&1\n\
+                 exit 0\n"
+            ),
+        ),
+        (
+            "agent-ask.sh",
+            format!(
+                "#!/bin/sh\n# {MARKER}: asks Gentra Island to answer a permission request. Prints the answer, or nothing.\n\
+                 dir=\"$(cd \"$(dirname \"$0\")\" && pwd)\"\n\
+                 read -r port token < \"$dir/endpoint\" 2>/dev/null || exit 0\n\
+                 curl -s -m {ASK_CURL_SECS} -X POST -H \"X-Gate-Token: $token\" -H \"Content-Type: application/json\" --data-binary @- \"http://127.0.0.1:$port/ask?agent=$1\" 2>/dev/null\n\
+                 exit 0\n"
+            ),
+        ),
+        (
+            "agent-ask.ps1",
+            format!(
+                "# {MARKER}: asks Gentra Island to answer a permission request. Prints the answer, or nothing.\n\
+                 param($agent)\n\
+                 $e = (Get-Content (Join-Path $PSScriptRoot 'endpoint') -ErrorAction SilentlyContinue) -split ' '\n\
+                 if ($e.Count -eq 2) {{\n  $body = [Console]::In.ReadToEnd()\n  try {{ $r = Invoke-WebRequest -UseBasicParsing -Uri \"http://127.0.0.1:$($e[0])/ask?agent=$agent\" -Method Post -Headers @{{ 'X-Gate-Token' = $e[1] }} -ContentType 'application/json' -Body $body -TimeoutSec {ASK_CURL_SECS}; [Console]::Out.Write($r.Content) }} catch {{}}\n}}\n\
                  exit 0\n"
             ),
         ),
@@ -263,10 +419,13 @@ pub fn hook_scripts() -> Vec<(&'static str, String)> {
 /// Codex reads `commandWindows`; Claude Code has no such key, so it gets the
 /// command for the system it runs on.
 fn hook_command(dir: &Path, agent: Agent, meaning: &str) -> (String, Option<String>) {
-    let sh = dir.join("agent-hook.sh");
-    let ps = dir.join("agent-hook.ps1");
-    let unix = format!("/bin/sh '{}' {} {meaning} # {MARKER}", sh.display(), agent.id());
-    let win = format!("powershell -NoProfile -ExecutionPolicy Bypass -File \"{}\" {} {meaning} # {MARKER}", ps.display(), agent.id());
+    let (sh, ps, args) = if meaning == "ask" {
+        (dir.join("agent-ask.sh"), dir.join("agent-ask.ps1"), agent.id().to_string())
+    } else {
+        (dir.join("agent-hook.sh"), dir.join("agent-hook.ps1"), format!("{} {meaning}", agent.id()))
+    };
+    let unix = format!("/bin/sh '{}' {args} # {MARKER}", sh.display());
+    let win = format!("powershell -NoProfile -ExecutionPolicy Bypass -File \"{}\" {args} # {MARKER}", ps.display());
     match (agent, cfg!(windows)) {
         (Agent::Codex, true) => (win.clone(), Some(win)),
         (Agent::Codex, false) => (unix, Some(win)),
@@ -516,6 +675,8 @@ pub struct AgentStatus {
     /// The agent's folder exists on this computer.
     pub installed: bool,
     pub connected: bool,
+    /// Its permission requests can be answered from the island.
+    pub can_ask: bool,
     pub usage: Usage,
 }
 
@@ -532,8 +693,10 @@ pub fn agents_status() -> Vec<AgentStatus> {
 
 fn status_of(agent: Agent, usage: Usage) -> AgentStatus {
     let installed = agent.home().is_some_and(|h| h.is_dir());
-    let connected = agent.settings_file().and_then(|p| read_settings(&p).ok()).is_some_and(|v| is_connected(&v));
-    AgentStatus { agent, installed, connected, usage }
+    let settings = agent.settings_file().and_then(|p| read_settings(&p).ok());
+    let connected = settings.as_ref().is_some_and(is_connected);
+    let can_ask = settings.as_ref().is_some_and(can_ask);
+    AgentStatus { agent, installed, connected, can_ask, usage }
 }
 
 /// The UI's local time zone, in minutes east of UTC; "today" starts at local midnight.
@@ -688,6 +851,49 @@ mod tests {
         assert!(hook_command(dir, Agent::Codex, "stop").1.is_some());
         let claude = merge_hooks(json!({}), Agent::Claude.events(), |m| hook_command(dir, Agent::Claude, m));
         assert!(!claude.to_string().contains("commandWindows"));
+    }
+
+    #[test]
+    fn reads_a_permission_request() {
+        let body = r#"{"session_id":"s1","cwd":"/Users/a/shop","hook_event_name":"PermissionRequest","tool_name":"Bash","tool_input":{"command":"rm -rf node_modules","description":"Remove node_modules"}}"#;
+        let raw = format!("POST /ask?agent=claude HTTP/1.1\r\nX-Gate-Token: {TOKEN}\r\n\r\n{body}");
+        let a = parse_ask_request(&raw, TOKEN).unwrap();
+        assert_eq!(a.tool, "Bash");
+        assert_eq!(a.summary, "rm -rf node_modules");
+        assert_eq!(a.place, "shop");
+        // Wrong token, or a body cut short, is never shown.
+        assert!(parse_ask_request(&raw.replace(TOKEN, "nope"), TOKEN).is_none());
+        assert!(parse_ask_request(&raw[..raw.len() - 10], TOKEN).is_none());
+    }
+
+    #[test]
+    fn summarizes_what_matters_and_masks_secrets() {
+        assert_eq!(ask_summary("Edit", &json!({ "file_path": "/a/b.ts", "old_string": "x" })), "/a/b.ts");
+        assert_eq!(ask_summary("WebFetch", &json!({ "url": "https://x.dev", "prompt": "p" })), "https://x.dev");
+        let key = format!("sk-ant-api03-{}", "a".repeat(40));
+        assert!(!ask_summary("Bash", &json!({ "command": format!("curl -H 'x-api-key: {key}' x") })).contains(&key));
+        assert!(ask_summary("Bash", &json!({ "command": "y".repeat(900) })).ends_with('…'));
+    }
+
+    #[test]
+    fn answers_in_the_hook_format() {
+        let allow: Value = serde_json::from_str(&answer_json(Answer::Allow)).unwrap();
+        assert_eq!(allow["hookSpecificOutput"]["hookEventName"], "PermissionRequest");
+        assert_eq!(allow["hookSpecificOutput"]["decision"]["behavior"], "allow");
+        let deny: Value = serde_json::from_str(&answer_json(Answer::Deny)).unwrap();
+        assert_eq!(deny["hookSpecificOutput"]["decision"]["behavior"], "deny");
+        assert_eq!(answer_json(Answer::Terminal), "");
+    }
+
+    #[test]
+    fn the_permission_hook_waits_longer_and_uses_its_own_script() {
+        let dir = Path::new("/hook");
+        let s = merge_hooks(json!({}), Agent::Claude.events(), |m| hook_command(dir, Agent::Claude, m));
+        let ask = &s["hooks"]["PermissionRequest"][0]["hooks"][0];
+        assert_eq!(ask["timeout"], 45);
+        assert!(ask["command"].as_str().unwrap().contains("agent-ask.sh' claude #"));
+        assert!(can_ask(&s));
+        assert_eq!(s["hooks"]["Stop"][0]["hooks"][0]["timeout"], 5);
     }
 
     #[test]
