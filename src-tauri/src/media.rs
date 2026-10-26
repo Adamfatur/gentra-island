@@ -6,10 +6,17 @@
 //!   changes. Commands still work from any app and go straight to MediaRemote.
 //! - Windows: the system media session API (SMTC).
 //! - Linux: MPRIS over D-Bus.
+//!
+//! Browsers register a media session for any video on a page, including feed
+//! videos nobody played, and keep it after the tab that was playing closes.
+//! So browser media shows only once it has actually played, and anything that
+//! ignores a play command is hidden until it plays again.
 
+use std::collections::{HashMap, HashSet};
 use std::io::Cursor;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
+use std::time::{Duration, Instant};
 
 use base64::Engine;
 use serde::{Deserialize, Serialize};
@@ -17,6 +24,55 @@ use tauri::{AppHandle, Emitter};
 
 static ENABLED: AtomicBool = AtomicBool::new(false);
 static LAST: Mutex<Option<NowPlaying>> = Mutex::new(None);
+/// What the system reports, before hiding anything; publish compares against it.
+static RAW: Mutex<Option<NowPlaying>> = Mutex::new(None);
+/// When each item (app and title) was last seen playing.
+static SEEN: Mutex<Option<HashMap<String, Instant>>> = Mutex::new(None);
+/// Items that ignored a play command; shown again once they play.
+static HIDDEN: Mutex<Option<HashSet<String>>> = Mutex::new(None);
+
+/// A paused browser video stays on the island this long after it last played.
+const BROWSER_KEEP: Duration = Duration::from_secs(30 * 60);
+/// A player that hasn't started this long after Play is treated as gone.
+const PLAY_TIMEOUT: Duration = Duration::from_secs(3);
+
+fn key(n: &NowPlaying) -> String {
+    format!("{}\u{0}{}", n.app, n.title)
+}
+
+/// Browsers by the names macOS, Windows, and Linux give them.
+pub fn is_browser(app: &str) -> bool {
+    let a = app.to_lowercase();
+    let a = a.trim_end_matches(".exe");
+    ["chrome", "chromium", "safari", "edge", "msedge", "firefox", "brave", "opera", "vivaldi", "orion", "zen"]
+        .iter()
+        .any(|b| a.contains(b))
+        || a == "arc"
+}
+
+/// Whether the island should show an item the system reports.
+pub fn shows(playing: bool, browser: bool, last_played: Option<Duration>, hidden: bool) -> bool {
+    if playing {
+        return true;
+    }
+    if hidden {
+        return false;
+    }
+    !browser || last_played.is_some_and(|ago| ago < BROWSER_KEEP)
+}
+
+fn visible(n: &NowPlaying) -> bool {
+    let k = key(n);
+    let mut seen = SEEN.lock().unwrap();
+    let seen = seen.get_or_insert_with(HashMap::new);
+    let mut hidden = HIDDEN.lock().unwrap();
+    let hidden = hidden.get_or_insert_with(HashSet::new);
+    if n.playing {
+        seen.insert(k.clone(), Instant::now());
+        hidden.remove(&k);
+    }
+    shows(n.playing, is_browser(&n.app), seen.get(&k).map(Instant::elapsed), hidden.contains(&k))
+}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(rename_all = "camelCase")]
@@ -78,7 +134,20 @@ pub fn media_youtube_art(app: AppHandle, on: bool) {
 
 /// `toggle`, `next`, `previous`, or `seek` with `position` in seconds.
 #[tauri::command]
-pub fn media_control(action: String, position: Option<f64>) -> Result<(), String> {
+pub fn media_control(app: AppHandle, action: String, position: Option<f64>) -> Result<(), String> {
+    // Play on something paused: if it doesn't start, its page or player is gone.
+    let resuming = (action == "toggle").then(|| LAST.lock().unwrap().clone()).flatten().filter(|n| !n.playing);
+    if let Some(n) = resuming {
+        std::thread::spawn(move || {
+            std::thread::sleep(PLAY_TIMEOUT);
+            let raw = RAW.lock().unwrap().clone();
+            if raw.as_ref().is_some_and(|r| key(r) == key(&n) && !r.playing) {
+                HIDDEN.lock().unwrap().get_or_insert_with(HashSet::new).insert(key(&n));
+                let _ = app.emit("media-gone", &n.app);
+                publish(&app, raw);
+            }
+        });
+    }
     let action = match action.as_str() {
         "toggle" => Action::Toggle,
         "next" => Action::Next,
@@ -100,6 +169,8 @@ pub enum Action {
 /// Stores and announces a new state, if it differs from the last one.
 /// Artwork arrives once per track; later updates without it keep the old one.
 fn publish(app: &AppHandle, next: Option<NowPlaying>) {
+    *RAW.lock().unwrap() = next.clone();
+    let next = next.filter(visible);
     let mut last = LAST.lock().unwrap();
     let next = next.map(|mut n| {
         if n.art.is_none() {
@@ -701,6 +772,31 @@ mod tests {
         assert_eq!(tab_for(tabs, "Something else"), None);
     }
 
+
+    #[test]
+    fn knows_browsers_by_any_name() {
+        for b in ["Google Chrome", "Safari", "Microsoft Edge", "Arc", "Brave Browser", "Firefox", "chrome.exe", "msedge.exe", "Vivaldi"] {
+            assert!(is_browser(b), "{b}");
+        }
+        for a in ["Spotify", "Music", "VLC", "Podcasts", "Archive Utility"] {
+            assert!(!is_browser(a), "{a}");
+        }
+    }
+
+    #[test]
+    fn a_paused_browser_video_shows_only_after_it_played() {
+        let min = |m: u64| Some(Duration::from_secs(m * 60));
+        // A feed video that never played (Threads, Instagram) stays hidden.
+        assert!(!shows(false, true, None, false));
+        // One you paused a minute ago stays, for a while.
+        assert!(shows(false, true, min(1), false));
+        assert!(!shows(false, true, min(45), false));
+        // Spotify paused is still worth showing.
+        assert!(shows(false, false, None, false));
+        // Anything playing shows; anything that ignored Play hides until it plays.
+        assert!(shows(true, true, None, true));
+        assert!(!shows(false, false, min(1), true));
+    }
 
     #[test]
     fn nothing_playing_is_none() {

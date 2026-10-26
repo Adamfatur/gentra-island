@@ -530,4 +530,6 @@ export const id: Record<Key, Msg> = {
   "settings.island.note.notch": "Tetap di dalam notch sampai ada yang diputar atau berjalan, jadi menu aplikasi tidak tertutup. Arahkan kursor ke sana untuk melihat semuanya.",
   "settings.island.note.compact": "Selalu menampilkan ikon kecil di samping notch. Arahkan kursor untuk melihat angkanya.",
   "settings.island.note.wide": "Selalu menampilkan memori, CPU, dan yang sedang berjalan, tapi memakan sebagian ruang menu bar.",
+  "media.gone": "{app} tidak merespons, jadi disembunyikan sampai diputar lagi",
+  "media.player": "Pemutarnya",
 };

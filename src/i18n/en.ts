@@ -542,6 +542,8 @@ export const en = {
   "settings.island.note.notch": "Stays inside the notch until something is playing or running, so app menus stay clear. Point at it to see everything.",
   "settings.island.note.compact": "Always shows small icons beside the notch. Point at it to see the numbers.",
   "settings.island.note.wide": "Always shows memory, CPU, and what's live, at the cost of some room in the menu bar.",
+  "media.gone": "{app} didn't respond, so it's hidden until it plays again",
+  "media.player": "The player",
 };
 
 export type Key = keyof typeof en;

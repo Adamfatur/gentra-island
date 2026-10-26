@@ -794,6 +794,9 @@ syncMeter();
 // Reminders start last: one missed while the app was closed shows right away.
 reminders.start();
 
+/** A paused player that ignored Play (its tab closed, or a page that can't resume). */
+await listen<string>("media-gone", ({ payload }) => toast(t("media.gone", { app: payload || t("media.player") })));
+
 /* ---------- AI agents ---------- */
 
 let agentClock = 0;
