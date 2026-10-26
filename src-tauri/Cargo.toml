@@ -1,6 +1,6 @@
 [package]
 name = "gentra-island"
-version = "0.9.0"
+version = "0.9.1"
 description = "A Dynamic Island for macOS, Windows, and Linux"
 authors = ["Adam Faturahman"]
 license = "GPL-3.0-or-later"

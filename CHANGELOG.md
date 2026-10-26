@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.9.1
 
 - **Eyes in the notch.** Point at the notch and two eyes peek out, follow your pointer, blink, smile when a task is done, look up when something needs you, and nap while you're away. On a Mac with a notch they sit just below the camera, since the notch itself has no pixels. Settings has Off, Moments (the default, so nothing is covered), and Always.
 - **Smart screenshots work with ⌃⇧⌘4 too.** A screenshot copied straight to the clipboard, or any copied image, gets Copy text. Before, only screenshots saved as files did.
