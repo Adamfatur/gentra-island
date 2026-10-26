@@ -266,6 +266,8 @@ export const id: Record<Key, Msg> = {
   "guide.1.title.notch": "Hai, pulau ini ada di notch kamu",
   "guide.1.title.top": "Hai, pulau ini ada di bagian atas layar",
   "guide.1.body": "Arahkan kursor ke sini untuk melihat memori dan CPU. Klik untuk membuka clipboard, rak, timer fokus, dan pembersih. Setiap kali kamu menyalin sesuatu, pulau melebar sebentar untuk menunjukkannya.",
+  "guide.1.tray.mac": "Tidak ada ikon di Dock. Untuk membukanya lagi, klik G di menu bar.",
+  "guide.1.tray.other": "Tidak ada tombol di taskbar. Untuk membukanya lagi, klik G di system tray.",
   "guide.2.title": "Tiga pintasan yang perlu diingat",
   "guide.2.body": "Bisa dipakai dari aplikasi mana pun, termasuk yang layar penuh.",
   "guide.2.open": "Buka atau tutup pulau",

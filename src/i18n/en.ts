@@ -276,6 +276,8 @@ export const en = {
   "guide.1.title.notch": "Hi, the island lives in your notch",
   "guide.1.title.top": "Hi, the island lives at the top of your screen",
   "guide.1.body": "Hover over it to see memory and CPU. Click it to open your clipboard, shelf, focus timer, and cleaner. When you copy something, it widens for a moment to show what you copied.",
+  "guide.1.tray.mac": "It has no Dock icon. To find it again, click the G in your menu bar.",
+  "guide.1.tray.other": "It has no taskbar button. To find it again, click the G in your system tray.",
   "guide.2.title": "Three shortcuts worth remembering",
   "guide.2.body": "They work from any app, even in full screen.",
   "guide.2.open": "Open or close the island",

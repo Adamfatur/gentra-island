@@ -102,7 +102,7 @@ export class GuidePanel {
     const current = this.currentMode();
     const devNote = LOGIN_LAUNCH_AVAILABLE ? "" : `<small>${t("settings.login.devNote")}</small>`;
     const bodies = [
-      `<h4>${t(this.env.notched ? "guide.1.title.notch" : "guide.1.title.top")}</h4><p>${t("guide.1.body")}</p>`,
+      `<h4>${t(this.env.notched ? "guide.1.title.notch" : "guide.1.title.top")}</h4><p>${t("guide.1.body")}</p><p>${t(this.env.mac ? "guide.1.tray.mac" : "guide.1.tray.other")}</p>`,
       `<h4>${t("guide.2.title")}</h4><p>${t("guide.2.body")}</p>
        <div class="guide-keys">${keys.map(([k, d]) => `<span><kbd>${k}</kbd>${t(d)}</span>`).join("")}</div>`,
       `<h4>${t("guide.3.title")}</h4><p>${t("guide.3.body")}</p>

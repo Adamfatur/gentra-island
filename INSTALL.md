@@ -12,6 +12,8 @@ Works on Intel Macs and Apple silicon (M1 and newer), macOS 11 or later.
 
 If the Mac says it can't check the app for malware, the app isn't signed yet. Open **System Settings**, go to **Privacy & Security**, scroll down, and click **Open Anyway**. You only need to do this once.
 
+The first open can take a few minutes on some Macs while macOS checks the app, with nothing on screen yet. Wait a moment: the island then appears at the top of the screen with a short guide. There's no Dock icon; to find it again, click the **G** in the menu bar.
+
 ## Windows
 
 Works on Windows 10 and 11.

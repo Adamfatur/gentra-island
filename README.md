@@ -135,6 +135,7 @@ Get the file for your system from the [latest release](../../releases/latest). N
 2. Open it and drag **Gentra Island** into **Applications**.
 3. Open Gentra Island from Applications.
 4. If the Mac says it can't check the app for malware: open **System Settings**, go to **Privacy & Security**, scroll down, and click **Open Anyway**. This happens once, because the app isn't notarized by Apple yet.
+5. The first open can take a few minutes on some Macs while macOS checks the app, with nothing on screen yet. Wait a moment: the island then appears at the top of the screen with a short guide. There's no Dock icon; to find it again, click the **G** in the menu bar.
 
 ### Windows
 

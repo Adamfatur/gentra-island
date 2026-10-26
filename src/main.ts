@@ -768,7 +768,8 @@ await listen<Tab | "toggle">("open-tab", ({ payload }) => {
 
 const win = getCurrentWindow();
 await win.onFocusChanged(({ payload: focused }) => {
-  if (!focused && mode === "open" && openedByShortcut) compact();
+  // The guide stays until Skip or Done: at launch another app takes focus before anyone reads it.
+  if (!focused && mode === "open" && openedByShortcut && tab !== "guide") compact();
 });
 
 shell.addEventListener("click", (e) => {
