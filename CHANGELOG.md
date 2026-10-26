@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- **Pixel eyes.** The eyes are now small rounded squares that glow in your accent color, like a tiny friendly robot. Change the accent in Settings and they follow.
+- **Fixed:** the selected mode's outline was cut off at the top of the Modes panel. Card descriptions now line up across the row.
+
 ## 0.9.2
 
 - **The eyes sit beside the camera.** On a Mac with a notch, one eye now sits either side of the camera, in the menu bar, so they stay visible at rest without covering the windows below. Pointing at the notch shows memory and CPU as before. Always is now the default; Moments shows them only when something happens.
