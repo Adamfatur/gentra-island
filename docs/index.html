@@ -70,6 +70,7 @@
       --island: #000000; --island-edge: transparent; --on-island: #F4F4F6; --on-island-muted: #A3A3AD;
       --accent: #FF8FB1; --on-accent: #16161A; --link: #C2255C;
       --ease-pop: cubic-bezier(0.3, 1.35, 0.5, 1);
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
     }
     @media (prefers-color-scheme: dark) {
       :root {
@@ -194,66 +195,67 @@
     footer a { color: var(--ink); text-decoration: none; }
     footer a:hover { text-decoration: underline; }
 
-    /* ---------- scroll motion: tied to scroll position, CSS only ----------
-       Browsers without scroll-driven animations, and anyone who prefers
-       reduced motion, get the same page, still. */
+    /* ---------- the stage: real peeks floating around the notch ----------
+       Cards arrive from depth and settle, then drift with the pointer and the
+       scroll, each at its own depth. Transforms only; the loop sleeps when
+       nothing moves and stops when the stage is off screen. */
+    .stage { position: relative; width: min(1180px, 100% - 24px); margin: 56px auto 0; border-radius: 32px; overflow: hidden; color: #f4f4f6;
+      background: radial-gradient(45% 60% at 12% 70%, rgba(217, 121, 47, 0.55) 0%, transparent 70%), radial-gradient(45% 60% at 90% 30%, rgba(42, 109, 244, 0.55) 0%, transparent 70%), #07080c; }
+    .stage-inner { position: relative; height: 640px; }
+    .st-notch { position: absolute; left: 50%; top: 0; translate: -50% 0; width: 200px; height: 52px; border-radius: 0 0 20px 20px; background: #000; display: grid; place-items: end center; padding-bottom: 10px; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06); }
+    .st-eyes { display: flex; gap: 12px; transition: translate 260ms cubic-bezier(0.25, 0.8, 0.3, 1); }
+    .st-eyes i { width: 10px; height: 14px; border-radius: 50%; background: #f4f4f6; box-shadow: 0 0 7px rgba(255, 255, 255, 0.55); transition: scale 120ms ease; }
+    .st-eyes.blink i { scale: 1 0.08; }
+    .st-head { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; padding: 0 24px; pointer-events: none; }
+    .st-head h2 { color: #fff; font-size: clamp(28px, 4.2vw, 50px); max-width: 15ch; margin: 0 auto 12px; }
+    .st-head p { color: #b9b9c3; max-width: 40ch; margin: 0 auto; }
+    .float { position: absolute; will-change: transform; }
+    .pk { width: 300px; display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 18px; background: #000; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 18px 40px rgba(0, 0, 0, 0.45);
+      opacity: 0; filter: blur(10px); scale: 0.82; translate: var(--from, 0 40px);
+      transition: opacity 0.9s var(--ease-out), filter 0.9s var(--ease-out), scale 1.1s var(--ease-pop), translate 1.1s var(--ease-out); transition-delay: calc(var(--i) * 110ms); }
+    .stage.in .pk { opacity: 1; filter: none; scale: 1; translate: 0 0; }
+    .pk .ic { width: 34px; height: 34px; flex: none; border-radius: 9px; background: #222228; display: grid; place-items: center; font-size: 16px; }
+    .pk .ic svg { width: 18px; height: 18px; }
+    .pk .art { width: 40px; height: 40px; border-radius: 9px; flex: none; background: linear-gradient(135deg, #ff7a59, #6a3df0); position: relative; }
+    .pk .art::after { content: ""; position: absolute; left: 50%; top: 40%; width: 14px; height: 14px; translate: -50% -50%; border-radius: 50%; background: #ffd166; }
+    .pk .thumb { width: 54px; height: 36px; flex: none; border-radius: 6px; background: linear-gradient(135deg, #5ac8fa, #b18cff); box-shadow: inset 0 0 0 5px #11141c; }
+    .pk b { display: block; font-size: 13.5px; font-weight: 700; color: #fff; }
+    .pk small { display: block; font-size: 12px; color: #a3a3ad; }
+    .pk code { display: block; margin-top: 6px; font: 500 11.5px/1.4 ui-monospace, "SF Mono", Menlo, monospace; color: #f4f4f6; background: #1c1c22; border-radius: 7px; padding: 5px 8px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+    .chips span { font-size: 11.5px; font-weight: 700; padding: 4px 9px; border-radius: 7px; background: #2a2a31; color: #f4f4f6; }
+    .chips span:first-child { background: #5ac8fa; color: #08080a; }
+    .stage .tag { position: absolute; left: 24px; bottom: 20px; color: #8d8d96; font-size: 13px; }
 
-    /* The story without motion: four rows, picture then words. */
-    #story .st { display: grid; grid-template-columns: 1.3fr 1fr; gap: clamp(20px, 4vw, 48px); align-items: center; width: min(1120px, 100% - 32px); margin: 0 auto clamp(40px, 6vw, 72px); }
-    #story .st img { width: 100%; height: auto; border-radius: 18px; background: #10131c; }
-    #story .kicker { display: block; color: var(--link); font-weight: 700; font-size: 14px; margin-bottom: 8px; }
-    #story h3 { font-size: clamp(26px, 3.4vw, 44px); line-height: 1.08; letter-spacing: -0.025em; font-weight: 800; margin: 0 0 12px; text-wrap: balance; }
-    #story .st p { color: var(--muted); margin: 0; max-width: 38ch; }
-    .story-dots { display: none; }
+    /* ---------- every feature, at a glance ---------- */
+    .all { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; margin-top: 8px; }
+    .all > div { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 18px; }
+    .all b { display: flex; align-items: center; gap: 8px; font-size: 16.5px; margin-bottom: 4px; }
+    .all span { color: var(--muted); font-size: 15px; }
+    .all .new { font-size: 11px; font-weight: 800; letter-spacing: 0.02em; padding: 2px 7px; border-radius: 99px; background: var(--accent); color: var(--on-accent); }
+    .all-free { display: inline-flex; align-items: center; gap: 8px; margin: 0 0 22px; padding: 8px 14px; border-radius: 99px; background: var(--surface); border: 1px solid var(--line); font-weight: 700; }
+    .all-free::before { content: "✓"; color: var(--link); font-weight: 800; }
 
-    @supports (animation-timeline: view()) {
-      @media (prefers-reduced-motion: no-preference) {
-        /* The demo opens out of the notch: the video starts clipped to the island's shape. */
-        .demo-scroll { height: 190vh; view-timeline: --demo block; }
-        .demo { position: sticky; top: max(24px, calc(50vh - 260px)); }
-        .demo video { animation: demo-open linear both; animation-timeline: --demo; animation-range: contain 0% contain 55%; }
-        .demo p { animation: fade-in linear both; animation-timeline: --demo; animation-range: contain 45% contain 60%; }
-
-        /* The story: one pinned screen; each step takes a quarter of the scroll. */
-        #story { height: 460vh; padding: 0; view-timeline: --story block; }
-        .story-pin { position: sticky; top: 0; height: 100vh; display: grid; align-items: center; }
-        .story-steps { position: relative; width: min(1120px, 100% - 32px); margin: 0 auto; height: min(78vh, 640px); }
-        #story .st { position: absolute; inset: 0; width: auto; margin: 0; grid-template-columns: 1.5fr 1fr; opacity: 0; }
-        #story .st img { align-self: center; }
-        .st1 { animation: step-first linear both; animation-timeline: --story; animation-range: contain 0% contain 25%; }
-        .st2 { animation: step linear both; animation-timeline: --story; animation-range: contain 20% contain 50%; }
-        .st3 { animation: step linear both; animation-timeline: --story; animation-range: contain 45% contain 75%; }
-        .st4 { animation: step-last linear both; animation-timeline: --story; animation-range: contain 70% contain 100%; }
-        .story-dots { display: flex; gap: 6px; position: absolute; left: max(16px, calc(50% - 560px)); bottom: 6vh; }
-        .story-dots i { width: 26px; height: 3px; border-radius: 2px; background: var(--line); overflow: hidden; }
-        .story-dots i::after { content: ""; display: block; height: 100%; background: var(--ink); transform-origin: left; scale: 0 1; animation: dot-fill linear both; animation-timeline: --story; }
-        .story-dots i:nth-child(1)::after { animation-range: contain 0% contain 25%; }
-        .story-dots i:nth-child(2)::after { animation-range: contain 25% contain 50%; }
-        .story-dots i:nth-child(3)::after { animation-range: contain 50% contain 75%; }
-        .story-dots i:nth-child(4)::after { animation-range: contain 75% contain 100%; }
-
-        /* Everything else rises in gently as it enters the screen. */
-        #features h2, #features .intro, .row > div, .pair > div, .more > div, .os, .reqs, .facts > div, #questions h2, details, .closing > * {
-          animation: rise linear both; animation-timeline: view(); animation-range: entry 0% cover 30%;
-        }
-        .row figure { animation: rise-pic linear both; animation-timeline: view(); animation-range: entry 0% cover 40%; }
-      }
-    }
-    @keyframes demo-open {
-      from { clip-path: inset(0 40% 88% 40% round 0 0 14px 14px); scale: 0.92; }
-      40% { clip-path: inset(0 30% 80% 30% round 0 0 22px 22px); }
-      to { clip-path: inset(0 0 0 0 round 20px); scale: 1; }
-    }
-    @keyframes fade-in { from { opacity: 0; } }
-    @keyframes step { 0% { opacity: 0; translate: 0 28px; } 20%, 80% { opacity: 1; translate: 0 0; } 100% { opacity: 0; translate: 0 -28px; } }
-    @keyframes step-first { 0%, 80% { opacity: 1; } 100% { opacity: 0; translate: 0 -28px; } }
-    @keyframes step-last { 0% { opacity: 0; translate: 0 28px; } 20%, 100% { opacity: 1; translate: 0 0; } }
-    @keyframes dot-fill { to { scale: 1 1; } }
-    @keyframes rise { from { opacity: 0; translate: 0 48px; } }
-    @keyframes rise-pic { from { opacity: 0; translate: 0 64px; scale: 0.94; } }
+    /* ---------- a coffee for the maker ---------- */
+    .coffee { display: grid; grid-template-columns: auto 1fr; gap: 28px; align-items: center; padding: clamp(24px, 4vw, 44px); border-radius: 28px; background: var(--surface); border: 1px solid var(--line); }
+    .coffee .cup { width: 92px; height: 92px; border-radius: 26px; display: grid; place-items: center; background: #6f4e37; color: #fff; }
+    .coffee .cup svg { width: 46px; height: 46px; }
+    .coffee h2 { margin-bottom: 8px; }
+    .coffee p { color: var(--muted); margin: 0 0 18px; max-width: 58ch; }
+    .coffee .acts { display: flex; flex-wrap: wrap; gap: 10px; }
+    .coffee .acts a { display: inline-flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 22px; border-radius: 14px; font-weight: 800; text-decoration: none; }
+    .coffee .pay { background: #6f4e37; color: #fff; }
+    .coffee .star { border: 1px solid var(--line); color: var(--ink); }
+    .coffee .acts svg { width: 18px; height: 18px; }
+    .hero-coffee { color: var(--on-island-muted); font-size: 15px; text-align: center; margin: 0; }
+    .hero-coffee a { color: var(--on-island); font-weight: 650; }
 
     @media (max-width: 820px) {
-      #story .st, #story .st:is(.st1, .st2, .st3, .st4) { grid-template-columns: 1fr; align-content: center; }
+      .stage-inner { height: auto; padding: 84px 16px 56px; display: grid; gap: 12px; }
+      .st-head { position: static; padding: 0 0 12px; }
+      .float { position: static; }
+      .pk { width: 100%; }
+      .coffee { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 820px) {
@@ -272,6 +274,7 @@
       .island, .island > *, .compact { animation: none; }
       .compact { display: none; }
       html { scroll-behavior: auto; }
+      .pk { opacity: 1; filter: none; scale: 1; translate: 0 0; transition: none; }
     }
   </style>
   <!-- Visitor counts: GoatCounter, no cookies and no personal data. The dashboard is public. -->
@@ -302,10 +305,35 @@
       </a>
       <p class="others" id="others">Also for <a href="#platforms">Mac, Windows, and Linux</a>. Free and open source, GPL-3.0.</p>
       <p class="status" id="status" role="status" aria-live="polite"></p>
+      <p class="hero-coffee">Free for good. If it helps you, <a href="#coffee">buy Adam a coffee</a>.</p>
     </div>
   </header>
 
-  <div class="demo-scroll">
+  <section class="stage" id="stage" aria-label="What the island shows you">
+    <div class="stage-inner">
+      <div class="st-notch" aria-hidden="true"><span class="st-eyes" id="stEyes"><i></i><i></i></span></div>
+      <div class="st-head">
+        <h2>Everything comes to the notch</h2>
+        <p>Your agents, your screenshots, your music, and a nudge to drink water. Right where you look, and gone when you're done.</p>
+      </div>
+      <div class="float" data-depth="1" style="left:3%;top:15%">
+        <div class="pk" style="--i:0;--from:-60px 30px"><span class="ic" style="color:#ffb547"><svg aria-hidden="true" viewBox="0 0 256 256" fill="currentColor"><path d="M216,104v48a88,88,0,0,1-176,0V64a16,16,0,0,1,32,0v56a8,8,0,0,0,16,0V32a16,16,0,0,1,32,0v80a8,8,0,0,0,16,0V48a16,16,0,0,1,32,0v80.67A48.08,48.08,0,0,0,128,176a8,8,0,0,0,16,0,32,32,0,0,1,32-32,8,8,0,0,0,8-8V104a16,16,0,0,1,32,0Z"/></svg></span><div><b>Claude Code wants to run a command</b><code>npm test -- --coverage</code><div class="chips"><span>Allow</span><span>Deny</span><span>In terminal</span></div></div></div>
+      </div>
+      <div class="float" data-depth="0.65" style="right:3%;top:12%">
+        <div class="pk" style="--i:1;--from:60px 30px"><span class="thumb"></span><div><b>Screenshot saved</b><small>2940 × 1912 px</small><div class="chips"><span>Copy text</span><span>Copy image</span></div></div></div>
+      </div>
+      <div class="float" data-depth="0.45" style="left:6%;bottom:12%">
+        <div class="pk" style="--i:2;--from:-60px -20px"><span class="ic" style="color:#5ac8fa"><svg aria-hidden="true" viewBox="0 0 256 256" fill="currentColor"><path d="M174,47.75a254.19,254.19,0,0,0-41.45-38.3,8,8,0,0,0-9.18,0A254.19,254.19,0,0,0,82,47.75C54.51,79.32,40,112.6,40,144a88,88,0,0,0,176,0C216,112.6,201.49,79.32,174,47.75ZM56,144c0-57.23,55.47-105,72-118V216A72.08,72.08,0,0,1,56,144Z"/></svg></span><div><b>Have a glass of water?</b><small>It's been a while. A few sips keep your head clear.</small><div class="chips"><span>Got it</span><span>Later</span></div></div></div>
+      </div>
+      <div class="float" data-depth="0.9" style="right:5%;bottom:16%">
+        <div class="pk" style="--i:3;--from:60px -20px"><span class="art"></span><div><b>Kisah Klasik Untuk Masa Depan</b><small>Sheila on 7, playing in Spotify</small></div></div>
+      </div>
+      <div class="float" data-depth="0.3" style="left:calc(50% - 150px);bottom:4%">
+        <div class="pk" style="--i:4;--from:0 50px"><span class="ic" style="color:#3ddc84"><svg aria-hidden="true" viewBox="0 0 256 256" fill="currentColor"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm45.66,85.66-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z"/></svg></span><div><b>Claude Code is done</b><small>gentra-island, took 4 min</small></div></div>
+      </div>
+    </div>
+  </section>
+
   <div class="demo">
     <video autoplay muted loop playsinline preload="metadata" poster="screenshots/home.png" width="760" height="330" aria-label="Gentra Island opening from the notch: Home, Media, Clipboard, Dev, and AI, then Claude Code asking for permission and a reminder to drink water">
       <source src="screenshots/demo.mp4" type="video/mp4">
@@ -313,30 +341,32 @@
     </video>
     <p>The real app, recorded from its preview with sample data.</p>
   </div>
-  </div>
 
   <main>
-    <section id="story" aria-label="A day with Gentra Island">
-      <div class="story-pin">
-        <div class="story-steps">
-          <div class="st st1">
-            <img src="screenshots/compact.png" width="1520" height="144" loading="lazy" alt="The small island beside the notch, with album art on the left and a level meter on the right">
-            <div><span class="kicker">While you work</span><h3>Barely wider than the notch.</h3><p>Music playing? You see the cover and a small meter. Your menus stay where they are.</p></div>
-          </div>
-          <div class="st st2">
-            <img src="screenshots/agent-peek.png" width="1520" height="316" loading="lazy" alt="A peek from the notch: Claude Code needs you, Claude needs your permission to use Bash, with a Show button">
-            <div><span class="kicker">When it matters</span><h3>Claude Code needs you.</h3><p>The question shows in the notch the moment the agent stops to ask.</p></div>
-          </div>
-          <div class="st st3">
-            <img src="screenshots/ai.png" width="1520" height="1040" loading="lazy" alt="The AI tab: Claude Code waiting for permission, Codex working, tokens used, and Codex's limits">
-            <div><span class="kicker">At a glance</span><h3>Every agent, every token.</h3><p>What's running, what's waiting, and how much of this 5-hour window you've used.</p></div>
-          </div>
-          <div class="st st4">
-            <img src="screenshots/care-water.png" width="1520" height="316" loading="lazy" alt="A reminder from the notch: Have a glass of water? with Got it, Later, and Not today">
-            <div><span class="kicker">And for you</span><h3>Have a glass of water?</h3><p>After a long stretch at the keyboard, a gentle nudge. Never during calls, and never more than 8 a day.</p></div>
-          </div>
+    <section id="all">
+      <div class="wrap">
+        <h2>Every feature, free</h2>
+        <p class="all-free">Nothing to unlock. All of this is in the one free download.</p>
+        <div class="all">
+          <div><b>Approve Claude Code <span class="new">New</span></b><span>Allow or deny its permission requests from the notch, with the command in full.</span></div>
+          <div><b>Smart screenshots <span class="new">New</span></b><span>Copy the text out of any screenshot or copied image, read on your computer.</span></div>
+          <div><b>Download progress <span class="new">New</span></b><span>See a download arrive, then open it or find it in one click.</span></div>
+          <div><b>Eyes in the notch <span class="new">New</span></b><span>They look toward your pointer, blink, and smile when a task is done.</span></div>
+          <div><b>AI agents</b><span>Claude Code and Codex: working, needs you, or done, plus your token use.</span></div>
+          <div><b>Gentle care</b><span>A break, water, lunch, dinner, and bed, never more than 8 nudges a day.</span></div>
+          <div><b>Now playing</b><span>Spotify, Apple Music, YouTube, and more, with artwork and controls.</span></div>
+          <div><b>Clipboard history</b><span>Search, pin, decode JWTs and timestamps, and keep secrets off the disk.</span></div>
+          <div><b>Reminders from copies</b><span>Copy "meeting at 3 pm" and the island offers to remind you.</span></div>
+          <div><b>Shelf</b><span>Drop files on the island, drag them out later, or AirDrop them.</span></div>
+          <div><b>Focus timer</b><span>5 to 50 minutes, counting down in the notch.</span></div>
+          <div><b>System monitor</b><span>Memory pressure, CPU, network, and the hungriest apps.</span></div>
+          <div><b>Safe cleaner</b><span>Caches, old logs, and installers to the Trash. Never your files.</span></div>
+          <div><b>For developers</b><span>Local servers by port, and an alert when a long command finishes.</span></div>
+          <div><b>For calls</b><span>Which app has your mic, the call time, mute, and a camera mirror.</span></div>
+          <div><b>Stays in the notch</b><span>Your menus stay visible. Compact and Wide if you want more.</span></div>
+          <div><b>Modes</b><span>Compact, Everyday, Dev, Meetings, or Focus. Off means it stops running.</span></div>
+          <div><b>English and Indonesian</b><span>Light or dark, any accent color, on Mac, Windows, and Linux.</span></div>
         </div>
-        <div class="story-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
       </div>
     </section>
 
@@ -365,16 +395,26 @@
           </div>
         </div>
 
-        <div class="pair">
+        <div class="row spotlight">
+          <figure><img src="screenshots/screenshot.png" width="1520" height="316" loading="lazy" alt="A new screenshot on the island with Copy text, Copy image, and Shelf"></figure>
           <div>
-            <figure><img src="screenshots/screenshot.png" width="1520" height="316" loading="lazy" alt="A new screenshot on the island with Copy text, Copy image, and Shelf"></figure>
             <h3>Copy the text out of any screenshot</h3>
             <p>Take a screenshot as usual. It shows on the island, and Copy text puts the words in it on your clipboard. Read on your computer, with no upload.</p>
+            <p>It works the way you already take them: saved to the Desktop, copied straight to the clipboard with ⌃⇧⌘4, or any image you copy from the web. Error messages, a slide, a receipt, a page you can't select: one click and the text is yours to paste.</p>
+            <span class="try">Vision on a Mac, the built-in OCR on Windows, tesseract on Linux. Nothing leaves your computer.</span>
           </div>
+        </div>
+
+        <div class="pair">
           <div>
             <figure><img src="screenshots/download.png" width="1520" height="316" loading="lazy" alt="A finished download on the island with Open, Show in Finder, and Shelf"></figure>
             <h3>Downloads, right in the notch</h3>
             <p>See a file arrive while your browser downloads it, then open it or find it in one click when it's done.</p>
+          </div>
+          <div>
+            <figure><img src="screenshots/eyes.png" width="1520" height="180" loading="lazy" alt="Two small eyes in a band just below the notch"></figure>
+            <h3>A little character in your notch</h3>
+            <p>Point at the notch and two eyes peek out and follow your pointer. They smile when a task is done, look up when something needs you, and nap while you're away. Off, Moments, or Always, in Settings.</p>
           </div>
         </div>
 
@@ -478,6 +518,22 @@
       </div>
     </section>
 
+    <section id="coffee">
+      <div class="wrap">
+        <div class="coffee">
+          <span class="cup" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V9Zm13 1h1.5a2.5 2.5 0 0 1 0 5H17v-1.6h1.5a.9.9 0 0 0 0-1.8H17V10ZM7 3.5c.6.7.6 1.6 0 2.3M10.5 3.5c.6.7.6 1.6 0 2.3M14 3.5c.6.7.6 1.6 0 2.3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path fill="currentColor" d="M3 20.5h15v1.5H3z"/></svg></span>
+          <div>
+            <h2>Buy Adam a coffee</h2>
+            <p>Gentra Island is free and stays free, with no paid version and nothing locked. It's made by one person, Adam Faturahman, in his own time. If it saves you a few minutes a day, a coffee helps keep it going. It's optional, and the app is the same either way.</p>
+            <div class="acts">
+              <a class="pay" href="https://paypal.me/adamfaturahman" data-goatcounter-click="coffee-paypal"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7.1 21H4.4a.6.6 0 0 1-.6-.7L6.6 3.6c.1-.4.4-.6.8-.6h6.1c3.6 0 5.6 1.8 5.1 4.9-.5 3.3-2.8 5-6.3 5H10a.8.8 0 0 0-.8.7L8.1 20.3a.8.8 0 0 1-.8.7Z"/></svg>Buy a coffee with PayPal</a>
+              <a class="star" href="https://github.com/Adamfatur/gentra-island" data-goatcounter-click="coffee-star"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3Z"/></svg>Or give it a star on GitHub</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section id="questions">
       <div class="wrap">
         <h2>Questions</h2>
@@ -559,6 +615,66 @@
       } catch {
         status.innerHTML = 'Couldn\'t reach GitHub just now. Every download is on the <a href="https://github.com/Adamfatur/gentra-island/releases/latest" style="color:inherit">releases page</a>.';
       }
+    })();
+  </script>
+  <script>
+    // The stage: peeks settle in when it comes into view, then drift with the
+    // pointer and the scroll at their own depth. The loop runs only while
+    // something is still moving and the stage is on screen.
+    (() => {
+      const stage = document.getElementById("stage");
+      const eyes = document.getElementById("stEyes");
+      const floats = [...stage.querySelectorAll("[data-depth]")];
+      const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const narrow = matchMedia("(max-width: 820px)");
+      const io = new IntersectionObserver(([e]) => {
+        visible = e.isIntersecting;
+        if (visible) { stage.classList.add("in"); wake(); }
+      }, { threshold: 0.15 });
+      let visible = false, raf = 0;
+      const target = { x: 0, y: 0 }, cur = { x: 0, y: 0, s: 0 };
+      io.observe(stage);
+      if (still) return;
+
+      addEventListener("pointermove", (e) => {
+        if (!visible) return;
+        const r = stage.getBoundingClientRect();
+        target.x = Math.max(-1, Math.min(1, (e.clientX - (r.left + r.width / 2)) / (r.width / 2)));
+        target.y = Math.max(-1, Math.min(1, (e.clientY - (r.top + r.height / 2)) / (r.height / 2)));
+        // The notch's eyes look toward the pointer too.
+        const n = eyes.getBoundingClientRect();
+        const dx = e.clientX - (n.left + n.width / 2), dy = e.clientY - (n.top + n.height / 2);
+        eyes.style.translate = `${Math.max(-7, Math.min(7, dx / 60)).toFixed(1)}px ${Math.max(-3, Math.min(3, dy / 90)).toFixed(1)}px`;
+        wake();
+      }, { passive: true });
+      addEventListener("scroll", () => visible && wake(), { passive: true });
+
+      function wake() { if (!raf) raf = requestAnimationFrame(tick); }
+      function tick() {
+        raf = 0;
+        if (!visible) return;
+        const r = stage.getBoundingClientRect();
+        // -1 when the stage enters from below, 1 as it leaves at the top.
+        const s = Math.max(-1, Math.min(1, (innerHeight / 2 - (r.top + r.height / 2)) / innerHeight));
+        cur.x += (target.x - cur.x) * 0.08;
+        cur.y += (target.y - cur.y) * 0.08;
+        cur.s += (s - cur.s) * 0.12;
+        const pointer = narrow.matches ? 0 : 1;
+        for (const f of floats) {
+          const d = Number(f.dataset.depth);
+          f.style.transform = `translate3d(${(cur.x * d * 26 * pointer).toFixed(2)}px, ${(cur.y * d * 16 * pointer - cur.s * d * 70).toFixed(2)}px, 0)`;
+        }
+        const moving = Math.abs(target.x - cur.x) + Math.abs(target.y - cur.y) + Math.abs(s - cur.s) > 0.002;
+        if (moving) raf = requestAnimationFrame(tick);
+      }
+
+      // A blink every few seconds, only while the stage is on screen.
+      (function blink() {
+        setTimeout(() => {
+          if (visible) { eyes.classList.add("blink"); setTimeout(() => eyes.classList.remove("blink"), 130); }
+          blink();
+        }, 3000 + Math.random() * 4000);
+      })();
     })();
   </script>
 </body>
