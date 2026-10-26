@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.9.3
 
 - **Pixel eyes.** The eyes are now small rounded squares that glow in your accent color, like a tiny friendly robot. Change the accent in Settings and they follow.
 - **Fixed:** the selected mode's outline was cut off at the top of the Modes panel. Card descriptions now line up across the row.

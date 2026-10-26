@@ -1368,7 +1368,7 @@ dependencies = [
 
 [[package]]
 name = "gentra-island"
-version = "0.9.2"
+version = "0.9.3"
 dependencies = [
  "arboard",
  "base64 0.22.1",
