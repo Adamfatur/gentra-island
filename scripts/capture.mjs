@@ -26,6 +26,10 @@ const SHOTS = [
   ["reminder-offer", "reminder-offer"],
   ["reminder-pick", "reminder-pick"],
   ["reminder-due", "reminder-due"],
+  ["ai", "ai"],
+  ["agent-peek", "agent-peek"],
+  ["care", "care"],
+  ["care-water", "care-water"],
 ];
 
 /** The stage around the island, trimmed below the island's bottom edge. */
@@ -79,13 +83,15 @@ const box = await page.evaluate(() => {
 });
 await cdp.send("Page.startScreencast", { format: "jpeg", quality: 92, everyNthFrame: 1 });
 await page.waitForSelector("body[data-done]", { timeout: 60000 });
+// Frames only arrive when something changes; the last one lasts until here.
+const stoppedAt = Date.now() / 1000;
 await cdp.send("Page.stopScreencast");
 await ctx.close();
 await browser.close();
 
 // Each frame lasts until the next one arrived.
 const list = frames
-  .map((f, i) => `file '${f.file.split("/").pop()}'\nduration ${Math.max(0.001, ((frames[i + 1]?.t ?? f.t + 0.04) - f.t)).toFixed(3)}`)
+  .map((f, i) => `file '${f.file.split("/").pop()}'\nduration ${Math.max(0.001, (frames[i + 1]?.t ?? Math.max(stoppedAt, f.t + 0.04)) - f.t).toFixed(3)}`)
   .join("\n");
 await writeFile(join(VIDEO_DIR, "frames.txt"), `${list}\nfile '${frames.at(-1).file.split("/").pop()}'\n`);
 const crop = `crop=${box.width}:${box.height}:${box.x}:${box.y}`;

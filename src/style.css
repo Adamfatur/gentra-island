@@ -142,7 +142,7 @@ p { margin: 0; }
 /* Peeks with buttons: a reminder that's due, or an offer to set one. */
 .peek-main { min-width: 0; flex: 1; display: grid; gap: 2px; }
 .peek-body .clamp1 { max-width: 360px; }
-.peek-body .clamp2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; }
+.peek-body .clamp2 { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; }
 .peek-acts { display: flex; gap: 6px; margin-top: 6px; }
 .peek-acts button { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 8px; background: #2a2a31; color: #f4f4f6; font-size: 12px; font-weight: 650; }
 .peek-acts button svg { width: 13px; height: 13px; }

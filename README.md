@@ -8,7 +8,7 @@
 <h1 align="center">A free Dynamic Island for Mac, Windows, and Linux</h1>
 
 <p align="center">
-  Turn your MacBook's notch into something useful. Gentra Island shows what's playing, remembers what you copy, reminds you about it, and tells you when your build is done. Then it gets out of the way.
+  Turn your MacBook's notch into something useful. Gentra Island tells you when Claude Code needs you, reminds you to drink some water, shows what's playing, and remembers what you copy. Then it slips back into the notch.
 </p>
 
 <p align="center">
@@ -28,38 +28,42 @@
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/demo.gif" alt="Gentra Island opening from the notch: now playing, Home, Media, Clipboard, and Dev tabs, then a build-finished alert" width="720">
+  <img src="docs/screenshots/demo.gif" alt="Gentra Island opening from the notch: Home, Media, Clipboard, Dev, and AI tabs, then Claude Code asking for permission and a reminder to drink water" width="720">
 </p>
 
 ---
 
 **Free and open source. No account, no tracking, about 1% CPU.**
 
-Gentra Island sits at the top of your screen. On a Mac with a notch it grows out of the camera housing; elsewhere it floats as a small pill. Hover, click, or press **⌥⌘G** (**Ctrl+Alt+G** on Windows and Linux) to open it. It opens by itself only when something is worth seeing, like a long build that just finished, a call that started, or a reminder you set.
+Gentra Island sits at the top of your screen. On a Mac with a notch it hides inside the camera housing until something is happening, so your menus stay visible; elsewhere it floats as a small pill. Hover, click, or press **⌥⌘G** (**Ctrl+Alt+G** on Windows and Linux) to open it. It speaks up by itself only when something is worth seeing: Claude Code waiting for your answer, a long build that finished, a call that started, or an hour without a break.
 
+- **AI agents:** see when Claude Code or Codex is working, needs you, or is done, and how many tokens you've used in this 5-hour window
+- **Gentle care:** a warm nudge to take a break, drink water, eat, and stop when it gets late, never more than 8 a day
 - **Now playing** for Spotify, Apple Music, YouTube, and more, with artwork and controls
 - **Clipboard history** that understands what you copied, and keeps secrets out of it
 - **Reminders** from what you copy: copy "meeting Friday at 2 pm" and it offers to remind you
 - **Shelf** for files, **focus timer**, **system monitor**, and a **safe cleaner**
 - **For developers:** see and stop local servers, get told when long commands finish
-- **Gentle care:** a nudge to take a break, drink water, eat, and stop when it gets late, at most a few times a day
-- **AI agents:** see when Claude Code or Codex is working, needs you, or is done, and how much you have used
 - **For calls:** which app has your mic, call time, mute, and a camera mirror
 
 ## Screenshots
 
 | | |
 |---|---|
-| ![Home: what's playing, memory, focus, last copied, and shelf](docs/screenshots/home.png) | ![Media: artwork-tinted player with a timeline and controls](docs/screenshots/media.png) |
-| **Home** shows what matters right now | **Media** controls whatever is playing |
+| ![Home: Claude Code at work, what's playing, memory, focus, last copied, and shelf](docs/screenshots/home.png) | ![AI: Claude Code waiting for permission, Codex working, token usage, and Codex limits](docs/screenshots/ai.png) |
+| **Home** shows what matters right now | **AI** shows your agents and how much you've used |
+| ![Claude Code needs you: a peek from the notch with the agent's question](docs/screenshots/agent-peek.png) | ![A break reminder after an hour of work, with Okay, Later, and Not today](docs/screenshots/care.png) |
+| A peek when Claude Code needs your answer | **Gentle care** reminds you to stand up |
+| ![A reminder to drink water](docs/screenshots/care-water.png) | ![Media: artwork-tinted player with a timeline and controls](docs/screenshots/media.png) |
+| And to drink some water | **Media** controls whatever is playing |
 | ![Clipboard history with a decoded JWT, a tracked link, and an image](docs/screenshots/clipboard.png) | ![Dev: local servers and terminal command alerts](docs/screenshots/dev.png) |
 | **Clipboard** remembers and understands what you copy | **Dev** watches your local servers and long commands |
 | ![Calls: which app uses the mic, with the call time](docs/screenshots/calls.png) | ![Settings: theme, accent color, language, startup, and About](docs/screenshots/settings.png) |
 | **Calls** shows who has your mic | **Settings** with themes and languages |
 | ![Copying a message with a time in it: the island offers to remind you](docs/screenshots/reminder-offer.png) | ![A reminder that is due, with Copy again, In 10 min, and Done](docs/screenshots/reminder-due.png) |
 | **Reminders** offered when what you copy has a time in it | A reminder when it's due |
-| ![Reminder times for a clipboard item: as written, in an hour, tonight, tomorrow, or any time](docs/screenshots/reminder-pick.png) | ![The small island with album artwork and a level meter](docs/screenshots/compact.png) |
-| Remind yourself about anything you copied | The small island while music plays |
+| ![Reminder times for a clipboard item: as written, in an hour, tonight, tomorrow, or any time](docs/screenshots/reminder-pick.png) | ![The small island, just wider than the notch, with album artwork and a level meter](docs/screenshots/compact.png) |
+| Remind yourself about anything you copied | The small island while music plays, barely wider than the notch |
 | ![Home in the light theme](docs/screenshots/home-light.png) | |
 | Light theme | |
 
@@ -247,7 +251,16 @@ Yes. Gentra Island is free and open source under the GPL-3.0. There's no paid ve
 No. On a Mac with a notch it blends into the camera housing. On other Macs, and on Windows and Linux, it floats as a small pill at the top of the screen.
 
 **Is it a NotchNook or Boring Notch alternative?**
-It covers similar ground (now playing, a file shelf, a notch that does something), and adds clipboard history, reminders, a system monitor, developer tools, and call tools. It's free, and it also runs on Windows and Linux.
+It covers similar ground (now playing, a file shelf, a notch that does something), and adds AI agent status, break and water reminders, clipboard history, reminders, a system monitor, developer tools, and call tools. It's free, and it also runs on Windows and Linux.
+
+**Can it tell me when Claude Code or Codex needs me?**
+Yes. Open the **AI** tab and click **Connect**. When Claude Code asks for permission, the notch shows its question; when a task of 15 seconds or more finishes, it tells you how long it took. It also shows the tokens you've used in the current 5-hour window, today, and this week, read from the logs on your computer. Codex's own 5-hour and weekly limits show as bars.
+
+**Can it remind me to take breaks and drink water?**
+Yes, that's **Gentle care**. It counts real keyboard and mouse activity, so time away counts as a break. It suggests a break after about 50 minutes, water every hour and a half, lunch, dinner, and bed when it's late. Never during calls or focus sessions, and at most 8 a day.
+
+**Does it cover my menu bar?**
+No. On a Mac with a notch, the small island stays inside the notch until something is playing or running, and then shows only small icons beside it. You can pick Hide in notch, Compact, or Wide in Settings.
 
 **Does it slow my computer down or drain the battery?**
 It's built to stay out of the way: about 1% CPU while you work, and nothing animates while the island is still. Features you switch off stop running. See [How light it is](#how-light-it-is).

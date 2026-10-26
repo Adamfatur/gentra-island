@@ -358,6 +358,7 @@ const scenes: Record<string, () => Promise<void>> = {
   },
   home: async () => {
     play();
+    agentEvent("claude", "start", "", "gentra-island");
     copy({ kind: "text", text: "Meeting moved to 3 pm, same link as last week.", app: "Slack" });
     actions["Seret file masuk"]();
     await wait(3400);
@@ -413,6 +414,28 @@ const scenes: Record<string, () => Promise<void>> = {
     await wait(600);
     document.querySelector<HTMLElement>("#strip [data-remind]")?.click();
   },
+  ai: async () => {
+    connected.claude = true;
+    agentEvent("claude", "start", "", "gentra-island");
+    agentEvent("codex", "start", "", "toko-online");
+    await wait(300);
+    agentEvent("claude", "notify", "Claude needs your permission to use Bash", "gentra-island");
+    await wait(10_600);
+    void emit("open-tab", "ai");
+  },
+  "agent-peek": async () => {
+    agentEvent("claude", "start", "", "gentra-island");
+    await wait(300);
+    agentEvent("claude", "notify", "Claude needs your permission to use Bash", "gentra-island");
+  },
+  care: async () => {
+    await wait(300);
+    (window as unknown as { __care: (k: string, v?: number) => void }).__care("break", 0);
+  },
+  "care-water": async () => {
+    await wait(300);
+    (window as unknown as { __care: (k: string, v?: number) => void }).__care("water", 0);
+  },
   "reminder-due": async () => {
     await wait(900);
   },
@@ -431,10 +454,17 @@ const scenes: Record<string, () => Promise<void>> = {
     await wait(2600);
     void emit("open-tab", "dev");
     await wait(2400);
+    connected.claude = true;
+    agentEvent("claude", "start", "", "gentra-island");
+    void emit("open-tab", "ai");
+    await wait(2800);
     void emit("open-tab", "toggle");
-    await wait(1500);
-    actions["Build selesai"]();
-    await wait(4000);
+    await wait(2200);
+    agentEvent("claude", "notify", "Claude needs your permission to use Bash", "gentra-island");
+    await wait(3800);
+    // A care reminder takes the peek's place.
+    (window as unknown as { __care: (k: string, v?: number) => void }).__care("water", 0);
+    await wait(4500);
     document.body.dataset.done = "1";
   },
 };
