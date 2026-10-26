@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.4
+
+- **Fixed: the welcome guide never showed.** On first launch the island opens a short Getting started guide, but another app taking focus closed it before anyone saw it. It now stays until you click Skip or Done, and tells you where to find the island again: the G in the menu bar.
+- **No bouncing Dock icon.** Gentra Island lives at the top of the screen, so it no longer shows in the Dock while it starts.
+- On a Mac, the first open can take a few minutes while macOS checks the app. The install notes now say so.
+
 ## 0.9.3
 
 - **Pixel eyes.** The eyes are now small rounded squares that glow in your accent color, like a tiny friendly robot. Change the accent in Settings and they follow.

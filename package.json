@@ -1,7 +1,7 @@
 {
   "name": "gentra-island",
   "private": true,
-  "version": "0.9.3",
+  "version": "0.9.4",
   "author": "Adam Faturahman",
   "license": "GPL-3.0-or-later",
   "type": "module",
