@@ -891,7 +891,8 @@ mod tests {
         let s = merge_hooks(json!({}), Agent::Claude.events(), |m| hook_command(dir, Agent::Claude, m));
         let ask = &s["hooks"]["PermissionRequest"][0]["hooks"][0];
         assert_eq!(ask["timeout"], 45);
-        assert!(ask["command"].as_str().unwrap().contains("agent-ask.sh' claude #"));
+        let script = if cfg!(windows) { "agent-ask.ps1\" claude #" } else { "agent-ask.sh' claude #" };
+        assert!(ask["command"].as_str().unwrap().contains(script));
         assert!(can_ask(&s));
         assert_eq!(s["hooks"]["Stop"][0]["hooks"][0]["timeout"], 5);
     }
