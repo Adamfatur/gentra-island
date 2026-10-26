@@ -571,6 +571,6 @@ export const id: Record<Key, Msg> = {
   "settings.eyes.moments": "Momen",
   "settings.eyes.always": "Selalu",
   "settings.eyes.note.off": "Tanpa mata. Pulau tetap seperti biasa.",
-  "settings.eyes.note.moments": "Muncul saat kamu menunjuk notch, saat tugas selesai, saat ada yang butuh kamu, dan saat kamu kembali. Lalu bersembunyi lagi, jadi tidak ada yang tertutup.",
-  "settings.eyes.note.always": "Selalu ada saat pulau kosong. Di Mac ber-notch, mata ada tepat di bawah kamera dan menyingkir saat kursor mendekat.",
+  "settings.eyes.note.moments": "Hanya saat ada momen: tersenyum saat tugas selesai, melirik saat ada yang butuh kamu, dan menyapa saat kamu kembali.",
+  "settings.eyes.note.always": "Selalu ada saat tidak ada yang diputar atau berjalan. Di Mac ber-notch, mata ada di kiri dan kanan kamera, di menu bar, jadi tidak ada yang tertutup di bawahnya.",
 };

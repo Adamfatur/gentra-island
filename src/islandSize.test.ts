@@ -23,6 +23,10 @@ describe("island size", () => {
     expect(compactWidth("full", notch)).toBe(185 + 148);
   });
 
+  it("eyes beside the camera take a slim island's width", () => {
+    expect(compactWidth("eyes", notch)).toBe(185 + 68);
+  });
+
   it("compact stays slim, wide stays as before", () => {
     expect(compactLook("compact", { hasNotch: true, live: false, hovering: false })).toBe("slim");
     expect(compactLook("wide", { hasNotch: true, live: false, hovering: false })).toBe("full");

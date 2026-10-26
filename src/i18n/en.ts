@@ -583,8 +583,8 @@ export const en = {
   "settings.eyes.moments": "Moments",
   "settings.eyes.always": "Always",
   "settings.eyes.note.off": "No eyes. The island stays as it is.",
-  "settings.eyes.note.moments": "They peek out when you point at the notch, when a task is done, when something needs you, and when you come back. Then they tuck away, so nothing is covered.",
-  "settings.eyes.note.always": "Always there while the island is empty. On a Mac with a notch they sit just below the camera and step aside when your pointer comes close.",
+  "settings.eyes.note.moments": "Only when something happens: a smile when a task is done, a look when something needs you, and hello when you come back.",
+  "settings.eyes.note.always": "Always there while nothing is playing or running. On a Mac with a notch they sit either side of the camera, in the menu bar, so nothing below is covered.",
 };
 
 export type Key = keyof typeof en;

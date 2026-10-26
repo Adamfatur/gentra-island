@@ -18,7 +18,7 @@ export interface Settings {
   eyes: EyesMode;
 }
 
-export const DEFAULTS: Settings = { theme: "auto", accent: null, islandSize: "notch", eyes: "moments" };
+export const DEFAULTS: Settings = { theme: "auto", accent: null, islandSize: "notch", eyes: "always" };
 
 export function resolveTheme(mode: ThemeMode, systemDark: boolean): "dark" | "light" {
   if (mode === "auto") return systemDark ? "dark" : "light";

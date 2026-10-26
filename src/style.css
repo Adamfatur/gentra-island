@@ -740,6 +740,9 @@ body[data-look="slim"] #v-compact .side svg, body[data-look="slim"] .mini-art { 
 :root[data-theme="light"] body:not(.notched) .eye .open { background: #2a2a31; box-shadow: none; }
 :root[data-theme="light"] body:not(.notched) .eye .happy { stroke: #2a2a31; }
 @media (prefers-reduced-motion: reduce) { .eyes-wrap .eyes, .eye > * { transition: none; } }
-/* With a notch, the eyes sit in a band just below the camera (the notch itself has no pixels). */
-body.notched .eyes-wrap { top: calc(100% + 9px); }
+/* With a notch, which has no pixels, an eye sits either side of the camera:
+   eye centers are the notch's width plus one slim side (34 px) apart. */
+body.notched .eyes-wrap .eyes { gap: calc(var(--nw) + 25px); }
+body[data-look="eyes"] #v-compact .side { opacity: 0; }
+body.notched .eyes-wrap .zzz { left: calc(100% - 4px); top: -6px; }
 .settings .sub-h { margin-top: 16px; }

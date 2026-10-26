@@ -91,6 +91,7 @@ const MOD = mac ? "⌘" : "Ctrl+";
 root.style.setProperty("--top", `${TOP}px`);
 root.style.setProperty("--ch", `${CH}px`);
 root.style.setProperty("--cw", `${CW}px`);
+root.style.setProperty("--nw", `${Math.round(info.notchWidth)}px`);
 // Content in the open island starts below the camera housing.
 root.style.setProperty("--notch-pad", hasNotch ? `${CH - 6}px` : "0px");
 document.body.classList.toggle("floating", !attached);
@@ -162,13 +163,6 @@ const eyes = new Eyes();
 let eyesShown = false;
 /** Whether the pointer feed is on: the eyes are wanted, even if tucked away for now. */
 let eyesFeed = false;
-/**
- * The notch has no pixels: on a Mac with one, the eyes sit in a band just
- * below the camera. When the pointer comes close below it, the band tucks
- * away so whatever is underneath stays clickable.
- */
-const EYE_BAND = 18;
-let eyesAway = false;
 /** In Moments, the eyes show until this time after something happens. */
 let momentUntil = 0;
 let momentTimer = 0;
@@ -176,25 +170,27 @@ const MOMENT_MS = 2500;
 /** A mood that happened while a peek or the open island hid the eyes. */
 let pendingMood: Mood | null = null;
 
-/** The eyes show only on an empty, closed island, and only with the setting on. */
-function syncEyes() {
+/**
+ * The eyes show only on an empty, closed island, and only with the setting on.
+ * The notch has no pixels, so on a Mac with one they sit either side of the
+ * camera, in the menu bar, and cover nothing below it. `fits` is false while
+ * the island shows its numbers (on hover, or the Wide size).
+ */
+function syncEyes(fits = true) {
   const setting = settings.settings.eyes;
   const want = setting !== "off" && mode === "compact" && !badge() && playingArt() === undefined;
   if (want !== eyesFeed) {
     eyesFeed = want;
     void invoke("set_eyes", { on: want });
   }
-  // On a notched Mac the eyes need a band below the camera, which covers a
-  // little of the window underneath. In Moments it shows only on hover or for
-  // a moment; elsewhere the eyes sit inside the pill and cover nothing.
   if (want && pendingMood && Date.now() >= momentUntil) {
     // A mood saved during a peek gets its moment now, and tucks away after.
     momentUntil = Date.now() + MOMENT_MS;
     window.clearTimeout(momentTimer);
     momentTimer = window.setTimeout(() => mode === "compact" && go(compactSize(), "hover"), MOMENT_MS + 50);
   }
-  const moment = hovering || Date.now() < momentUntil;
-  const show = want && (!hasNotch || ((setting === "always" || moment) && !eyesAway));
+  const moment = Date.now() < momentUntil;
+  const show = want && fits && (!hasNotch || setting === "always" || moment);
   if (show === eyesShown) return;
   eyesShown = show;
   eyes.setVisible(show);
@@ -235,7 +231,10 @@ function moment() {
  */
 function compactSize(): Size {
   const live = !!badge() || playingArt() !== undefined;
-  const next = compactLook(settings.settings.islandSize, { hasNotch, live, hovering });
+  let next: Look = compactLook(settings.settings.islandSize, { hasNotch, live, hovering });
+  syncEyes(!hasNotch || next !== "full");
+  // Beside the camera, the eyes take the place of the small icons.
+  if (hasNotch && eyesShown) next = "eyes";
   // A running timer needs a little more room on the right.
   const extra = next === "full" && badge() ? 24 : 0;
   const w = compactWidth(next, { hasNotch, notchW: Math.round(info.notchWidth) }) + extra;
@@ -244,9 +243,7 @@ function compactSize(): Size {
     document.body.dataset.look = next;
     root.style.setProperty("--cw", `${w - extra}px`);
   }
-  syncEyes();
-  const band = eyesShown && hasNotch ? EYE_BAND : 0;
-  return { w, h: CH + band + (hovering ? 3 : 0), r: R_COMPACT };
+  return { w, h: CH + (hovering ? 3 : 0), r: R_COMPACT };
 }
 
 function compact() {
@@ -1129,12 +1126,6 @@ await listen<AgentStatus[]>("agent-usage", ({ payload }) => {
 await listen<[number, number]>("pointer", ({ payload: [x, y] }) => {
   const dx = x - WIN_W / 2;
   eyes.look(dx, y - (TOP + CH / 2));
-  if (!hasNotch) return;
-  // Close below the band: tuck it away. Over the menu bar it can stay.
-  const away = Math.abs(dx) < info.notchWidth / 2 + 40 && y > CH - 2 && y < CH + EYE_BAND + 40;
-  if (away === eyesAway) return;
-  eyesAway = away;
-  if (mode === "compact") go(compactSize(), "hover");
 });
 
 // Asleep after five quiet minutes; the next pointer move wakes them.

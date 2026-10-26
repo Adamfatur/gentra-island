@@ -3,8 +3,8 @@
 // until something is live, and opens up fully only while you point at it.
 
 export type IslandSize = "notch" | "compact" | "wide";
-/** tucked: just the notch, nothing shown. slim: icons only. full: icons and numbers. */
-export type Look = "tucked" | "slim" | "full";
+/** tucked: just the notch, nothing shown. slim: icons only. full: icons and numbers. eyes: slim, with an eye either side of the camera. */
+export type Look = "tucked" | "slim" | "full" | "eyes";
 
 export const ISLAND_SIZES: IslandSize[] = ["notch", "compact", "wide"];
 
@@ -24,7 +24,7 @@ export function compactLook(size: IslandSize, at: { hasNotch: boolean; live: boo
 export function compactWidth(look: Look, at: { hasNotch: boolean; notchW: number }): number {
   const base = at.hasNotch ? at.notchW : FLOAT_GAP;
   if (look === "tucked") return base;
-  if (look === "slim") return base + 2 * SLIM_SIDE;
+  if (look === "slim" || look === "eyes") return base + 2 * SLIM_SIDE;
   return at.hasNotch ? at.notchW + 2 * WIDE_SIDE : FLOAT_WIDE;
 }
 
