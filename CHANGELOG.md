@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.1
+
+- **Fixed: a browser video stuck on the island.** After you close the tab that was playing, a paused video on another open page (a Threads or Instagram post, say) no longer shows as now playing. Browser videos show once they have actually played, and a player that doesn't respond to Play within 3 seconds is hidden until it plays again.
+
 ## 0.8.0
 
 - **AI agents.** See what Claude Code and Codex are doing from the island: a clock while they work, a peek when they need you (even in Focus mode), and a note when a task of 15 seconds or more is done. Connecting is one click in the new AI tab. It explains the change first, keeps a backup of the agent's settings file, and Disconnect undoes it.
