@@ -30,6 +30,7 @@ const SHOTS = [
   ["agent-peek", "agent-peek"],
   ["agent-ask", "agent-ask"],
   ["screenshot", "screenshot"],
+  ["download", "download"],
   ["care", "care"],
   ["care-water", "care-water"],
 ];

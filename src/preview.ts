@@ -336,10 +336,10 @@ const actions: Record<string, () => void> = {
   "Claude mulai": () => agentEvent("claude", "start"),
   "Claude butuh izin": () => agentEvent("claude", "notify", "Claude needs your permission to use Bash"),
   "Claude selesai": () => agentEvent("claude", "stop"),
-  "Unduh berjalan": () => void emit("downloads", [{ name: "Gentra.Island_0.8.1_universal.dmg", bytes: 3_400_000, total: 6_850_000, speed: 1_200_000 }]),
+  "Unduh berjalan": () => void emit("downloads", [{ name: "Gentra.Island_0.9.0_universal.dmg", bytes: 3_400_000, total: 6_850_000, speed: 1_200_000 }]),
   "Unduh selesai": () => {
     void emit("downloads", []);
-    void emit("download-done", { path: "/Users/kamu/Downloads/Gentra.Island_0.8.1_universal.dmg", name: "Gentra.Island_0.8.1_universal.dmg", bytes: 6_850_000 });
+    void emit("download-done", { path: "/Users/kamu/Downloads/Gentra.Island_0.9.0_universal.dmg", name: "Gentra.Island_0.9.0_universal.dmg", bytes: 6_850_000 });
   },
   "Screenshot baru": () =>
     void emit("screenshot", { path: "/Users/kamu/Desktop/Screenshot 2026-10-26 at 09.41.12.png", name: "Screenshot 2026-10-26 at 09.41.12.png", thumb: shot("#5ac8fa", "#b18cff"), size: [2940, 1912] }),
@@ -455,6 +455,10 @@ const scenes: Record<string, () => Promise<void>> = {
     agentEvent("claude", "start", "", "gentra-island");
     await wait(300);
     actions["Claude minta izin"]();
+  },
+  download: async () => {
+    await wait(300);
+    actions["Unduh selesai"]();
   },
   screenshot: async () => {
     await wait(300);

@@ -56,8 +56,12 @@ Gentra Island sits at the top of your screen. On a Mac with a notch it hides ins
 | **Home** shows what matters right now | **AI** shows your agents and how much you've used |
 | ![Claude Code needs you: a peek from the notch with the agent's question](docs/screenshots/agent-peek.png) | ![A break reminder after an hour of work, with Okay, Later, and Not today](docs/screenshots/care.png) |
 | A peek when Claude Code needs your answer | **Gentle care** reminds you to stand up |
-| ![A reminder to drink water](docs/screenshots/care-water.png) | ![Media: artwork-tinted player with a timeline and controls](docs/screenshots/media.png) |
-| And to drink some water | **Media** controls whatever is playing |
+| ![Claude Code asks to run a command; the notch shows it with Allow, Deny, and In terminal](docs/screenshots/agent-ask.png) | ![A new screenshot with Copy text, Copy image, and Shelf](docs/screenshots/screenshot.png) |
+| **Approve** Claude Code's requests from the notch | **Copy the text** out of a screenshot |
+| ![A finished download with Open, Show in Finder, and Shelf](docs/screenshots/download.png) | ![A reminder to drink water](docs/screenshots/care-water.png) |
+| **Downloads** in the notch | And to drink some water |
+| ![Media: artwork-tinted player with a timeline and controls](docs/screenshots/media.png) | |
+| **Media** controls whatever is playing | |
 | ![Clipboard history with a decoded JWT, a tracked link, and an image](docs/screenshots/clipboard.png) | ![Dev: local servers and terminal command alerts](docs/screenshots/dev.png) |
 | **Clipboard** remembers and understands what you copy | **Dev** watches your local servers and long commands |
 | ![Calls: which app uses the mic, with the call time](docs/screenshots/calls.png) | ![Settings: theme, accent color, language, startup, and About](docs/screenshots/settings.png) |
