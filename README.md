@@ -39,7 +39,7 @@ Gentra Island sits at the top of your screen. On a Mac with a notch it hides ins
 
 - **AI agents:** see when Claude Code or Codex is working, needs you, or is done, **allow or deny Claude Code's permission requests from the notch**, and see how many tokens you've used in this 5-hour window
 - **Smart screenshots:** copy the text out of any screenshot with one click, saved or copied with ⌃⇧⌘4, read on your computer
-- **Eyes in the notch:** two little eyes peek out when you point at the notch, follow your pointer, and smile when a task is done
+- **Eyes in the notch:** two glowing pixel eyes sit either side of the camera, follow your pointer, and smile when a task is done
 - **Download progress** in the notch, with Open when it's done
 - **Gentle care:** a warm nudge to take a break, drink water, eat, and stop when it gets late, never more than 8 a day
 - **Now playing** for Spotify, Apple Music, YouTube, and more, with artwork and controls
@@ -61,8 +61,8 @@ Gentra Island sits at the top of your screen. On a Mac with a notch it hides ins
 | **Approve** Claude Code's requests from the notch | **Copy the text** out of a screenshot |
 | ![A finished download with Open, Show in Finder, and Shelf](docs/screenshots/download.png) | ![A reminder to drink water](docs/screenshots/care-water.png) |
 | **Downloads** in the notch | And to drink some water |
-| ![Media: artwork-tinted player with a timeline and controls](docs/screenshots/media.png) | |
-| **Media** controls whatever is playing | |
+| ![Media: artwork-tinted player with a timeline and controls](docs/screenshots/media.png) | ![Two glowing pixel eyes, one either side of the notch](docs/screenshots/eyes.png) |
+| **Media** controls whatever is playing | **Eyes** beside the camera follow your pointer |
 | ![Clipboard history with a decoded JWT, a tracked link, and an image](docs/screenshots/clipboard.png) | ![Dev: local servers and terminal command alerts](docs/screenshots/dev.png) |
 | **Clipboard** remembers and understands what you copy | **Dev** watches your local servers and long commands |
 | ![Calls: which app uses the mic, with the call time](docs/screenshots/calls.png) | ![Settings: theme, accent color, language, startup, and About](docs/screenshots/settings.png) |

@@ -202,9 +202,11 @@
     .stage { position: relative; width: min(1180px, 100% - 24px); margin: 56px auto 0; border-radius: 32px; overflow: hidden; color: #f4f4f6;
       background: radial-gradient(45% 60% at 12% 70%, rgba(217, 121, 47, 0.55) 0%, transparent 70%), radial-gradient(45% 60% at 90% 30%, rgba(42, 109, 244, 0.55) 0%, transparent 70%), #07080c; }
     .stage-inner { position: relative; height: 640px; }
-    .st-notch { position: absolute; left: 50%; top: 0; translate: -50% 0; width: 200px; height: 52px; border-radius: 0 0 20px 20px; background: #000; display: grid; place-items: end center; padding-bottom: 10px; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06); }
-    .st-eyes { display: flex; gap: 12px; transition: translate 260ms cubic-bezier(0.25, 0.8, 0.3, 1); }
-    .st-eyes i { width: 10px; height: 14px; border-radius: 50%; background: #f4f4f6; box-shadow: 0 0 7px rgba(255, 255, 255, 0.55); transition: scale 120ms ease; }
+    /* The notch as the app draws it at rest: a Pixel eye either side of the camera. */
+    .st-notch { position: absolute; left: 50%; top: 0; translate: -50% 0; width: 280px; height: 46px; border-radius: 0 0 18px 18px; background: #000; display: flex; align-items: center; padding: 0 18px; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06); }
+    .st-notch::after { content: ""; position: absolute; left: 50%; top: 15px; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; background: #0d1220; box-shadow: inset 0 0 0 2px #182033; }
+    .st-eyes { display: flex; width: 100%; justify-content: space-between; transition: translate 260ms cubic-bezier(0.25, 0.8, 0.3, 1); }
+    .st-eyes i { width: 15px; height: 18px; border-radius: 4px; background: #5ac8fa; box-shadow: 0 0 12px rgba(90, 200, 250, 0.6); transition: scale 120ms ease; }
     .st-eyes.blink i { scale: 1 0.08; }
     .st-head { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; padding: 0 24px; pointer-events: none; }
     .st-head h2 { color: #fff; font-size: clamp(28px, 4.2vw, 50px); max-width: 15ch; margin: 0 auto 12px; }
@@ -351,7 +353,7 @@
           <div><b>Approve Claude Code <span class="new">New</span></b><span>Allow or deny its permission requests from the notch, with the command in full.</span></div>
           <div><b>Smart screenshots <span class="new">New</span></b><span>Copy the text out of any screenshot or copied image, read on your computer.</span></div>
           <div><b>Download progress <span class="new">New</span></b><span>See a download arrive, then open it or find it in one click.</span></div>
-          <div><b>Eyes in the notch <span class="new">New</span></b><span>They look toward your pointer, blink, and smile when a task is done.</span></div>
+          <div><b>Eyes in the notch <span class="new">New</span></b><span>Glowing pixel eyes either side of the camera. They look toward your pointer, blink, and smile when a task is done.</span></div>
           <div><b>AI agents</b><span>Claude Code and Codex: working, needs you, or done, plus your token use.</span></div>
           <div><b>Gentle care</b><span>A break, water, lunch, dinner, and bed, never more than 8 nudges a day.</span></div>
           <div><b>Now playing</b><span>Spotify, Apple Music, YouTube, and more, with artwork and controls.</span></div>
@@ -363,7 +365,7 @@
           <div><b>Safe cleaner</b><span>Caches, old logs, and installers to the Trash. Never your files.</span></div>
           <div><b>For developers</b><span>Local servers by port, and an alert when a long command finishes.</span></div>
           <div><b>For calls</b><span>Which app has your mic, the call time, mute, and a camera mirror.</span></div>
-          <div><b>Stays in the notch</b><span>Your menus stay visible. Compact and Wide if you want more.</span></div>
+          <div><b>Stays in the notch</b><span>Close around the camera, so your menus stay visible. Compact and Wide if you want more.</span></div>
           <div><b>Modes</b><span>Compact, Everyday, Dev, Meetings, or Focus. Off means it stops running.</span></div>
           <div><b>English and Indonesian</b><span>Light or dark, any accent color, on Mac, Windows, and Linux.</span></div>
         </div>
@@ -373,7 +375,7 @@
     <section id="features">
       <div class="wrap">
         <h2>Small until it matters</h2>
-        <p class="intro">On a MacBook it hides inside the notch, so your menus stay where they are. Hover, click, or press ⌥⌘G (Ctrl+Alt+G on Windows and Linux) to open it. It speaks up by itself only when something is worth seeing.</p>
+        <p class="intro">On a MacBook it sits close around the notch, so your menus stay where they are. Hover, click, or press ⌥⌘G (Ctrl+Alt+G on Windows and Linux) to open it. It speaks up by itself only when something is worth seeing.</p>
 
         <div class="row">
           <figure><img src="screenshots/ai.png" width="1520" height="1040" loading="lazy" alt="The AI tab: Claude Code waiting for permission, Codex working, tokens used, and Codex's 5-hour and weekly limits"></figure>
@@ -414,7 +416,7 @@
           <div>
             <figure><img src="screenshots/eyes.png" width="1520" height="144" loading="lazy" alt="Two small eyes, one either side of the notch"></figure>
             <h3>A little character in your notch</h3>
-            <p>Two eyes sit either side of the camera and follow your pointer. They smile when a task is done, look up when something needs you, and nap while you're away. They sit in the menu bar, so nothing below is covered. Off, Moments, or Always, in Settings.</p>
+            <p>Two glowing pixel eyes sit either side of the camera, in your accent color, and follow your pointer. They smile when a task is done, look up when something needs you, and nap while you're away. They sit in the menu bar, so nothing below is covered. Off, Moments, or Always, in Settings.</p>
           </div>
         </div>
 
@@ -460,7 +462,7 @@
 
         <div class="more">
           <div><b>Home</b><span>Your agents, what's playing, memory, focus, the last thing you copied, and your shelf, at a glance.</span></div>
-          <div><b>Stays in the notch</b><span>Hidden in the notch until something is live, so app menus stay visible. Compact and Wide if you want more.</span></div>
+          <div><b>Stays in the notch</b><span>Close around the notch, with two small eyes or the icons of what's playing, so app menus stay visible. Compact and Wide if you want more.</span></div>
           <div><b>Shelf</b><span>Drop files on the island, drag them out anywhere later, or AirDrop them.</span></div>
           <div><b>Focus timer</b><span>5 to 50 minute sessions, counting down in the notch.</span></div>
           <div><b>System monitor</b><span>Memory pressure, CPU, network, and which apps use the most memory.</span></div>
@@ -544,7 +546,7 @@
         <details><summary>Can I approve Claude Code's requests from the notch?</summary><p>Yes. Connect Claude Code in the AI tab. When it asks for permission, the notch shows the exact command with Allow, Deny, and In terminal. Only your click decides, and an unanswered request goes back to Claude Code's own prompt after 30 seconds.</p></details>
         <details><summary>Can it copy the text from a screenshot?</summary><p>Yes. Take a screenshot as usual and click Copy text on the island. The text is read on your computer: Vision on a Mac, the built-in OCR on Windows, and tesseract on Linux. Nothing is uploaded.</p></details>
         <details><summary>Can it remind me to take breaks and drink water?</summary><p>Yes. Gentle care counts real keyboard and mouse activity and suggests a break after about 50 minutes, water every hour and a half, lunch, dinner, and bed when it's late. Never during calls or focus sessions, and at most 8 a day. Every reminder has Later and Not today.</p></details>
-        <details><summary>Does it cover my menu bar?</summary><p>No. On a MacBook with a notch it stays inside the notch until something is playing or running, then shows only small icons beside it.</p></details>
+        <details><summary>Does it cover my menu bar?</summary><p>No. On a MacBook with a notch it stays close around the notch: two small eyes beside the camera when nothing is happening, or small icons while something is playing or running. Nothing below the menu bar is covered. You can switch the eyes off in Settings.</p></details>
         <details><summary>Will it slow down my computer or drain the battery?</summary><p>It's built to stay out of the way: about 1% of the CPU while you work, nothing animates while it's still, and features you switch off stop running.</p></details>
         <details><summary>Why does my computer warn me when I first open it?</summary><p>The app isn't notarized by Apple or code-signed for Windows yet, which costs money for a free project made by one person. The <a href="https://github.com/Adamfatur/gentra-island/blob/main/INSTALL.md">install guide</a> shows how to open it the first time.</p></details>
       </div>
