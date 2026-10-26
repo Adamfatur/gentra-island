@@ -166,6 +166,14 @@ mockIPC(
           ],
           recent: doneList,
         };
+      case "idle_secs":
+        return 3;
+      case "agents_status":
+        return agentStatus();
+      case "agents_connect":
+      case "agents_disconnect":
+        connected[a.agent as "claude" | "codex"] = cmd === "agents_connect";
+        return null;
       case "media_now":
         return track;
       case "media_control":
@@ -204,7 +212,7 @@ if (scene || params.has("shot")) {
   }
   localStorage.setItem(
     "gentra:mode",
-    JSON.stringify({ mode: "kustom", base: "harian", on: ["sistem", "clip", "pintar", "rak", "fokus", "bersih", "port", "perintah", "meeting", "kamera", "musik", "ingat"] }),
+    JSON.stringify({ mode: "kustom", base: "harian", on: ["sistem", "clip", "pintar", "rak", "fokus", "bersih", "port", "perintah", "meeting", "kamera", "musik", "ingat", "ai", "jaga"] }),
   );
 }
 
@@ -227,6 +235,30 @@ const copy = (item: Omit<ClipItem, "id" | "created" | "pinned">) => {
   clips.unshift({ id: n++, created: Date.now(), pinned: false, ...item });
   void emit("clips-changed", null);
 };
+
+const connected = { claude: false, codex: false };
+const H = 3_600_000;
+const windowStart = Math.floor(Date.now() / H) * H - H;
+const agentStatus = () => [
+  {
+    agent: "claude",
+    installed: true,
+    connected: connected.claude,
+    usage: { windowTokens: 2_955_318, windowStart, windowEnd: windowStart + 5 * H, todayTokens: 3_129_806, weekTokens: 95_368_831, lastActive: Date.now(), primary: null, secondary: null },
+  },
+  {
+    agent: "codex",
+    installed: true,
+    connected: connected.codex,
+    usage: {
+      windowTokens: 412_000, windowStart, windowEnd: windowStart + 5 * H, todayTokens: 412_000, weekTokens: 1_840_000, lastActive: Date.now(),
+      primary: { usedPercent: 42, windowMinutes: 300, resetsAt: windowStart + 5 * H },
+      secondary: { usedPercent: 18, windowMinutes: 10080, resetsAt: Date.now() + 4 * 24 * H },
+    },
+  },
+];
+const agentEvent = (agent: string, event: string, message = "", place = "toko-online") =>
+  void emit("agent-event", { agent, event, place, message, session: `${agent}-1` });
 
 let n = 100;
 const actions: Record<string, () => void> = {
@@ -286,6 +318,16 @@ const actions: Record<string, () => void> = {
   "Musik berhenti": () => {
     track = null;
     void emit("media", null);
+  },
+  "Claude mulai": () => agentEvent("claude", "start"),
+  "Claude butuh izin": () => agentEvent("claude", "notify", "Claude needs your permission to use Bash"),
+  "Claude selesai": () => agentEvent("claude", "stop"),
+  "Codex mulai": () => agentEvent("codex", "start", "", "gentra-island"),
+  "Codex selesai": () => agentEvent("codex", "stop", "", "gentra-island"),
+  "Codex 85%": () => {
+    const st = agentStatus();
+    st[1].usage.primary!.usedPercent = 85;
+    void emit("agent-usage", st);
   },
   "Panggilan mulai": () => {
     mic = { inUse: true, app: "Zoom", muted: false, since: Math.floor(Date.now() / 1000) - 724 };

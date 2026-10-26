@@ -50,6 +50,12 @@ import next from "@phosphor-icons/core/assets/fill/skip-forward-fill.svg?raw";
 import coffee from "@phosphor-icons/core/assets/fill/coffee-fill.svg?raw";
 import bell from "@phosphor-icons/core/assets/fill/bell-fill.svg?raw";
 import bellRing from "@phosphor-icons/core/assets/fill/bell-ringing-fill.svg?raw";
+import robot from "@phosphor-icons/core/assets/fill/robot-fill.svg?raw";
+import hand from "@phosphor-icons/core/assets/fill/hand-palm-fill.svg?raw";
+import walk from "@phosphor-icons/core/assets/fill/person-simple-walk-fill.svg?raw";
+import water from "@phosphor-icons/core/assets/fill/drop-half-fill.svg?raw";
+import meal from "@phosphor-icons/core/assets/fill/fork-knife-fill.svg?raw";
+import night from "@phosphor-icons/core/assets/fill/moon-stars-fill.svg?raw";
 
 export const icon = {
   memory,
@@ -102,6 +108,12 @@ export const icon = {
   coffee,
   bell,
   bellRing,
+  robot,
+  hand,
+  walk,
+  water,
+  meal,
+  night,
 };
 
 export type IconName = keyof typeof icon;

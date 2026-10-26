@@ -26,10 +26,12 @@ let lastRight = "";
 
 /** What the right side of the compact island shows instead of CPU. */
 export interface Badge {
-  kind: "focus" | "call" | "media";
+  kind: "focus" | "call" | "media" | "agent";
   label: string;
   /** Focus paused, mic muted during a call, or media paused. */
   dim: boolean;
+  /** Who the badge is about, for its tooltip. */
+  title?: string;
 
 }
 
@@ -37,6 +39,8 @@ const BADGE = {
   focus: { cls: "timer", on: () => icon.timer, off: () => icon.pause, title: ["compact.focusLeft", "compact.focusPaused"] as Key[] },
   call: { cls: "call", on: () => icon.mic, off: () => icon.micOff, title: ["compact.call", "compact.callMuted"] as Key[] },
   media: { cls: "media", on: () => "", off: () => "", title: ["compact.media", "compact.mediaPaused"] as Key[] },
+  // For agents, "dim" means it is waiting for you.
+  agent: { cls: "agent", on: () => `<i class="pulse"></i>`, off: () => icon.hand, title: ["compact.agent", "compact.agentWaiting"] as Key[] },
 };
 
 let lastArt: string | null | undefined;
@@ -81,7 +85,7 @@ export function renderCompact(s: Stats | null, timer: Badge | null, art?: string
       el.innerHTML = `<span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>`;
       return;
     }
-    el.title = t(b.title[timer.dim ? 1 : 0]);
+    el.title = t(b.title[timer.dim ? 1 : 0], { agent: timer.title ?? "" });
     el.innerHTML = `${timer.dim ? b.off() : b.on()}<span class="num">${timer.label}</span>`;
     return;
   }

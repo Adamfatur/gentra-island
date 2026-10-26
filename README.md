@@ -42,6 +42,8 @@ Gentra Island sits at the top of your screen. On a Mac with a notch it grows out
 - **Reminders** from what you copy: copy "meeting Friday at 2 pm" and it offers to remind you
 - **Shelf** for files, **focus timer**, **system monitor**, and a **safe cleaner**
 - **For developers:** see and stop local servers, get told when long commands finish
+- **Gentle care:** a nudge to take a break, drink water, eat, and stop when it gets late, at most a few times a day
+- **AI agents:** see when Claude Code or Codex is working, needs you, or is done, and how much you have used
 - **For calls:** which app has your mic, call time, mute, and a camera mirror
 
 ## Screenshots
@@ -78,6 +80,8 @@ A higher-quality version of the video is in [docs/screenshots/demo.mp4](docs/scr
 | **System** | Memory (with real memory pressure on macOS), CPU, network, swap, and the apps using the most memory. |
 | **Cleaner** | Moves safe-to-delete caches, old logs, and old installers to the Trash or Recycle Bin. Never touches documents, photos, or settings. |
 | **Dev** | Local servers by port, with their folder: open or stop them. Alerts when a terminal command of 10 seconds or more finishes. |
+| **Gentle care** | Warm reminders for the small things that matter: a break after about 50 minutes of real activity, water every hour and a half, lunch and dinner, and a word when it's past eleven. Five minutes away from the keyboard counts as a break. Never during a call, a focus session, or Focus mode, at least 20 minutes apart, and no more than 8 a day. Every reminder has **Later** and **Not today**. |
+| **AI agents** | Claude Code and Codex on the island: a clock while they work, a nudge when they need you, and a note when a long task is done. Usage from their local logs: tokens per 5-hour window, today, and the last 7 days, plus Codex's own 5-hour and weekly limits when it reports them. |
 | **Calls** | Which app is using your mic, the call time on the small island, a system mute button on macOS, and a camera mirror. |
 
 **Modes** keep it as small as you want. Compact, Everyday, Dev, Meetings, and Focus are presets; switch any feature on or off. A switched-off feature stops its background work, not just its tab.
@@ -162,6 +166,7 @@ To check your download, compare it with `SHA256SUMS.txt` on the release page. Mo
 
 - **See and stop local servers**: open **Dev**. Each server shows its port, folder, and how long it has run; **Open** opens it in your browser, **Stop** asks once more, then stops it.
 - **Get told when a long command finishes**: in **Dev**, pick your shell, click **Copy line**, paste it at the end of your shell config, and open a new terminal. Commands of 10 seconds or more show up on the island when they finish.
+- **Watch Claude Code or Codex**: open **AI** and click **Connect** next to the agent. The island explains what it will change before it does it: one small script is added to the agent's hook settings (`~/.claude/settings.json` or `~/.codex/hooks.json`), with a backup of the file kept next to it. New sessions then report when they start working, when they need you, and when they finish. **Disconnect** takes the script out again.
 
 **In calls**
 
@@ -186,6 +191,8 @@ The full [Privacy Policy](PRIVACY.md) explains what is stored where and how to d
 - **Everything stays on your computer.** No accounts, no analytics, no telemetry, no update pings.
 - **No network calls of its own by default.** It reaches the network when you click a link it shows, such as opening a local server in your browser, and, only if you switch on **Show thumbnails** in the Media tab, to load a YouTube video's thumbnail from `i.ytimg.com`.
 - **Reminders** and **clipboard history** are stored in your user's app data folder. Secrets are never written there. Clear it any time from the Clipboard tab.
+- **Gentle care** asks the system how long since you last touched the keyboard or mouse, a single number. It never sees what you type.
+- **AI agents.** Usage is read from the agents' own logs on your computer, and only the token counts are kept. Connecting adds a hook that tells the island the project folder name and, when an agent asks you something, its question. Your prompts, code, and logins are never read or sent.
 - **The mic is never opened.** The meeting guard only asks the system whether an app is using it.
 - **The camera** is on only while the mirror is visible, and nothing is recorded.
 
@@ -202,8 +209,10 @@ Measured on a Mac with the release build:
 
 - **Artwork from browsers on macOS.** Since macOS 15.4, apps other than Apple's may not read what's playing; Gentra Island reads it through a small built-in `osascript` helper. Titles, artists, and controls work, including YouTube in Chrome, but browsers don't share their artwork. For YouTube, you can switch on **Show thumbnails** in the Media tab: Gentra Island then asks your browser (Chrome, Safari, Brave, Edge, Arc, Vivaldi, Opera) which tab is playing and loads the video's thumbnail. Other sites stay without artwork.
 - **Now playing on older macOS.** The reader relies on parts of macOS that may not exist before macOS 15. On macOS 11 to 14 the Media tab may stay empty.
+- **Claude's plan limit isn't public.** Claude Code doesn't share how much of your plan's limit is left, so the island shows the tokens it counted, not a percentage. Codex reports its limits itself, so those are exact.
 - **Muting the mic** from the island works on macOS only for now.
 - **Linux on Wayland** decides window positions itself, so the island may not sit exactly at the top. X11 works fully.
+- **Gentle care on Linux** knows when you step away on GNOME and KDE. On other desktops it can't tell, so a break only resets when you answer a reminder.
 - **Camera mirror on Linux** depends on the system's web view and may not be available.
 
 ## Build from source

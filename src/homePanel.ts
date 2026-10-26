@@ -1,8 +1,11 @@
+import type { AgentStatus } from "./aiPanel";
+import { sessionLine, sessionTitle } from "./aiPanel";
+import { AGENT_NAME, tokens, type Session } from "./agents";
 import type { Mic } from "./callPanel";
 import { callTime } from "./callPanel";
 import type { ClipItem } from "./clipboard";
 import { esc, pct } from "./format";
-import { t } from "./i18n";
+import { lang, t } from "./i18n";
 import { icon } from "./icons";
 import type { NowPlaying } from "./mediaPanel";
 import type { FeatureId } from "./modes";
@@ -20,6 +23,8 @@ export interface HomeSource {
   latestClip: () => ClipItem | null;
   shelfCount: () => number;
   reminders: () => Reminder[];
+  agents: () => Session[];
+  agentStatus: () => AgentStatus[];
   go: (tab: string) => void;
   act: (action: string) => void;
 }
@@ -84,10 +89,13 @@ export class HomePanel {
     const m = this.src.mic();
     const call = this.root.querySelector("[data-live=call]");
     if (call && m?.inUse) call.textContent = callTime(m);
+    const agent = this.root.querySelector("[data-live=agent]");
+    const lead = this.src.agents()[0];
+    if (agent && lead?.state === "working") agent.textContent = sessionLine(lead);
   }
 
   render() {
-    const cards = [this.callCard(), this.remindCard(), this.mediaCard(), this.systemCard(), this.focusCard(), this.clipCard(), this.shelfCard()].filter(Boolean);
+    const cards = [this.callCard(), this.agentCard(), this.remindCard(), this.mediaCard(), this.systemCard(), this.focusCard(), this.clipCard(), this.shelfCard()].filter(Boolean);
     this.root.innerHTML = cards.length
       ? `<div class="home">${cards.join("")}</div>`
       : `<div class="state"><b>${t("home.empty.title")}</b><span>${t("home.empty.body")}</span></div>`;
@@ -112,6 +120,33 @@ export class HomePanel {
     return `<section class="card-v wide remind-card">
       <span class="card-label">${icon.bell}${t("home.remind")}</span>
       <ul class="remind-list">${rows}</ul>${more}
+    </section>`;
+  }
+
+  /** A live agent session, or what the agents have used. */
+  private agentCard() {
+    if (!this.src.on("ai")) return "";
+    const live = this.src.agents().filter((s) => s.state !== "done");
+    const s = live.find((x) => x.state === "waiting") ?? live[0];
+    if (s) {
+      const waiting = s.state === "waiting";
+      return `<section class="card-h wide live-agent ${waiting ? "waiting" : ""}" data-go="ai">
+        <span class="card-ic ${waiting ? "warn" : "ok"}">${waiting ? icon.hand : `<i class="pulse"></i>`}</span>
+        <span class="card-text"><b>${esc(sessionTitle(s))}</b><span data-live="agent">${esc(sessionLine(s))}</span></span>
+        ${live.length > 1 ? `<span class="card-sub">${t("home.remind.more", { count: live.length - 1 })}</span>` : ""}
+      </section>`;
+    }
+    const connected = this.src.agentStatus().filter((a) => a.connected || a.usage.weekTokens);
+    const line = connected
+      .map((a) => {
+        const p = a.usage.primary;
+        const used = p ? pct(p.usedPercent) : tokens(a.usage.windowTokens, lang());
+        return `<span class="card-sub">${esc(AGENT_NAME[a.agent])} <span class="num">${used}</span></span>`;
+      })
+      .join("");
+    return `<section class="card-v" data-go="ai">
+      <span class="card-label">${icon.robot}${t("home.ai")}</span>
+      ${line ? `<span class="card-sub">${t("ai.usage.window")}</span>${line}` : `<span class="card-sub">${t("home.ai.connect")}</span>`}
     </section>`;
   }
 

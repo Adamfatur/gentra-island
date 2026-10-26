@@ -2,6 +2,8 @@
 //! SPDX-License-Identifier: GPL-3.0-or-later
 
 mod cleaner;
+mod agents;
+mod idle;
 mod clipboard;
 mod hooks;
 mod media;
@@ -19,7 +21,8 @@ use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut,
 
 /// The user's mode decides which background work runs at all.
 #[tauri::command]
-fn set_features(sistem: bool, clip: bool, perintah: bool, meeting: bool, musik: bool) {
+fn set_features(sistem: bool, clip: bool, perintah: bool, meeting: bool, musik: bool, ai: bool) {
+    agents::set_enabled(ai);
     media::set_enabled(musik);
     stats::set_enabled(sistem);
     clipboard::set_enabled(clip);
@@ -141,6 +144,11 @@ pub fn run() {
             cleaner::cleaner_scan,
             cleaner::cleaner_run,
             hooks::hook_info,
+            agents::agents_status,
+            agents::agents_connect,
+            agents::agents_disconnect,
+            agents::agents_set_offset,
+            idle::idle_secs,
             media::media_now,
             media::media_control,
             media::media_youtube_art,
@@ -183,6 +191,7 @@ pub fn run() {
             }
             meeting::spawn(app.handle().clone());
             media::spawn(app.handle().clone());
+            agents::spawn(app.handle().clone());
 
             for code in [Code::KeyV, Code::KeyG] {
                 if let Err(e) = app.global_shortcut().register(shortcut(code)) {

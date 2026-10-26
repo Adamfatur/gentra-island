@@ -5,13 +5,17 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { AiPanel, resetLabel, sessionTitle, type AgentStatus } from "./aiPanel";
+import { AGENT_NAME, Agents, DONE_PEEK_SECS, elapsed, type AgentEvent } from "./agents";
 import { CallPanel, callTime, type Mic } from "./callPanel";
+import { Care, careHtml } from "./carePanel";
+import type { CareKind } from "./care";
 import { CleanerPanel } from "./cleaner";
 import { DevPanel, doneMeta, doneTitle, type Done } from "./devPanel";
 import { MediaPanel, sameTrack, type NowPlaying } from "./mediaPanel";
 import { ClipboardPanel, ICON, remindable, secondsLeft, secretName, setSmart, smart, type ClipItem } from "./clipboard";
 import { FocusPanel, chime } from "./focusPanel";
-import { esc, whenLabel } from "./format";
+import { esc, pct, took, whenLabel } from "./format";
 import { APP_AUTHOR, errorText, initLanguage, lang, onLanguageChange, t, type Key } from "./i18n";
 import { icon } from "./icons";
 import { GuidePanel, savedGuide } from "./guidePanel";
@@ -34,7 +38,7 @@ interface ScreenInfo {
 }
 
 type Mode = "compact" | "peek" | "open";
-type Tab = "home" | "system" | "clipboard" | "shelf" | "focus" | "cleaner" | "dev" | "call" | "media" | "settings" | "mode" | "guide";
+type Tab = "home" | "system" | "clipboard" | "shelf" | "focus" | "cleaner" | "dev" | "call" | "media" | "ai" | "settings" | "mode" | "guide";
 
 /** Each tab belongs to features; a mode that switches all of them off hides the tab. */
 const TAB_FEATURE: Partial<Record<Tab, FeatureId[]>> = {
@@ -46,6 +50,7 @@ const TAB_FEATURE: Partial<Record<Tab, FeatureId[]>> = {
   dev: ["port", "perintah"],
   call: ["meeting", "kamera"],
   media: ["musik"],
+  ai: ["ai"],
 };
 const tabOn = (s: ModeState, t: Tab) => !TAB_FEATURE[t] || TAB_FEATURE[t]!.some((f) => isOn(s, f));
 
@@ -155,6 +160,7 @@ function compact() {
   call.hide();
   media.hide();
   home.hide();
+  ai.hide();
   mode = "compact";
   openedByShortcut = false;
   shell.classList.remove("open");
@@ -211,6 +217,8 @@ function setTab(t: Tab, focusTab = false) {
   else media.hide();
   if (t === "home") home.show();
   else home.hide();
+  if (t === "ai") void ai.show();
+  else ai.hide();
   if (t === "shelf") shelf.render();
   if (t === "focus") focus.render();
   if (t === "settings") settings.render();
@@ -361,6 +369,8 @@ const focus = new FocusPanel(
 
 const dev = new DevPanel(info.platform, toast);
 const call = new CallPanel(toast, info.platform);
+const agents = new Agents();
+const ai = new AiPanel(agents, toast);
 const media = new MediaPanel(toast, (tint) => {
   if (tint) root.style.setProperty("--media-tint", tint);
   else root.style.removeProperty("--media-tint");
@@ -378,6 +388,8 @@ const home = new HomePanel({
   latestClip: () => newestClip(),
   shelfCount: () => shelf.items.length,
   reminders: () => reminders.upcoming,
+  agents: () => agents.list(),
+  agentStatus: () => [ai.usage("claude"), ai.usage("codex")].filter((s): s is AgentStatus => !!s),
   go: (t) => setTab(t as Tab),
   act: (a) => void homeAct(a),
 });
@@ -412,7 +424,11 @@ async function homeAct(a: string) {
 function badge(): Badge | null {
   const m = call.mic;
   if (m?.inUse) return { kind: "call", label: callTime(m), dim: !!m.muted };
+  // An agent waiting on you outranks the timer; one that's just working doesn't.
+  const lead = isOn(modes.state, "ai") ? agents.lead() : null;
+  if (lead?.state === "waiting") return { kind: "agent", label: AGENT_NAME[lead.agent].split(" ")[0], dim: true, title: AGENT_NAME[lead.agent] };
   if (focus.running) return { kind: "focus", label: focus.label, dim: focus.paused };
+  if (lead) return { kind: "agent", label: elapsed(Date.now() - lead.started), dim: false, title: AGENT_NAME[lead.agent] };
   // Music only while it plays; a paused song gives the spot back to CPU.
   const n = media.now;
   if (n?.playing) return { kind: "media", label: n.title, dim: false };
@@ -429,7 +445,9 @@ const quiet = () => modes.state.mode === "fokus";
 
 function applyMode(s: ModeState, announce = false) {
   // Switched-off features stop their background work, not just their UI.
-  void invoke("set_features", { sistem: isOn(s, "sistem"), clip: isOn(s, "clip"), perintah: isOn(s, "perintah"), meeting: isOn(s, "meeting"), musik: isOn(s, "musik") });
+  void invoke("set_features", { sistem: isOn(s, "sistem"), clip: isOn(s, "clip"), perintah: isOn(s, "perintah"), meeting: isOn(s, "meeting"), musik: isOn(s, "musik"), ai: isOn(s, "ai") });
+  // "Today" in AI usage starts at local midnight.
+  void invoke("agents_set_offset", { minutes: -new Date().getTimezoneOffset() });
   if (!isOn(s, "musik")) media.set(null); // the backend's empty "media" event then stops the meter
   dev.ports = isOn(s, "port");
   dev.alerts = isOn(s, "perintah");
@@ -448,6 +466,7 @@ function applyMode(s: ModeState, announce = false) {
   document.body.classList.toggle("no-sistem", !isOn(s, "sistem"));
   document.body.classList.toggle("mode-ringkas", s.mode === "ringkas");
   if (!isOn(s, "fokus")) focus.stop();
+  care.setEnabled(isOn(s, "jaga"));
   $("#modeBtn").innerHTML = `${modeIcon(s)}<span>${modeName(s)}</span>`;
   $("#modeBtn").title = modeName(s);
   clips.render();
@@ -456,6 +475,15 @@ function applyMode(s: ModeState, announce = false) {
   home.refresh();
   if (announce) toast(t("mode.on", { mode: modeName(s) }));
 }
+
+/** Care nudges wait while you're on a call, focusing, or using the island. */
+const care = new Care(
+  () => mode !== "compact" || !!call.mic?.inUse || focus.running || quiet() || agents.lead()?.state === "waiting",
+  (html) => peek(html, 15_000, true),
+);
+
+// The preview harness shows each nudge on demand.
+if (import.meta.env.DEV) Object.assign(window, { __care: (kind: CareKind, variant = 0) => peek(careHtml({ kind, activeMin: 62, variant }), 15_000, true) });
 
 const modes = new ModePanel((s) => applyMode(s, true));
 applyMode(modes.state);
@@ -598,6 +626,16 @@ shell.addEventListener("click", (e) => {
   // Buttons inside a peek act in place instead of opening the island.
   const rem = el.closest<HTMLElement>("[data-rem-act]");
   if (rem) return void reminderAct(rem.closest<HTMLElement>("[data-rem]")!.dataset.rem!, rem.dataset.remAct!);
+  const careBtn = el.closest<HTMLElement>("[data-care]");
+  if (careBtn) {
+    const kind = careBtn.closest<HTMLElement>("[data-care-kind]")!.dataset.careKind as CareKind;
+    const said = care.answer(kind, careBtn.dataset.care as "ok" | "later" | "today");
+    compact();
+    if (said) window.setTimeout(() => peek(peekLine(icon.check, "var(--ok)", esc(said), ""), 1600), 450);
+    return;
+  }
+  const to = el.closest<HTMLElement>("[data-open]");
+  if (to) return open(to.dataset.open as Tab);
   const off = el.closest<HTMLElement>("[data-offer]");
   if (off) {
     if (off.dataset.offer === "yes" && offer) remindAt(offer.text, offer.at, offer.app);
@@ -741,3 +779,55 @@ syncMeter();
 
 // Reminders start last: one missed while the app was closed shows right away.
 reminders.start();
+
+/* ---------- AI agents ---------- */
+
+let agentClock = 0;
+/** The compact island's agent clock ticks only while an agent works. */
+function syncAgents() {
+  window.clearInterval(agentClock);
+  if (agents.lead()) agentClock = window.setInterval(() => renderCompact(lastStats, badge(), playingArt()), 1000);
+  renderCompact(lastStats, badge(), playingArt());
+  if (mode === "compact") go(compactSize(), "hover");
+  ai.refresh();
+  home.refresh();
+}
+
+await listen<AgentEvent>("agent-event", ({ payload }) => {
+  const n = agents.apply(payload);
+  syncAgents();
+  if (!n || mode === "open") return;
+  const s = n.session;
+  if (n.kind === "waiting") {
+    // A question blocks the agent, so it speaks even in Focus mode.
+    chime();
+    peek(
+      `<span class="ic" style="color:var(--warn)">${icon.hand}</span>
+       <div class="peek-main"><div class="t">${esc(t("peek.agent.waiting", { agent: AGENT_NAME[s.agent] }))}</div><div class="s clamp2">${esc(s.message || sessionTitle(s))}</div>
+         <div class="peek-acts"><button class="primary" data-open="ai">${t("peek.agent.show")}</button></div></div>`,
+      10_000,
+      true,
+    );
+  } else if (n.secs >= DONE_PEEK_SECS && !quiet()) {
+    const sub = s.place ? t("peek.agent.doneSub", { place: s.place, time: took(n.secs) }) : t("peek.agent.doneSubNoPlace", { time: took(n.secs) });
+    peek(peekLine(icon.ok, "var(--ok)", esc(t("peek.agent.done", { agent: AGENT_NAME[s.agent] })), esc(sub)), 4500);
+  }
+});
+
+/** Codex limit warnings already shown, by window and threshold. */
+const warnedLimits = new Set<string>();
+await listen<AgentStatus[]>("agent-usage", ({ payload }) => {
+  ai.setStatus(payload);
+  home.refresh();
+  for (const st of payload) {
+    for (const [l, name] of [[st.usage.primary, t("ai.limit.window")], [st.usage.secondary, t("ai.limit.week")]] as const) {
+      if (!l) continue;
+      const step = l.usedPercent >= 95 ? 95 : l.usedPercent >= 80 ? 80 : 0;
+      const key = `${st.agent}:${l.windowMinutes}:${l.resetsAt}:${step}`;
+      if (!step || warnedLimits.has(key)) continue;
+      warnedLimits.add(key);
+      if (!quiet()) peek(peekLine(icon.warning, step >= 95 ? "var(--bad)" : "var(--warn)", esc(t("peek.agent.limit", { percent: pct(l.usedPercent), window: name.toLocaleLowerCase(lang()) })), l.resetsAt ? esc(resetLabel(l.resetsAt)) : ""), 5000);
+    }
+  }
+});
+

@@ -224,16 +224,25 @@ pub fn init(app: &AppHandle) -> tauri::Result<()> {
     let listener = TcpListener::bind("127.0.0.1:0")?;
     let port = listener.local_addr()?.port();
     let token = token();
-    for (name, body) in scripts(&dir) {
+    for (name, body) in scripts(&dir).into_iter().chain(crate::agents::hook_scripts()) {
         fs::write(dir.join(name), body)?;
     }
     fs::write(dir.join("endpoint"), format!("{port} {token}\n"))?;
+    crate::agents::set_hook_dir(&dir);
     *STATE.lock().unwrap() = Some(Hook { dir, recent: Vec::new() });
 
     let app = app.clone();
     thread::spawn(move || {
         for stream in listener.incoming().flatten() {
-            if let Some(done) = handle(stream, &token) {
+            let done = match handle(stream, &token) {
+                Some(Request::Done(d)) => d,
+                Some(Request::Agent(e)) => {
+                    crate::agents::deliver(&app, e);
+                    continue;
+                }
+                None => continue,
+            };
+            {
                 if !ENABLED.load(Ordering::Relaxed) {
                     continue;
                 }
@@ -248,11 +257,18 @@ pub fn init(app: &AppHandle) -> tauri::Result<()> {
     Ok(())
 }
 
-fn handle(mut stream: TcpStream, token: &str) -> Option<Done> {
+enum Request {
+    Done(Done),
+    Agent(crate::agents::AgentEvent),
+}
+
+fn handle(mut stream: TcpStream, token: &str) -> Option<Request> {
     let _ = stream.set_read_timeout(Some(Duration::from_secs(2)));
-    let mut buf = vec![0u8; 16 * 1024];
+    // Agent hooks send the whole prompt; anything past this is cut off, and
+    // the fields we use come before it.
+    let mut buf = vec![0u8; 256 * 1024];
     let mut len = 0;
-    // Read until the body is complete; requests are a few hundred bytes.
+    // Read until the body is complete.
     while len < buf.len() {
         let n = stream.read(&mut buf[len..]).ok()?;
         if n == 0 {
@@ -273,10 +289,13 @@ fn handle(mut stream: TcpStream, token: &str) -> Option<Done> {
         }
     }
     let raw = String::from_utf8_lossy(&buf[..len]).into_owned();
-    let form = parse_request(&raw, token);
-    let status = if form.is_some() { "204 No Content" } else { "403 Forbidden" };
+    let req = match crate::agents::parse_agent_request(&raw, token) {
+        Some(e) => Some(Request::Agent(e)),
+        None => parse_request(&raw, token).and_then(|f| to_done(&f)).map(Request::Done),
+    };
+    let status = if req.is_some() { "204 No Content" } else { "403 Forbidden" };
     let _ = stream.write_all(format!("HTTP/1.1 {status}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n").as_bytes());
-    to_done(&form?)
+    req
 }
 
 #[tauri::command]
@@ -341,6 +360,46 @@ mod tests {
             assert!(body.contains("/Users/a/Library/Application Support/gate/hook"), "{name}");
             assert!(body.contains("X-Gate-Token"), "{name}");
         }
+    }
+}
+
+#[cfg(all(test, unix))]
+mod agent_hook {
+    use std::io::Write;
+    use std::net::TcpListener;
+    use std::process::{Command, Stdio};
+
+    /// The real agent script, run by sh with curl, reaches the real request handler.
+    #[test]
+    fn agent_script_reaches_the_server() {
+        let dir = std::env::temp_dir().join(format!("gentra-agent-hook-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let port = listener.local_addr().unwrap().port();
+        std::fs::write(dir.join("endpoint"), format!("{port} tok123\n")).unwrap();
+        for (name, body) in crate::agents::hook_scripts() {
+            std::fs::write(dir.join(name), body).unwrap();
+        }
+        let mut child = Command::new("/bin/sh")
+            .arg(dir.join("agent-hook.sh"))
+            .args(["claude", "notify"])
+            .stdin(Stdio::piped())
+            .spawn()
+            .unwrap();
+        child
+            .stdin
+            .take()
+            .unwrap()
+            .write_all(br#"{"session_id":"s9","cwd":"/Users/a/My Shop","message":"Claude needs your permission to use Bash"}"#)
+            .unwrap();
+        let (stream, _) = listener.accept().unwrap();
+        let got = super::handle(stream, "tok123");
+        assert!(child.wait().unwrap().success());
+        let Some(super::Request::Agent(e)) = got else { panic!("no agent event") };
+        assert_eq!(e.place, "My Shop");
+        assert_eq!(e.session, "s9");
+        assert_eq!(e.event, "notify");
+        let _ = std::fs::remove_dir_all(dir);
     }
 }
 

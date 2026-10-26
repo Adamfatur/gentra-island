@@ -18,8 +18,10 @@ Gentra Island stores these things in your user's app data folder, so that it sti
 | Clipboard history: text, links, and small thumbnails of copied images | So you can find and paste earlier copies | **Clear history** in the Clipboard tab, or deleting single items |
 | Reminders: the text you chose (up to 500 characters), the time, and the app it was copied from | So the reminder can show at that time | **Done** or **×** on the reminder |
 | Shelf: the file paths you dropped on the island, not the files | So the shelf lists them again | Removing them from the Shelf |
+| Gentle care: today's count of reminders, which ones you answered, and when the last one showed | So it doesn't repeat itself or spam you after a restart | It resets every day; switching the feature off stops it |
 | Settings: theme, accent color, language, mode, and similar choices | So the app looks and behaves the way you set it | Uninstalling and deleting the folders below |
 | Command alert scripts, plus a random local port and token | So your terminal can report finished commands to the island | Deleting the `hook` folder |
+| Agent hook script (only if you connect Claude Code or Codex) | So the agent can tell the island it is working, needs you, or is done | **Disconnect** in the AI tab, then deleting the `hook` folder |
 
 **Secrets are never stored.** Text that looks like an API key or a private key is kept in memory only, shown masked, and removed from history and the clipboard after 60 seconds.
 
@@ -35,6 +37,13 @@ The folders are:
 - **What's playing** (title, artist, artwork, which app) is read from the system to show and control it. It isn't saved.
 - **Microphone use.** The meeting guard asks the system whether an app is using the mic, and which one. It never opens the microphone and never hears audio.
 - **Local servers.** The port watcher lists processes listening on your computer, only while the Dev tab is open.
+- **Idle time.** While gentle care is on, Gentra Island asks the system once a minute how many seconds have passed since the last keyboard or mouse input. It doesn't see which keys or where you clicked.
+- **AI agent logs.** While the AI agents feature is on, Gentra Island reads the session logs Claude Code and Codex keep on your computer (`~/.claude/projects` and `~/.codex/sessions`) and keeps only token counts, times, and the rate limits Codex reports, in memory. It doesn't read their login files or keys.
+- **AI agent events.** If you connect an agent, its hook sends the island the name of the project folder, the session ID, and, when the agent asks you something, its question. The agent hands its hook the whole event, your prompt included; the hook passes it only to the island on your own computer (`127.0.0.1`), which takes those fields and drops the rest straight away. Nothing is saved.
+
+## Files it changes outside its own folder
+
+Only when you click **Connect** in the AI tab: Gentra Island adds one hook entry per event to `~/.claude/settings.json` (Claude Code) or `~/.codex/hooks.json` (Codex). Before changing the file it saves a copy next to it, named `settings.json.gentra-backup-<time>` or `hooks.json.gentra-backup-<time>`. **Disconnect** removes exactly those entries and leaves the rest of the file as it was.
 
 ## Permissions
 
@@ -83,8 +92,10 @@ Gentra Island berjalan di komputermu dan menyimpan semuanya di sana. Tidak ada a
 | Riwayat clipboard: teks, tautan, dan thumbnail kecil gambar yang disalin | Supaya kamu bisa mencari dan menempel salinan sebelumnya | **Hapus riwayat** di tab Clipboard, atau hapus satu per satu |
 | Pengingat: teks yang kamu pilih (maksimal 500 karakter), waktunya, dan aplikasi asalnya | Supaya pengingat muncul tepat waktu | **Selesai** atau **×** pada pengingat |
 | Rak: lokasi file yang kamu seret ke pulau, bukan file-nya | Supaya rak tetap menampilkannya | Hapus dari Rak |
+| Pengingat sehat: jumlah pengingat hari ini, mana yang kamu jawab, dan kapan terakhir muncul | Supaya tidak berulang atau jadi spam setelah aplikasi dibuka ulang | Ter-reset tiap hari; mematikan fiturnya menghentikannya |
 | Pengaturan: tema, warna aksen, bahasa, mode, dan pilihan serupa | Supaya aplikasi tampil seperti yang kamu atur | Uninstall lalu hapus folder di bawah |
 | Skrip notifikasi perintah, plus port dan token lokal acak | Supaya terminal bisa mengabari pulau saat perintah selesai | Hapus folder `hook` |
+| Skrip hook agen (hanya kalau kamu menyambungkan Claude Code atau Codex) | Supaya agen bisa mengabari pulau saat bekerja, butuh kamu, atau selesai | **Putuskan** di tab AI, lalu hapus folder `hook` |
 
 **Rahasia tidak pernah disimpan.** Teks yang terlihat seperti kunci API atau kunci privat hanya ada di memori, tampil tersamar, dan hilang dari riwayat serta clipboard setelah 60 detik.
 
@@ -100,6 +111,13 @@ Lokasi foldernya:
 - **Yang sedang diputar** (judul, artis, gambar, aplikasinya) dibaca untuk ditampilkan dan dikendalikan, tidak disimpan.
 - **Pemakaian mikrofon.** Penjaga meeting hanya bertanya ke sistem apakah ada aplikasi yang memakai mic, dan aplikasi mana. Mikrofon tidak pernah dibuka dan suara tidak pernah didengar.
 - **Server lokal.** Pengawas port mendaftar proses yang mendengarkan port di komputermu, hanya selama tab Dev terbuka.
+- **Waktu diam.** Selama pengingat sehat menyala, Gentra Island bertanya ke sistem sekali semenit sudah berapa detik sejak keyboard atau mouse terakhir disentuh. Tombol apa yang ditekan atau di mana kamu mengeklik tidak terlihat.
+- **Log agen AI.** Selama fitur agen AI menyala, Gentra Island membaca log sesi yang disimpan Claude Code dan Codex di komputermu (`~/.claude/projects` dan `~/.codex/sessions`) dan hanya menyimpan jumlah token, waktu, dan batas pemakaian yang dilaporkan Codex, di memori. File login dan kuncinya tidak dibaca.
+- **Kejadian agen AI.** Kalau kamu menyambungkan agen, hook-nya mengirim ke pulau nama folder proyek, ID sesi, dan, saat agen bertanya, pertanyaannya. Agen memberi hook-nya seluruh data kejadian, termasuk prompt-mu; hook hanya meneruskannya ke pulau di komputermu sendiri (`127.0.0.1`), yang mengambil isian tadi dan langsung membuang sisanya. Tidak ada yang disimpan.
+
+### File di luar foldernya yang diubah
+
+Hanya saat kamu menekan **Sambungkan** di tab AI: Gentra Island menambahkan satu entri hook per kejadian ke `~/.claude/settings.json` (Claude Code) atau `~/.codex/hooks.json` (Codex). Sebelum mengubahnya, salinan file disimpan di sebelahnya dengan nama `settings.json.gentra-backup-<waktu>` atau `hooks.json.gentra-backup-<waktu>`. **Putuskan** menghapus entri itu saja, sisanya tetap seperti semula.
 
 ### Izin
 

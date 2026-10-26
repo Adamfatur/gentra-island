@@ -607,8 +607,9 @@ button.danger { color: var(--bad); }
 .mode-card[aria-pressed="true"] svg, .mode-card[aria-current="true"] svg { color: var(--accent); }
 .mode-card.static { background: transparent; box-shadow: inset 0 0 0 1px var(--line); }
 .mode-card.static[aria-current="true"] { box-shadow: 0 0 0 2px var(--accent); }
-.feat-list { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 18px; }
+.feat-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px 12px; }
 .feat-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 8px; font-size: 12.5px; }
+.feat-row > span { min-width: 0; line-height: 1.25; }
 .feat-row:hover { background: var(--surface); }
 .feat-row em { font-style: normal; font-size: 11px; font-weight: 650; color: var(--muted); margin-left: 4px; }
 .feat-row.soon > span { color: var(--muted); }
@@ -657,3 +658,40 @@ button.danger { color: var(--bad); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: 0.01ms !important; animation: none !important; }
 }
+
+/* AI agents */
+.ai { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.ai h3 { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 13px; font-weight: 650; }
+.ai h3 svg { width: 14px; height: 14px; color: var(--muted); }
+.agent-row { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 10px; }
+.agent-row.working .done-ic { color: var(--accent); }
+.agent-row.waiting .done-ic { color: var(--warn); }
+.agent-row.done .done-ic { color: var(--ok); }
+.agent-row.waiting .h { color: var(--text); }
+.agent-card { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 12px; border-radius: 14px; background: var(--surface); }
+.agent-card.off { opacity: 0.6; }
+.agent-card .hook-setup { background: var(--raised); }
+.agent-head { display: flex; align-items: center; gap: 10px; }
+.agent-acts { display: flex; gap: 8px; }
+.agent-btn, .agent-acts button { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 9px; background: var(--raised); font-size: 12.5px; font-weight: 650; flex: none; }
+.agent-btn svg, .agent-acts button svg { width: 14px; height: 14px; }
+.agent-btn:hover, .agent-acts button:hover { filter: brightness(1.08); }
+.agent-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.agent-stat { display: grid; gap: 2px; }
+.agent-stat b { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
+.agent-bars { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.agent-bar { display: grid; gap: 3px; }
+.agent-bar-top { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); font-weight: 600; }
+.agent-bar-top b { color: var(--text); }
+.agent-card .note, .agent-empty { margin: 0; }
+.pulse { display: block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: agent-pulse 1.6s ease-in-out infinite; }
+@keyframes agent-pulse { 50% { opacity: 0.35; scale: 0.7; } }
+@media (prefers-reduced-motion: reduce) { .pulse { animation: none; } }
+.side.agent { color: var(--accent); gap: 6px; }
+.side.agent.dim { color: var(--warn); }
+.side.agent .pulse { width: 7px; height: 7px; }
+.card-ic.warn { background: color-mix(in srgb, var(--warn) 18%, transparent); color: var(--warn); }
+.card-ic .pulse { width: 10px; height: 10px; }
+.card-ic.ok .pulse { background: var(--ok); }
+.side.agent .pulse { animation: none; }
+.agent-acts button.primary, .agent-btn.primary { background: var(--accent); color: var(--on-accent); }
