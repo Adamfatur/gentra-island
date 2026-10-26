@@ -3,6 +3,7 @@
 ## 0.8.1
 
 - **Fixed: a browser video stuck on the island.** After you close the tab that was playing, a paused video on another open page (a Threads or Instagram post, say) no longer shows as now playing. Browser videos show once they have actually played, and a player that doesn't respond to Play within 3 seconds is hidden until it plays again.
+- **Fixed: a large, empty island.** If macOS paused the island's animation (it does that to windows it thinks are hidden), the island could freeze at the open size while showing a small message. It now jumps to the right size instead.
 
 ## 0.8.0
 

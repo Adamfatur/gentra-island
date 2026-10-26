@@ -46,6 +46,9 @@ export class Morph {
   private s = { w: new Spring(0), h: new Spring(0), r: new Spring(0) };
   private raf = 0;
   private last = 0;
+  /** When a frame last arrived, and the timer that checks they keep coming. */
+  private ticked = 0;
+  private guard = 0;
   private k = 300;
   private c = 24;
   private reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -76,10 +79,32 @@ export class Morph {
       this.settled(this.current);
       return;
     }
-    if (!this.raf) this.raf = requestAnimationFrame(this.tick);
+    if (!this.raf) {
+      this.ticked = performance.now();
+      this.raf = requestAnimationFrame(this.tick);
+    }
+    // WebKit pauses animation frames for a window it thinks nobody can see.
+    // Without frames the island would freeze mid-way, so it jumps instead.
+    window.clearTimeout(this.guard);
+    this.guard = window.setTimeout(this.unstick, 250);
   }
 
+  private unstick = () => {
+    if (!this.raf) return;
+    if (performance.now() - this.ticked < 200) {
+      this.guard = window.setTimeout(this.unstick, 250);
+      return;
+    }
+    cancelAnimationFrame(this.raf);
+    this.raf = 0;
+    this.last = 0;
+    Object.values(this.s).forEach((s) => s.snap());
+    this.paint(this.current);
+    this.settled(this.current);
+  };
+
   private tick = (ts: number) => {
+    this.ticked = performance.now();
     const dt = Math.min(0.034, this.last ? (ts - this.last) / 1000 : 1 / 60);
     this.last = ts;
     const springs = Object.values(this.s);
@@ -90,6 +115,7 @@ export class Morph {
       this.paint(this.current);
       this.raf = 0;
       this.last = 0;
+      window.clearTimeout(this.guard);
       this.settled(this.current);
       return;
     }
