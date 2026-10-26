@@ -695,3 +695,10 @@ button.danger { color: var(--bad); }
 .card-ic.ok .pulse { background: var(--ok); }
 .side.agent .pulse { animation: none; }
 .agent-acts button.primary, .agent-btn.primary { background: var(--accent); color: var(--on-accent); }
+
+/* Small island sizes: tucked into the notch, icons only, or everything. */
+#v-compact .side { transition: opacity 0.2s ease; }
+body[data-look="tucked"] #v-compact .side { opacity: 0; }
+body[data-look="slim"] .compact-row { padding: 0 8px; }
+body[data-look="slim"] #v-compact .num { display: none; }
+body[data-look="slim"] #v-compact .side svg, body[data-look="slim"] .mini-art { width: 16px; height: 16px; }

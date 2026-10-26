@@ -2,15 +2,19 @@
 // darker until it reads at 4.5:1 on the theme's surface, so no choice can
 // make the UI illegible.
 
+import { isIslandSize, type IslandSize } from "./islandSize";
+
 export type ThemeMode = "auto" | "dark" | "light";
 
 export interface Settings {
   theme: ThemeMode;
   /** Custom accent as #RRGGBB, or null for the theme's default. */
   accent: string | null;
+  /** How wide the closed island is; see islandSize.ts. */
+  islandSize: IslandSize;
 }
 
-export const DEFAULTS: Settings = { theme: "auto", accent: null };
+export const DEFAULTS: Settings = { theme: "auto", accent: null, islandSize: "notch" };
 
 export function resolveTheme(mode: ThemeMode, systemDark: boolean): "dark" | "light" {
   if (mode === "auto") return systemDark ? "dark" : "light";
@@ -61,7 +65,8 @@ export function loadSettings(raw: string | null): Settings {
     if (!v || typeof v !== "object") return { ...DEFAULTS };
     const theme: ThemeMode = ["auto", "dark", "light"].includes(v.theme) ? v.theme : DEFAULTS.theme;
     const accent = typeof v.accent === "string" && /^#[0-9a-f]{6}$/i.test(v.accent) ? v.accent.toUpperCase() : null;
-    return { theme, accent };
+    const islandSize = isIslandSize(v.islandSize) ? v.islandSize : DEFAULTS.islandSize;
+    return { theme, accent, islandSize };
   } catch {
     return { ...DEFAULTS };
   }

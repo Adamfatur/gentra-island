@@ -27,6 +27,7 @@ import { findTime } from "./timeparse";
 import { isOn, type FeatureId, type ModeState } from "./modes";
 import { SettingsPanel } from "./settings";
 import { ShelfPanel } from "./shelf";
+import { compactLook, compactWidth, type Look } from "./islandSize";
 import { Morph, type Feel, type Size } from "./spring";
 import { renderCompact, renderSystem, renderSystemStalled, type Badge, type Stats } from "./system";
 
@@ -147,11 +148,24 @@ function openSize(): Size {
 
 /* ---------- modes ---------- */
 
+let look: Look | null = null;
+
+/**
+ * The closed island's width follows Settings, what is live, and the pointer.
+ * The row inside is laid out at the same width, so its sides sit at the edges.
+ */
 function compactSize(): Size {
-  const grow = hovering ? 1 : 0;
+  const live = !!badge() || playingArt() !== undefined;
+  const next = compactLook(settings.settings.islandSize, { hasNotch, live, hovering });
   // A running timer needs a little more room on the right.
-  const extra = badge() ? 24 : 0;
-  return { w: CW + extra + grow * 12, h: CH + grow * 3, r: R_COMPACT };
+  const extra = next === "full" && badge() ? 24 : 0;
+  const w = compactWidth(next, { hasNotch, notchW: Math.round(info.notchWidth) }) + extra;
+  if (next !== look) {
+    look = next;
+    document.body.dataset.look = next;
+    root.style.setProperty("--cw", `${w - extra}px`);
+  }
+  return { w, h: CH + (hovering ? 3 : 0), r: R_COMPACT };
 }
 
 function compact() {
@@ -507,7 +521,7 @@ function showGuide() {
   open("guide");
 }
 
-settings.hooks = { toast, replayGuide: showGuide };
+settings.hooks = { toast, replayGuide: showGuide, resized: () => mode === "compact" && go(compactSize(), "hover") };
 
 function describe(item: ClipItem) {
   if (item.secret) {

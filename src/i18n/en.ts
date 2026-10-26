@@ -535,6 +535,13 @@ export const en = {
   "care.today": "Not today",
   "care.thanks": "Nice. Enjoy it.",
   "care.muted": "Okay, no more of these today",
+  "settings.island": "Small island",
+  "settings.island.notch": "Hide in notch",
+  "settings.island.compact": "Compact",
+  "settings.island.wide": "Wide",
+  "settings.island.note.notch": "Stays inside the notch until something is playing or running, so app menus stay clear. Point at it to see everything.",
+  "settings.island.note.compact": "Always shows small icons beside the notch. Point at it to see the numbers.",
+  "settings.island.note.wide": "Always shows memory, CPU, and what's live, at the cost of some room in the menu bar.",
 };
 
 export type Key = keyof typeof en;

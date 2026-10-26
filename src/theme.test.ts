@@ -44,16 +44,21 @@ describe("onAccentText", () => {
 });
 
 describe("loadSettings", () => {
+  test("keeps a valid island size and drops a made-up one", () => {
+    expect(loadSettings('{"islandSize":"wide"}').islandSize).toBe("wide");
+    expect(loadSettings('{"islandSize":"huge"}').islandSize).toBe("notch");
+  });
+
   test("reads a valid saved setting", () => {
-    expect(loadSettings('{"theme":"light","accent":"#FF6A3D"}')).toEqual({ theme: "light", accent: "#FF6A3D" });
+    expect(loadSettings('{"theme":"light","accent":"#FF6A3D"}')).toEqual({ theme: "light", accent: "#FF6A3D", islandSize: "notch" });
   });
 
   test("falls back to defaults for missing or broken data", () => {
-    expect(loadSettings(null)).toEqual({ theme: "auto", accent: null });
-    expect(loadSettings("{not json")).toEqual({ theme: "auto", accent: null });
+    expect(loadSettings(null)).toEqual({ theme: "auto", accent: null, islandSize: "notch" });
+    expect(loadSettings("{not json")).toEqual({ theme: "auto", accent: null, islandSize: "notch" });
   });
 
   test("drops values that are not a theme or a hex colour", () => {
-    expect(loadSettings('{"theme":"neon","accent":"red;background:url(x)"}')).toEqual({ theme: "auto", accent: null });
+    expect(loadSettings('{"theme":"neon","accent":"red;background:url(x)"}')).toEqual({ theme: "auto", accent: null, islandSize: "notch" });
   });
 });

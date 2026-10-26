@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **The small island hides in the notch** when nothing is live, so app menus beside the notch stay visible. While something plays or runs it shows icons only, and everything when you point at it. Settings has Hide in notch, Compact, and Wide.
 - **Gentle care.** Warm, automatic reminders for your body: a break after about 50 minutes of real activity, water every 90 minutes, lunch and dinner once each, and a nudge to rest after 11 pm. Time away from the keyboard counts as a break. They wait while you're on a call or focusing, keep at least 20 minutes apart, stop at 8 a day, and each has Later and Not today. On in every mode except Focus.
 - **AI agents.** See what Claude Code and Codex are doing from the island: a clock while they work, a peek when they need you (even in Focus mode), and a note when a task of 15 seconds or more is done. Connecting is one click in the new AI tab. It explains the change first, keeps a backup of the agent's settings file, and Disconnect undoes it.
 - **AI usage** from the agents' local logs: tokens in the current 5-hour window, today, and the last 7 days. Codex's own 5-hour and weekly limits show as bars, with a heads-up at 80% and 95%.

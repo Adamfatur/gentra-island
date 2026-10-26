@@ -3,6 +3,7 @@ import { LOGIN_LAUNCH_AVAILABLE, loginLaunch, setLoginLaunch } from "./guidePane
 import { APP_AUTHOR, LANGUAGES, errorText, lang, setLanguage, t, type Key, type Lang } from "./i18n";
 import wordmark from "../assets/brand/gentra-island-wordmark.svg?raw";
 import { icon } from "./icons";
+import { ISLAND_SIZES, type IslandSize } from "./islandSize";
 import { DEFAULTS, loadSettings, onAccentText, readableAccent, resolveTheme, type Settings, type ThemeMode } from "./theme";
 
 const KEY = "gentra:settings";
@@ -35,7 +36,7 @@ export class SettingsPanel {
   private root = document.getElementById("settingsPanel")!;
 
   /** Set by main once the toast and guide exist. */
-  hooks: { toast: (msg: string) => void; replayGuide: () => void } | null = null;
+  hooks: { toast: (msg: string) => void; replayGuide: () => void; resized: () => void } | null = null;
 
   constructor() {
     this.media.addEventListener("change", () => this.apply());
@@ -66,6 +67,11 @@ export class SettingsPanel {
       }
       const theme = target.closest<HTMLElement>("[data-theme-mode]")?.dataset.themeMode as ThemeMode | undefined;
       if (theme) return this.update({ theme });
+      const size = target.closest<HTMLElement>("[data-island-size]")?.dataset.islandSize as IslandSize | undefined;
+      if (size) {
+        this.update({ islandSize: size });
+        return this.hooks?.resized();
+      }
       const swatch = target.closest<HTMLElement>("[data-accent]");
       if (swatch) return this.update({ accent: swatch.dataset.accent || null });
     });
@@ -115,6 +121,9 @@ export class SettingsPanel {
     const languages = LANGUAGES.map(
       (l) => `<button class="seg lang-seg" data-lang="${l.id}" lang="${l.id}" dir="${l.dir}" aria-pressed="${lang() === l.id}"><span>${l.name}</span></button>`,
     ).join("");
+    const sizes = ISLAND_SIZES.map(
+      (s) => `<button class="seg" data-island-size="${s}" aria-pressed="${this.settings.islandSize === s}"><span>${t(`settings.island.${s}` as Key)}</span></button>`,
+    ).join("");
     const devNote = LOGIN_LAUNCH_AVAILABLE ? "" : `<small>${t("settings.login.devNote")}</small>`;
     this.root.innerHTML = `<div class="settings">
       <section>
@@ -132,6 +141,11 @@ export class SettingsPanel {
           </label>
         </div>
         <p class="note">${t("settings.accent.note")}</p>
+      </section>
+      <section>
+        <h3>${t("settings.island")}</h3>
+        <div class="segs" role="group" aria-label="${t("settings.island")}">${sizes}</div>
+        <p class="note">${t(`settings.island.note.${this.settings.islandSize}` as Key)}</p>
       </section>
       <section>
         <h3>${t("settings.language")}</h3>
