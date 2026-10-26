@@ -31,6 +31,7 @@ const SHOTS = [
   ["agent-ask", "agent-ask"],
   ["screenshot", "screenshot"],
   ["download", "download"],
+  ["eyes", "eyes"],
   ["care", "care"],
   ["care-water", "care-water"],
 ];

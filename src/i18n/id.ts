@@ -566,4 +566,11 @@ export const id: Record<Key, Msg> = {
   "dl.reveal": "Tampilkan di folder",
   "dl.revealMac": "Tampilkan di Finder",
   "error.file_missing": "File itu sudah tidak ada. Mungkin sudah dipindah atau dihapus.",
+  "settings.eyes": "Mata di notch",
+  "settings.eyes.off": "Mati",
+  "settings.eyes.moments": "Momen",
+  "settings.eyes.always": "Selalu",
+  "settings.eyes.note.off": "Tanpa mata. Pulau tetap seperti biasa.",
+  "settings.eyes.note.moments": "Muncul saat kamu menunjuk notch, saat tugas selesai, saat ada yang butuh kamu, dan saat kamu kembali. Lalu bersembunyi lagi, jadi tidak ada yang tertutup.",
+  "settings.eyes.note.always": "Selalu ada saat pulau kosong. Di Mac ber-notch, mata ada tepat di bawah kamera dan menyingkir saat kursor mendekat.",
 };

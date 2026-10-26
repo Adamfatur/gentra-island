@@ -339,6 +339,17 @@ pub fn clip_write(store: tauri::State<ClipStore>, text: String) -> Result<(), St
     Ok(())
 }
 
+/// The text in a copied image, such as a screenshot copied straight to the
+/// clipboard, read on this computer.
+#[tauri::command]
+pub async fn clip_text(store: tauri::State<'_, ClipStore>, id: u64) -> Result<String, String> {
+    let path = store.image_path(id);
+    if !path.is_file() {
+        return Err("item_missing".into());
+    }
+    tauri::async_runtime::spawn_blocking(move || crate::screenshots::read_text(&path)).await.map_err(|e| e.to_string())?
+}
+
 /// Puts an item back on the system clipboard and moves it to the top.
 #[tauri::command]
 pub fn clip_copy(app: AppHandle, store: tauri::State<ClipStore>, id: u64) -> Result<(), String> {

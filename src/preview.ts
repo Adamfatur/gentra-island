@@ -171,6 +171,8 @@ mockIPC(
       case "download_open":
       case "download_reveal":
         return null;
+      case "clip_text":
+        return "Rapat sprint dipindah ke Kamis jam 14.00";
       case "shot_copy":
         return null;
       case "agents_answer":
@@ -214,7 +216,7 @@ if (scene || params.has("shot")) {
   document.body.classList.add("shot");
   localStorage.setItem("gentra:guide", "1");
   localStorage.setItem("gentra:lang", params.get("lang") ?? "en");
-  localStorage.setItem("gentra:settings", JSON.stringify({ theme: params.get("theme") ?? "dark", accent: null }));
+  localStorage.setItem("gentra:settings", JSON.stringify({ theme: params.get("theme") ?? "dark", accent: null, eyes: scene === "eyes" ? "always" : "moments" }));
   localStorage.removeItem("gentra:reminders");
   if (scene === "reminder-due") {
     localStorage.setItem(
@@ -455,6 +457,9 @@ const scenes: Record<string, () => Promise<void>> = {
     agentEvent("claude", "start", "", "gentra-island");
     await wait(300);
     actions["Claude minta izin"]();
+  },
+  eyes: async () => {
+    await wait(1200);
   },
   download: async () => {
     await wait(300);

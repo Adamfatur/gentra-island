@@ -38,7 +38,8 @@
 Gentra Island sits at the top of your screen. On a Mac with a notch it hides inside the camera housing until something is happening, so your menus stay visible; elsewhere it floats as a small pill. Hover, click, or press **⌥⌘G** (**Ctrl+Alt+G** on Windows and Linux) to open it. It speaks up by itself only when something is worth seeing: Claude Code waiting for your answer, a long build that finished, a call that started, or an hour without a break.
 
 - **AI agents:** see when Claude Code or Codex is working, needs you, or is done, **allow or deny Claude Code's permission requests from the notch**, and see how many tokens you've used in this 5-hour window
-- **Smart screenshots:** take a screenshot and copy the text in it with one click, read on your computer
+- **Smart screenshots:** copy the text out of any screenshot with one click, saved or copied with ⌃⇧⌘4, read on your computer
+- **Eyes in the notch:** two little eyes peek out when you point at the notch, follow your pointer, and smile when a task is done
 - **Download progress** in the notch, with Open when it's done
 - **Gentle care:** a warm nudge to take a break, drink water, eat, and stop when it gets late, never more than 8 a day
 - **Now playing** for Spotify, Apple Music, YouTube, and more, with artwork and controls

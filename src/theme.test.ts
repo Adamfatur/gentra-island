@@ -44,21 +44,28 @@ describe("onAccentText", () => {
 });
 
 describe("loadSettings", () => {
+  test("eyes: a valid choice stays, the old off switch stays off", () => {
+    expect(loadSettings('{"eyes":"always"}').eyes).toBe("always");
+    expect(loadSettings('{"islandEyes":false}').eyes).toBe("off");
+    expect(loadSettings('{"islandEyes":true}').eyes).toBe("moments");
+    expect(loadSettings('{"eyes":"wink"}').eyes).toBe("moments");
+  });
+
   test("keeps a valid island size and drops a made-up one", () => {
     expect(loadSettings('{"islandSize":"wide"}').islandSize).toBe("wide");
     expect(loadSettings('{"islandSize":"huge"}').islandSize).toBe("notch");
   });
 
   test("reads a valid saved setting", () => {
-    expect(loadSettings('{"theme":"light","accent":"#FF6A3D"}')).toEqual({ theme: "light", accent: "#FF6A3D", islandSize: "notch" });
+    expect(loadSettings('{"theme":"light","accent":"#FF6A3D"}')).toEqual({ theme: "light", accent: "#FF6A3D", islandSize: "notch", eyes: "moments" });
   });
 
   test("falls back to defaults for missing or broken data", () => {
-    expect(loadSettings(null)).toEqual({ theme: "auto", accent: null, islandSize: "notch" });
-    expect(loadSettings("{not json")).toEqual({ theme: "auto", accent: null, islandSize: "notch" });
+    expect(loadSettings(null)).toEqual({ theme: "auto", accent: null, islandSize: "notch", eyes: "moments" });
+    expect(loadSettings("{not json")).toEqual({ theme: "auto", accent: null, islandSize: "notch", eyes: "moments" });
   });
 
   test("drops values that are not a theme or a hex colour", () => {
-    expect(loadSettings('{"theme":"neon","accent":"red;background:url(x)"}')).toEqual({ theme: "auto", accent: null, islandSize: "notch" });
+    expect(loadSettings('{"theme":"neon","accent":"red;background:url(x)"}')).toEqual({ theme: "auto", accent: null, islandSize: "notch", eyes: "moments" });
   });
 });

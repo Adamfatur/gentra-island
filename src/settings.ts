@@ -4,7 +4,7 @@ import { APP_AUTHOR, LANGUAGES, errorText, lang, setLanguage, t, type Key, type 
 import wordmark from "../assets/brand/gentra-island-wordmark.svg?raw";
 import { icon } from "./icons";
 import { ISLAND_SIZES, type IslandSize } from "./islandSize";
-import { DEFAULTS, loadSettings, onAccentText, readableAccent, resolveTheme, type Settings, type ThemeMode } from "./theme";
+import { DEFAULTS, EYES_MODES, loadSettings, onAccentText, readableAccent, resolveTheme, type EyesMode, type Settings, type ThemeMode } from "./theme";
 
 const KEY = "gentra:settings";
 
@@ -67,6 +67,11 @@ export class SettingsPanel {
       }
       const theme = target.closest<HTMLElement>("[data-theme-mode]")?.dataset.themeMode as ThemeMode | undefined;
       if (theme) return this.update({ theme });
+      const eyes = target.closest<HTMLElement>("[data-eyes]")?.dataset.eyes as EyesMode | undefined;
+      if (eyes) {
+        this.update({ eyes });
+        return this.hooks?.resized();
+      }
       const size = target.closest<HTMLElement>("[data-island-size]")?.dataset.islandSize as IslandSize | undefined;
       if (size) {
         this.update({ islandSize: size });
@@ -146,6 +151,9 @@ export class SettingsPanel {
         <h3>${t("settings.island")}</h3>
         <div class="segs" role="group" aria-label="${t("settings.island")}">${sizes}</div>
         <p class="note">${t(`settings.island.note.${this.settings.islandSize}` as Key)}</p>
+        <h3 class="sub-h">${t("settings.eyes")}</h3>
+        <div class="segs" role="group" aria-label="${t("settings.eyes")}">${EYES_MODES.map((m) => `<button class="seg" data-eyes="${m}" aria-pressed="${this.settings.eyes === m}"><span>${t(`settings.eyes.${m}` as Key)}</span></button>`).join("")}</div>
+        <p class="note">${t(`settings.eyes.note.${this.settings.eyes}` as Key)}</p>
       </section>
       <section>
         <h3>${t("settings.language")}</h3>

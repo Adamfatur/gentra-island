@@ -206,6 +206,11 @@ fn ocr(path: &Path) -> Result<String, String> {
     Ok(String::from_utf8_lossy(&out.stdout).trim_end().to_string())
 }
 
+/// The text in any image file, read on this computer.
+pub fn read_text(path: &Path) -> Result<String, String> {
+    ocr(path)
+}
+
 /// Puts the screenshot itself on the clipboard.
 #[tauri::command]
 pub fn shot_copy(path: String) -> Result<(), String> {

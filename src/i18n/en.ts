@@ -578,6 +578,13 @@ export const en = {
   "dl.reveal": "Show in folder",
   "dl.revealMac": "Show in Finder",
   "error.file_missing": "That file isn't there anymore. It may have been moved or deleted.",
+  "settings.eyes": "Eyes in the notch",
+  "settings.eyes.off": "Off",
+  "settings.eyes.moments": "Moments",
+  "settings.eyes.always": "Always",
+  "settings.eyes.note.off": "No eyes. The island stays as it is.",
+  "settings.eyes.note.moments": "They peek out when you point at the notch, when a task is done, when something needs you, and when you come back. Then they tuck away, so nothing is covered.",
+  "settings.eyes.note.always": "Always there while the island is empty. On a Mac with a notch they sit just below the camera and step aside when your pointer comes close.",
 };
 
 export type Key = keyof typeof en;

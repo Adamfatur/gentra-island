@@ -5,6 +5,8 @@
 import { isIslandSize, type IslandSize } from "./islandSize";
 
 export type ThemeMode = "auto" | "dark" | "light";
+export type EyesMode = "off" | "moments" | "always";
+export const EYES_MODES: EyesMode[] = ["off", "moments", "always"];
 
 export interface Settings {
   theme: ThemeMode;
@@ -12,9 +14,11 @@ export interface Settings {
   accent: string | null;
   /** How wide the closed island is; see islandSize.ts. */
   islandSize: IslandSize;
+  /** Eyes in the notch: never, for moments (on hover and when something happens), or always. */
+  eyes: EyesMode;
 }
 
-export const DEFAULTS: Settings = { theme: "auto", accent: null, islandSize: "notch" };
+export const DEFAULTS: Settings = { theme: "auto", accent: null, islandSize: "notch", eyes: "moments" };
 
 export function resolveTheme(mode: ThemeMode, systemDark: boolean): "dark" | "light" {
   if (mode === "auto") return systemDark ? "dark" : "light";
@@ -66,7 +70,9 @@ export function loadSettings(raw: string | null): Settings {
     const theme: ThemeMode = ["auto", "dark", "light"].includes(v.theme) ? v.theme : DEFAULTS.theme;
     const accent = typeof v.accent === "string" && /^#[0-9a-f]{6}$/i.test(v.accent) ? v.accent.toUpperCase() : null;
     const islandSize = isIslandSize(v.islandSize) ? v.islandSize : DEFAULTS.islandSize;
-    return { theme, accent, islandSize };
+    // 0.9 stored an on/off switch; off stays off, on becomes the new default.
+    const eyes: EyesMode = EYES_MODES.includes(v.eyes) ? v.eyes : v.islandEyes === false ? "off" : DEFAULTS.eyes;
+    return { theme, accent, islandSize, eyes };
   } catch {
     return { ...DEFAULTS };
   }

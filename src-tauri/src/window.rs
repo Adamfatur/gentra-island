@@ -4,9 +4,10 @@
 //! reports the island's rectangle; everything outside that rectangle is made
 //! click-through by polling the cursor and toggling `ignore_cursor_events`.
 
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
 use std::thread;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, LogicalPosition, LogicalSize, Manager, WebviewWindow};
@@ -52,6 +53,17 @@ pub struct ScreenInfo {
 }
 
 /// Called by the frontend whenever the island's hit area changes (logical px).
+/// The eyes in the notch follow the pointer; only then is its position sent.
+static EYES: AtomicBool = AtomicBool::new(false);
+/// Ten times a second: smooth enough with the CSS transition, and quick
+/// enough to tuck the eyes away before the pointer reaches them.
+const EYES_EVERY: Duration = Duration::from_millis(100);
+
+#[tauri::command]
+pub fn set_eyes(on: bool) {
+    EYES.store(on, Ordering::Relaxed);
+}
+
 #[tauri::command]
 pub fn set_hit_rect(state: tauri::State<HitState>, rect: Rect) {
     *state.0.lock().unwrap() = rect;
@@ -91,6 +103,7 @@ pub fn spawn_hit_tester(app: AppHandle) {
     thread::spawn(move || {
         let mut inside = false;
         let mut accepting = false;
+        let mut sent = Instant::now();
         let mut wait = Duration::from_millis(100);
         let mut last = (f64::NAN, f64::NAN);
         let mut still = Duration::ZERO;
@@ -114,6 +127,10 @@ pub fn spawn_hit_tester(app: AppHandle) {
             let moved = (x - last.0).abs() > 0.5 || (y - last.1).abs() > 0.5;
             last = (x, y);
             still = if moved { Duration::ZERO } else { still.saturating_add(wait) };
+            if moved && EYES.load(Ordering::Relaxed) && sent.elapsed() >= EYES_EVERY {
+                sent = Instant::now();
+                let _ = app.emit("pointer", (x.round(), y.round()));
+            }
             let rect = *app.state::<HitState>().0.lock().unwrap();
             let near = y < rect.y + rect.h + 80.0 && x > rect.x - 80.0 && x < rect.x + rect.w + 80.0;
             // Every check wakes the CPU, so poll fast only when hover can change soon:

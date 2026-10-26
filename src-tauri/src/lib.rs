@@ -138,6 +138,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             window::set_hit_rect,
             window::screen_info,
+            window::set_eyes,
             stats::stats_now,
             stats::set_stats_detail,
             set_features,
@@ -177,6 +178,7 @@ pub fn run() {
             clipboard::clip_list,
             clipboard::clip_copy,
             clipboard::clip_write,
+            clipboard::clip_text,
             clipboard::clip_pin,
             clipboard::clip_delete,
             clipboard::clip_clear,

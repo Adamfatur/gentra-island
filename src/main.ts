@@ -28,6 +28,7 @@ import { isOn, type FeatureId, type ModeState } from "./modes";
 import { SettingsPanel } from "./settings";
 import { ShelfPanel } from "./shelf";
 import { compactLook, compactWidth, type Look } from "./islandSize";
+import { Eyes, SLEEP_AFTER, type Mood } from "./eyes";
 import { Morph, type Feel, type Size } from "./spring";
 import { renderCompact, renderSystem, renderSystemStalled, type Badge, type Stats } from "./system";
 
@@ -157,6 +158,76 @@ function openSize(): Size {
 /* ---------- modes ---------- */
 
 let look: Look | null = null;
+const eyes = new Eyes();
+let eyesShown = false;
+/** Whether the pointer feed is on: the eyes are wanted, even if tucked away for now. */
+let eyesFeed = false;
+/**
+ * The notch has no pixels: on a Mac with one, the eyes sit in a band just
+ * below the camera. When the pointer comes close below it, the band tucks
+ * away so whatever is underneath stays clickable.
+ */
+const EYE_BAND = 18;
+let eyesAway = false;
+/** In Moments, the eyes show until this time after something happens. */
+let momentUntil = 0;
+let momentTimer = 0;
+const MOMENT_MS = 2500;
+/** A mood that happened while a peek or the open island hid the eyes. */
+let pendingMood: Mood | null = null;
+
+/** The eyes show only on an empty, closed island, and only with the setting on. */
+function syncEyes() {
+  const setting = settings.settings.eyes;
+  const want = setting !== "off" && mode === "compact" && !badge() && playingArt() === undefined;
+  if (want !== eyesFeed) {
+    eyesFeed = want;
+    void invoke("set_eyes", { on: want });
+  }
+  // On a notched Mac the eyes need a band below the camera, which covers a
+  // little of the window underneath. In Moments it shows only on hover or for
+  // a moment; elsewhere the eyes sit inside the pill and cover nothing.
+  if (want && pendingMood && Date.now() >= momentUntil) {
+    // A mood saved during a peek gets its moment now, and tucks away after.
+    momentUntil = Date.now() + MOMENT_MS;
+    window.clearTimeout(momentTimer);
+    momentTimer = window.setTimeout(() => mode === "compact" && go(compactSize(), "hover"), MOMENT_MS + 50);
+  }
+  const moment = hovering || Date.now() < momentUntil;
+  const show = want && (!hasNotch || ((setting === "always" || moment) && !eyesAway));
+  if (show === eyesShown) return;
+  eyesShown = show;
+  eyes.setVisible(show);
+  if (show && pendingMood) {
+    const m = pendingMood;
+    pendingMood = null;
+    window.setTimeout(() => eyes.feel(m), 450);
+  }
+}
+
+/** Back after a while away: a moment to say hello, in either mode. */
+function wake() {
+  if (!eyesFeed) return;
+  moment();
+  window.setTimeout(() => eyes.sleep(false), 300);
+}
+
+function mood(m: Mood) {
+  if (mode !== "compact") {
+    pendingMood = m;
+    return;
+  }
+  moment();
+  window.setTimeout(() => eyes.feel(m), eyesShown ? 0 : 350);
+}
+
+/** Moments: the eyes peek out for a little while, then tuck away. */
+function moment() {
+  momentUntil = Date.now() + MOMENT_MS;
+  window.clearTimeout(momentTimer);
+  momentTimer = window.setTimeout(() => mode === "compact" && go(compactSize(), "hover"), MOMENT_MS + 50);
+  if (mode === "compact") go(compactSize(), "hover");
+}
 
 /**
  * The closed island's width follows Settings, what is live, and the pointer.
@@ -173,7 +244,9 @@ function compactSize(): Size {
     document.body.dataset.look = next;
     root.style.setProperty("--cw", `${w - extra}px`);
   }
-  return { w, h: CH + (hovering ? 3 : 0), r: R_COMPACT };
+  syncEyes();
+  const band = eyesShown && hasNotch ? EYE_BAND : 0;
+  return { w, h: CH + band + (hovering ? 3 : 0), r: R_COMPACT };
 }
 
 function compact() {
@@ -200,6 +273,7 @@ function allowed(t: Tab): Tab {
 function open(t: Tab = tab) {
   clearTimeout(peekTimer);
   mode = "open";
+  syncEyes();
   shell.classList.add("open");
   show("v-exp");
   setTab(allowed(t));
@@ -282,6 +356,7 @@ document.querySelectorAll(".panel").forEach((p) => resize.observe(p));
 function peek(html: string, ms = 1800, wide = false) {
   if (mode === "open") return;
   mode = "peek";
+  syncEyes();
   $("#v-peek").classList.toggle("wide", wide);
   $("#peekBody").innerHTML = html;
   show("v-peek");
@@ -331,6 +406,7 @@ const reminders = new Reminders(
 
 function reminderDue(r: Reminder, late: boolean) {
   chime();
+  mood("surprised");
   if (mode === "open") {
     toast(t("due.toast", { text: r.text.slice(0, 60) }));
     return;
@@ -610,6 +686,18 @@ await listen("clips-changed", async () => {
       8000,
       true,
     );
+  } else if (fresh && top.kind === "image" && !quiet() && isOn(modes.state, "tangkap")) {
+    // A screenshot copied straight to the clipboard (⌃⇧⌘4) never becomes a
+    // file, so any copied image gets the same Copy text as a saved screenshot.
+    const pic = top.thumb ? `<img class="shot-thumb" alt="" src="${top.thumb}">` : `<span class="ic">${icon.image}</span>`;
+    const title = top.app ? t("peek.imageCopiedFrom", { source: top.app }) : t("peek.imageCopied");
+    const size = top.size ? `<div class="s num">${top.size[0]} × ${top.size[1]} px</div>` : "";
+    peek(
+      `${pic}<div class="peek-main"><div class="t">${esc(title)}</div>${size}
+         <div class="peek-acts"><button class="primary" data-clip-text="${top.id}">${icon.text}<span>${t("shot.text")}</span></button></div></div>`,
+      6000,
+      true,
+    );
   } else if (fresh && (top.secret || !quiet())) peek(describe(top), top.secret ? 3500 : 2400);
   if (mode === "open" && tab === "clipboard") renderHeadMeta();
   home.refresh();
@@ -695,12 +783,15 @@ shell.addEventListener("click", (e) => {
   if (careBtn) {
     const kind = careBtn.closest<HTMLElement>("[data-care-kind]")!.dataset.careKind as CareKind;
     const said = care.answer(kind, careBtn.dataset.care as "ok" | "later" | "today");
+    if (careBtn.dataset.care === "ok") mood("happy");
     compact();
     if (said) window.setTimeout(() => peek(peekLine(icon.check, "var(--ok)", esc(said), ""), 1600), 450);
     return;
   }
   const dlBtn = el.closest<HTMLElement>("[data-dl]");
   if (dlBtn) return void downloadAct(dlBtn.dataset.dl!);
+  const clipText = el.closest<HTMLElement>("[data-clip-text]");
+  if (clipText) return void copyTextFrom(Number(clipText.dataset.clipText));
   const shotBtn = el.closest<HTMLElement>("[data-shot]");
   if (shotBtn) return void shotAct(shotBtn.dataset.shot!);
   const ans = el.closest<HTMLElement>("[data-act=answer]");
@@ -916,6 +1007,19 @@ await listen<Shot>("screenshot", ({ payload: s }) => {
   );
 });
 
+/** Copy text for an image in the clipboard history. */
+async function copyTextFrom(id: number) {
+  compact();
+  try {
+    const text = await invoke<string>("clip_text", { id });
+    if (!text.trim()) return toast(t("shot.noText"));
+    await invoke("clip_write", { text });
+    toast(t("shot.textCopied", { key: pasteKey }));
+  } catch (err) {
+    toast(errorText(err));
+  }
+}
+
 async function shotAct(act: string) {
   const s = lastShot;
   if (!s) return;
@@ -962,6 +1066,7 @@ await listen<AgentEvent>("agent-event", ({ payload }) => {
   const s = n.session;
   // Claude Code also notifies about a permission request the island is already showing.
   if (n.kind === "waiting" && ai.asks.some((a) => a.agent === s.agent)) return;
+  mood(n.kind === "waiting" ? "surprised" : "happy");
   if (n.kind === "waiting") {
     // A question blocks the agent, so it speaks even in Focus mode.
     chime();
@@ -1017,4 +1122,27 @@ await listen<AgentStatus[]>("agent-usage", ({ payload }) => {
     }
   }
 });
+
+/* ---------- eyes ---------- */
+
+// The pointer, from the hit tester, relative to the middle of the notch.
+await listen<[number, number]>("pointer", ({ payload: [x, y] }) => {
+  const dx = x - WIN_W / 2;
+  eyes.look(dx, y - (TOP + CH / 2));
+  if (!hasNotch) return;
+  // Close below the band: tuck it away. Over the menu bar it can stay.
+  const away = Math.abs(dx) < info.notchWidth / 2 + 40 && y > CH - 2 && y < CH + EYE_BAND + 40;
+  if (away === eyesAway) return;
+  eyesAway = away;
+  if (mode === "compact") go(compactSize(), "hover");
+});
+
+// Asleep after five quiet minutes; the next pointer move wakes them.
+window.setInterval(async () => {
+  if (!eyesFeed) return;
+  const idle = await invoke<number | null>("idle_secs").catch(() => null);
+  if (idle === null) return;
+  if (idle >= SLEEP_AFTER) eyes.sleep(true);
+  else if (eyes.sleeping) wake();
+}, 30_000);
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- **Eyes in the notch.** Point at the notch and two eyes peek out, follow your pointer, blink, smile when a task is done, look up when something needs you, and nap while you're away. On a Mac with a notch they sit just below the camera, since the notch itself has no pixels. Settings has Off, Moments (the default, so nothing is covered), and Always.
+- **Smart screenshots work with ⌃⇧⌘4 too.** A screenshot copied straight to the clipboard, or any copied image, gets Copy text. Before, only screenshots saved as files did.
+
 ## 0.9.0
 
 - **Approve from the notch.** When Claude Code asks for permission, the notch shows the command in full with Allow, Deny, and In terminal. Only your click decides; unanswered after 30 seconds, Claude Code asks in its own window. Connected before? Click Connect again in the AI tab once.
