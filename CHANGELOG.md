@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.9.0
 
 - **Approve from the notch.** When Claude Code asks for permission, the notch shows the command in full with Allow, Deny, and In terminal. Only your click decides; unanswered after 30 seconds, Claude Code asks in its own window. Connected before? Click Connect again in the AI tab once.
 - **Smart screenshots.** A new screenshot shows on the island with Copy text, Copy image, and Shelf. The text is read on your computer, with no upload.
