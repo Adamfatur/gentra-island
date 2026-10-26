@@ -192,6 +192,68 @@
     footer a { color: var(--ink); text-decoration: none; }
     footer a:hover { text-decoration: underline; }
 
+    /* ---------- scroll motion: tied to scroll position, CSS only ----------
+       Browsers without scroll-driven animations, and anyone who prefers
+       reduced motion, get the same page, still. */
+
+    /* The story without motion: four rows, picture then words. */
+    #story .st { display: grid; grid-template-columns: 1.3fr 1fr; gap: clamp(20px, 4vw, 48px); align-items: center; width: min(1120px, 100% - 32px); margin: 0 auto clamp(40px, 6vw, 72px); }
+    #story .st img { width: 100%; height: auto; border-radius: 18px; background: #10131c; }
+    #story .kicker { display: block; color: var(--link); font-weight: 700; font-size: 14px; margin-bottom: 8px; }
+    #story h3 { font-size: clamp(26px, 3.4vw, 44px); line-height: 1.08; letter-spacing: -0.025em; font-weight: 800; margin: 0 0 12px; text-wrap: balance; }
+    #story .st p { color: var(--muted); margin: 0; max-width: 38ch; }
+    .story-dots { display: none; }
+
+    @supports (animation-timeline: view()) {
+      @media (prefers-reduced-motion: no-preference) {
+        /* The demo opens out of the notch: the video starts clipped to the island's shape. */
+        .demo-scroll { height: 190vh; view-timeline: --demo block; }
+        .demo { position: sticky; top: max(24px, calc(50vh - 260px)); }
+        .demo video { animation: demo-open linear both; animation-timeline: --demo; animation-range: contain 0% contain 55%; }
+        .demo p { animation: fade-in linear both; animation-timeline: --demo; animation-range: contain 45% contain 60%; }
+
+        /* The story: one pinned screen; each step takes a quarter of the scroll. */
+        #story { height: 460vh; padding: 0; view-timeline: --story block; }
+        .story-pin { position: sticky; top: 0; height: 100vh; display: grid; align-items: center; }
+        .story-steps { position: relative; width: min(1120px, 100% - 32px); margin: 0 auto; height: min(78vh, 640px); }
+        #story .st { position: absolute; inset: 0; width: auto; margin: 0; grid-template-columns: 1.5fr 1fr; opacity: 0; }
+        #story .st img { align-self: center; }
+        .st1 { animation: step-first linear both; animation-timeline: --story; animation-range: contain 0% contain 25%; }
+        .st2 { animation: step linear both; animation-timeline: --story; animation-range: contain 20% contain 50%; }
+        .st3 { animation: step linear both; animation-timeline: --story; animation-range: contain 45% contain 75%; }
+        .st4 { animation: step-last linear both; animation-timeline: --story; animation-range: contain 70% contain 100%; }
+        .story-dots { display: flex; gap: 6px; position: absolute; left: max(16px, calc(50% - 560px)); bottom: 6vh; }
+        .story-dots i { width: 26px; height: 3px; border-radius: 2px; background: var(--line); overflow: hidden; }
+        .story-dots i::after { content: ""; display: block; height: 100%; background: var(--ink); transform-origin: left; scale: 0 1; animation: dot-fill linear both; animation-timeline: --story; }
+        .story-dots i:nth-child(1)::after { animation-range: contain 0% contain 25%; }
+        .story-dots i:nth-child(2)::after { animation-range: contain 25% contain 50%; }
+        .story-dots i:nth-child(3)::after { animation-range: contain 50% contain 75%; }
+        .story-dots i:nth-child(4)::after { animation-range: contain 75% contain 100%; }
+
+        /* Everything else rises in gently as it enters the screen. */
+        #features h2, #features .intro, .row > div, .pair > div, .more > div, .os, .reqs, .facts > div, #questions h2, details, .closing > * {
+          animation: rise linear both; animation-timeline: view(); animation-range: entry 0% cover 30%;
+        }
+        .row figure { animation: rise-pic linear both; animation-timeline: view(); animation-range: entry 0% cover 40%; }
+      }
+    }
+    @keyframes demo-open {
+      from { clip-path: inset(0 40% 88% 40% round 0 0 14px 14px); scale: 0.92; }
+      40% { clip-path: inset(0 30% 80% 30% round 0 0 22px 22px); }
+      to { clip-path: inset(0 0 0 0 round 20px); scale: 1; }
+    }
+    @keyframes fade-in { from { opacity: 0; } }
+    @keyframes step { 0% { opacity: 0; translate: 0 28px; } 20%, 80% { opacity: 1; translate: 0 0; } 100% { opacity: 0; translate: 0 -28px; } }
+    @keyframes step-first { 0%, 80% { opacity: 1; } 100% { opacity: 0; translate: 0 -28px; } }
+    @keyframes step-last { 0% { opacity: 0; translate: 0 28px; } 20%, 100% { opacity: 1; translate: 0 0; } }
+    @keyframes dot-fill { to { scale: 1 1; } }
+    @keyframes rise { from { opacity: 0; translate: 0 48px; } }
+    @keyframes rise-pic { from { opacity: 0; translate: 0 64px; scale: 0.94; } }
+
+    @media (max-width: 820px) {
+      #story .st, #story .st:is(.st1, .st2, .st3, .st4) { grid-template-columns: 1fr; align-content: center; }
+    }
+
     @media (max-width: 820px) {
       .row, .row.flip, .pair, .facts { grid-template-columns: 1fr; }
       .row.flip figure { order: 0; }
@@ -241,6 +303,7 @@
     </div>
   </header>
 
+  <div class="demo-scroll">
   <div class="demo">
     <video autoplay muted loop playsinline preload="metadata" poster="screenshots/home.png" width="760" height="330" aria-label="Gentra Island opening from the notch: Home, Media, Clipboard, Dev, and AI, then Claude Code asking for permission and a reminder to drink water">
       <source src="screenshots/demo.mp4" type="video/mp4">
@@ -248,8 +311,33 @@
     </video>
     <p>The real app, recorded from its preview with sample data.</p>
   </div>
+  </div>
 
   <main>
+    <section id="story" aria-label="A day with Gentra Island">
+      <div class="story-pin">
+        <div class="story-steps">
+          <div class="st st1">
+            <img src="screenshots/compact.png" width="1520" height="144" loading="lazy" alt="The small island beside the notch, with album art on the left and a level meter on the right">
+            <div><span class="kicker">While you work</span><h3>Barely wider than the notch.</h3><p>Music playing? You see the cover and a small meter. Your menus stay where they are.</p></div>
+          </div>
+          <div class="st st2">
+            <img src="screenshots/agent-peek.png" width="1520" height="316" loading="lazy" alt="A peek from the notch: Claude Code needs you, Claude needs your permission to use Bash, with a Show button">
+            <div><span class="kicker">When it matters</span><h3>Claude Code needs you.</h3><p>The question shows in the notch the moment the agent stops to ask.</p></div>
+          </div>
+          <div class="st st3">
+            <img src="screenshots/ai.png" width="1520" height="1040" loading="lazy" alt="The AI tab: Claude Code waiting for permission, Codex working, tokens used, and Codex's limits">
+            <div><span class="kicker">At a glance</span><h3>Every agent, every token.</h3><p>What's running, what's waiting, and how much of this 5-hour window you've used.</p></div>
+          </div>
+          <div class="st st4">
+            <img src="screenshots/care-water.png" width="1520" height="316" loading="lazy" alt="A reminder from the notch: Have a glass of water? with Got it, Later, and Not today">
+            <div><span class="kicker">And for you</span><h3>Have a glass of water?</h3><p>After a long stretch at the keyboard, a gentle nudge. Never during calls, and never more than 8 a day.</p></div>
+          </div>
+        </div>
+        <div class="story-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
     <section id="features">
       <div class="wrap">
         <h2>Small until it matters</h2>
