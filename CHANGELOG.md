@@ -2,6 +2,7 @@
 
 ## 1.0.2
 
+- **Fixed: the Focus droplet counted down two seconds at a time.** It only redrew when new system figures arrived, every two seconds. It now ticks every second.
 - **The cover fills the music view.** With artwork, the open player lets the cover fill its left side, edge to edge, and fade into the cover's own color, which fills the rest. The words, the bar, and the buttons switch between light and dark ink to stay readable on any cover. Songs without artwork look as before.
 - **Fixed: blurry album art.** Covers were shrunk to 160 pixels, and a YouTube frame ended up a 90 pixel square stretched across the open player. Covers are now sharp 512 pixel squares, and YouTube thumbnails come in their largest size, without the black bars.
 

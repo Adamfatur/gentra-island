@@ -555,6 +555,8 @@ const focus = new FocusPanel(
   () => {
     renderCompact(lastStats, badge(), playingArt());
     if (mode === "compact") go(compactSize(), "hover");
+    // The focus droplet counts down every second, not only when other news redraws the droplets.
+    drops?.refreshOne("focus", dropContent);
     // Home redraws when a session starts or ends; the countdown ticks on its own.
     if (focus.running !== focusWasRunning) {
       focusWasRunning = focus.running;

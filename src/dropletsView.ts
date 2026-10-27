@@ -249,6 +249,13 @@ export class DropletsView {
     for (const [id, el] of this.els) el.innerHTML = content(id);
   }
 
+  /** Redraws one droplet, for a value that changes every second. */
+  refreshOne(id: DropletId, content: (id: DropletId) => string) {
+    if (!this.layout || this.open) return;
+    const el = this.els.get(id);
+    if (el) el.innerHTML = content(id);
+  }
+
   /**
    * Grows a panel out of the droplet at `from` (or the core) into `layout.panel`,
    * holding `section`. The other droplets give way to it.
