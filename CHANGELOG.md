@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.0.3
 
 - **Nine more languages.** Español, Português, Français, Deutsch, 日本語, 한국어, 简体中文, हिन्दी, and العربية join English and Bahasa Indonesia. Arabic lays the island out right to left. Pick one in Settings, Language. These translations were drafted with AI help; corrections from native speakers are welcome. Reminders still read times in English and Indonesian only.
 
