@@ -153,7 +153,8 @@ export class ClipboardPanel {
       (e) => {
         if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
         e.preventDefault();
-        this.strip.scrollLeft += e.deltaY;
+        // Right to left, the strip starts at the right and scrolls toward negative values.
+        this.strip.scrollLeft += document.documentElement.dir === "rtl" ? -e.deltaY : e.deltaY;
       },
       { passive: false },
     );
@@ -331,8 +332,12 @@ export class ClipboardPanel {
   /** Fades the strip's edges when more cards hide beyond them. */
   private updateEdges() {
     const { scrollLeft, scrollWidth, clientWidth } = this.strip;
-    this.strip.classList.toggle("more-left", scrollLeft > 4);
-    this.strip.classList.toggle("more-right", scrollLeft + clientWidth < scrollWidth - 4);
+    const rtl = document.documentElement.dir === "rtl";
+    const fromStart = Math.abs(scrollLeft);
+    const beforeStart = fromStart > 4;
+    const pastEnd = fromStart + clientWidth < scrollWidth - 4;
+    this.strip.classList.toggle("more-left", rtl ? pastEnd : beforeStart);
+    this.strip.classList.toggle("more-right", rtl ? beforeStart : pastEnd);
   }
 
   private card(i: ClipItem) {
@@ -348,7 +353,8 @@ export class ClipboardPanel {
     } else if (i.kind === "color") {
       body = `<div class="swatch-fill" style="background:${CSS.supports("color", i.text!) ? text : "transparent"}"></div><div class="body">${text}</div>`;
     } else {
-      body = `<div class="body ${i.kind}${s.insight ? " short" : ""}">${text}</div>`;
+      // dir="auto": copied text keeps its own direction, so English stays left to right in Arabic.
+      body = `<div class="body ${i.kind}${s.insight ? " short" : ""}" dir="auto">${text}</div>`;
     }
     const kind = i.secret
       ? `<span class="kind secret">${ICON.secret}${esc(secretName(i.secret))}</span>`

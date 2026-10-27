@@ -1,6 +1,6 @@
 # Translating Gentra Island
 
-English is the default language and the fallback for everything. Bahasa Indonesia ships alongside it. Chinese, Arabic, Japanese, and Korean come next, then others.
+English is the default language and the fallback for everything. Bahasa Indonesia ships alongside it, and so do Spanish, Brazilian Portuguese, French, German, Japanese, Korean, Simplified Chinese, Hindi, and Arabic. Those nine were drafted with AI help: if you speak one of them, reading it in the app and fixing what sounds off is the most useful help there is.
 
 Every language has to read like a person wrote it for people who speak it. A correct but stiff translation is a bug.
 
@@ -50,7 +50,7 @@ Set `dir: "rtl"` in `LANGUAGES`. The app sets `dir` on the page, so text and inl
 
 ## Fonts
 
-Plus Jakarta Sans covers Latin scripts. Chinese, Japanese, Korean, and Arabic fall back to each system's own font (PingFang, Hiragino, Apple SD Gothic Neo, Microsoft YaHei, Yu Gothic, Malgun Gothic, Geeza Pro, Noto). No extra download is needed.
+Plus Jakarta Sans and Figtree cover Latin scripts. Chinese, Japanese, Korean, Hindi, and Arabic fall back to each system's own font (PingFang, Hiragino, Apple SD Gothic Neo, Kohinoor Devanagari, Geeza Pro, Microsoft YaHei, Yu Gothic, Malgun Gothic, Nirmala UI, Noto). Japanese and Korean put their own face ahead of the Chinese one through `--cjk` in `src/style.css`, so shared characters take the right shapes. No extra download is needed.
 
 ## Before you open a pull request
 

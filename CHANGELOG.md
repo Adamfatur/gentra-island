@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- **Nine more languages.** Español, Português, Français, Deutsch, 日本語, 한국어, 简体中文, हिन्दी, and العربية join English and Bahasa Indonesia. Arabic lays the island out right to left. Pick one in Settings, Language. These translations were drafted with AI help; corrections from native speakers are welcome. Reminders still read times in English and Indonesian only.
+
 ## 1.0.2
 
 - **Fixed: the Focus droplet counted down two seconds at a time.** It only redrew when new system figures arrived, every two seconds. It now ticks every second.

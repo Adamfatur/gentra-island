@@ -109,7 +109,7 @@ A higher-quality version of the video is in [docs/screenshots/demo.mp4](docs/scr
 
 **Modes** keep it as small as you want. Compact, Everyday, Dev, Meetings, and Focus are presets; switch any feature on or off. A switched-off feature stops its background work, not just its tab.
 
-The interface is in **English** and **Bahasa Indonesia**, with more languages coming. See [docs/TRANSLATING.md](docs/TRANSLATING.md) to help.
+The interface speaks eleven languages: English, Bahasa Indonesia, Español, Português, Français, Deutsch, 日本語, 한국어, 简体中文, हिन्दी, and العربية, right to left included. The nine newest were drafted with AI help and still want a native speaker's read; see [docs/TRANSLATING.md](docs/TRANSLATING.md) to help.
 
 ## System requirements
 

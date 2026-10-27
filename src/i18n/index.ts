@@ -1,6 +1,15 @@
 import { createI18n, resolveLang, type Msg, type Params } from "./core";
 import { en, type Key } from "./en";
 import { id } from "./id";
+import { es } from "./es";
+import { pt } from "./pt";
+import { fr } from "./fr";
+import { de } from "./de";
+import { ja } from "./ja";
+import { ko } from "./ko";
+import { zh } from "./zh";
+import { hi } from "./hi";
+import { ar } from "./ar";
 
 /** Change the product name here; every string reads it as {app}. */
 export const APP_NAME = "Gentra Island";
@@ -11,12 +20,21 @@ export const APP_AUTHOR = "Adam Faturahman";
 export const LANGUAGES = [
   { id: "en", name: "English", dir: "ltr" },
   { id: "id", name: "Bahasa Indonesia", dir: "ltr" },
+  { id: "es", name: "Español", dir: "ltr" },
+  { id: "pt", name: "Português", dir: "ltr" },
+  { id: "fr", name: "Français", dir: "ltr" },
+  { id: "de", name: "Deutsch", dir: "ltr" },
+  { id: "ja", name: "日本語", dir: "ltr" },
+  { id: "ko", name: "한국어", dir: "ltr" },
+  { id: "zh", name: "简体中文", dir: "ltr" },
+  { id: "hi", name: "हिन्दी", dir: "ltr" },
+  { id: "ar", name: "العربية", dir: "rtl" },
 ] as const;
 
 export type Lang = (typeof LANGUAGES)[number]["id"];
-export const DICTS: Record<Lang, Record<Key, Msg>> = { en, id };
+export const DICTS: Record<Lang, Record<Key, Msg>> = { en, id, es, pt, fr, de, ja, ko, zh, hi, ar };
 
-const i18n = createI18n<Lang>(DICTS, { en: "ltr", id: "ltr" });
+const i18n = createI18n<Lang>(DICTS, Object.fromEntries(LANGUAGES.map((l) => [l.id, l.dir])) as Record<Lang, "ltr" | "rtl">);
 const STORE = "gentra:lang";
 const listeners = new Set<() => void>();
 

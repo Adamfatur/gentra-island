@@ -194,7 +194,7 @@ export class SettingsPanel {
       </section>
       <section>
         <h3>${t("settings.language")}</h3>
-        <div class="segs" role="group" aria-label="${t("settings.language")}">${languages}</div>
+        <div class="segs lang-segs" role="group" aria-label="${t("settings.language")}">${languages}</div>
         <p class="note">${t("settings.language.note")}</p>
       </section>
       <section class="startup">

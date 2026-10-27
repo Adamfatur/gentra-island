@@ -229,7 +229,7 @@ export class MediaPanel {
     const timeline =
       n.duration > 0
         ? `<div class="scrub" role="slider" tabindex="0" style="--p:${pct}%" aria-label="${t("media.seek")}" aria-valuemin="0" aria-valuemax="${Math.round(n.duration)}" aria-valuenow="${Math.round(p)}" aria-valuetext="${mmss(p)}"><span class="track"><i></i></span></div>
-          <div class="media-times num"><span class="elapsed">${mmss(p)}</span><span class="left">-${mmss(Math.max(0, n.duration - p))}</span></div>`
+          <div class="media-times num" dir="ltr"><span class="elapsed">${mmss(p)}</span><span class="left">-${mmss(Math.max(0, n.duration - p))}</span></div>`
         : `<p class="media-live"><i></i>${t("media.live")}</p>`;
     // With artwork, the open player lets the cover fill its left side and fade into the cover's own edge color.
     const backdrop = n.art && this.edge ? coverBackdrop(this.edge) : null;
