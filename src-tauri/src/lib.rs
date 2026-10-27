@@ -145,6 +145,8 @@ pub fn run() {
             glass::set_glass,
             glass::glass_kind,
             glass::droplets_enabled,
+            glass::fps_probe,
+            glass::fps_log,
             stats::stats_now,
             stats::set_stats_detail,
             set_features,

@@ -128,9 +128,14 @@ export function hitShapes(l: Layout): Shape[] {
   return [l.core, ...glassShapes(l)];
 }
 
-/** Where a droplet starts before it grows: tucked into the core's middle. */
+/**
+ * Where a droplet starts before it grows: a small copy of itself, the same
+ * shape, tucked into the core's middle. Keeping the shape means it can grow by
+ * scaling alone, which the GPU does at the screen's full frame rate.
+ */
 export function tucked(d: Shape, core: Shape): Shape {
-  const w = Math.min(d.w, 60);
-  const h = Math.min(d.h, 30);
-  return { x: core.x + (core.w - w) / 2, y: core.y + core.h - h, w, h, r: h / 2 };
+  const k = Math.min(1, 60 / d.w, 30 / d.h);
+  const w = d.w * k;
+  const h = d.h * k;
+  return { x: core.x + (core.w - w) / 2, y: core.y + core.h - h, w, h, r: d.r * k };
 }

@@ -2,6 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { AGENT_NAME, askVerb, elapsed, tokens, type AgentId, type Agents, type Ask, type Session } from "./agents";
 import { esc, pct, took, whenLabel } from "./format";
 import { errorText, lang, t } from "./i18n";
+import { agentLogo } from "./agentLogos";
 import { icon } from "./icons";
 
 export interface Limit {
@@ -158,7 +159,7 @@ export class AiPanel {
     if (!this.asks.length) return "";
     return this.asks
       .map(
-        (a) => `<section class="ask-card"><span class="card-label">${icon.hand}${esc(t(askVerb(a.tool), { agent: AGENT_NAME[a.agent] }))}</span>
+        (a) => `<section class="ask-card"><span class="card-label">${agentLogo(a.agent)}${esc(t(askVerb(a.tool), { agent: AGENT_NAME[a.agent] }))}</span>
           ${a.place ? `<span class="card-sub">${esc(a.place)}</span>` : ""}
           <code class="ask-code">${esc(a.summary || a.tool)}</code>
           ${askButtons(a.id)}</section>`,
@@ -172,6 +173,7 @@ export class AiPanel {
       .map((s) => {
         const ic = s.state === "waiting" ? icon.hand : s.state === "done" ? icon.ok : `<i class="pulse"></i>`;
         return `<li class="agent-row ${s.state}" data-session="${esc(s.id)}">
+          ${agentLogo(s.agent)}
           <span class="done-ic">${ic}</span>
           <span class="server-text"><span class="n">${esc(sessionTitle(s))}</span><span class="h">${esc(sessionLine(s))}</span></span>
         </li>`;
@@ -184,7 +186,7 @@ export class AiPanel {
     const st = this.usage(agent);
     const name = AGENT_NAME[agent];
     const head = (right: string, sub: string) =>
-      `<div class="agent-head"><span class="card-text"><b>${name}</b><span>${sub}</span></span>${right}</div>`;
+      `<div class="agent-head">${agentLogo(agent)}<span class="card-text"><b>${name}</b><span>${sub}</span></span>${right}</div>`;
     if (st && !st.installed) {
       return `<section class="agent-card off">${head("", t("ai.missing"))}</section>`;
     }

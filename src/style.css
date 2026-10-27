@@ -766,7 +766,9 @@ body.notched .eyes-wrap .zzz { left: calc(100% - 4px); top: -6px; }
    only paints a droplet itself where the system has no glass (.solid). */
 .droplets { position: absolute; inset: 0; pointer-events: none; z-index: 5; color: #fff; }
 .dl { position: absolute; left: 0; top: 0; pointer-events: auto; border: 0; padding: 0; margin: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; overflow: hidden; display: flex; align-items: center; gap: 14px; box-sizing: border-box; }
-.dl.moving { transition: transform var(--move) var(--curve), width var(--move) var(--curve), height var(--move) var(--curve), border-radius var(--move) var(--curve); }
+/* Only transform and opacity animate: the GPU keeps them at the screen's frame rate. */
+.dl, .dl-panel { transform-origin: 0 0; will-change: transform; backface-visibility: hidden; }
+.dl.moving { transition: transform var(--move) var(--curve); }
 .dl > * { transition: opacity 180ms ease 200ms; }
 .dl.tucked > * { opacity: 0; transition-delay: 0ms; }
 /* Over system glass, a dark layer in the page keeps white text readable: the
@@ -803,7 +805,8 @@ body.notched .eyes-wrap .zzz { left: calc(100% - 4px); top: -6px; }
   --text: #fff; --muted: rgba(255, 255, 255, 0.8); --line: rgba(255, 255, 255, 0.16);
   color: var(--text);
 }
-.dl-panel.moving { transition: transform var(--move) var(--curve), width var(--move) var(--curve), height var(--move) var(--curve), border-radius var(--move) var(--curve); }
+.dl-panel.moving { transition: transform var(--move) var(--curve); }
+.dl-panel.refit { transition: height var(--move) var(--curve); }
 .dl-panel > * { transition: opacity 180ms ease 200ms; }
 /* Going away, the words fade first so droplets never carry text across each other. */
 .droplets.leaving .dl > *, .droplets.leaving .dl-panel > * { opacity: 0; transition: opacity 90ms ease; }
@@ -1005,3 +1008,15 @@ body.notched .eyes-wrap .zzz { left: calc(100% - 4px); top: -6px; }
 .dl-chip { gap: 8px; }
 .dl-chip svg { width: 16px; height: 16px; flex: none; }
 .dl-dot { position: absolute; top: 9px; right: 11px; width: 8px; height: 8px; border-radius: 50%; }
+
+/* Agent marks: Claude's own, a terminal for Codex. */
+.agent-logo { width: 28px; height: 28px; flex: none; border-radius: 9px; display: grid; place-items: center; background: rgba(255, 255, 255, 0.1); }
+.agent-logo svg { width: 17px; height: 17px; }
+.agent-logo.codex { color: var(--text); }
+.card-label .agent-logo { width: 22px; height: 22px; border-radius: 7px; }
+.card-label .agent-logo svg { width: 14px; height: 14px; }
+.agent-head { align-items: center; gap: 12px; }
+.agent-row { gap: 12px; }
+.core-ring.logo .agent-logo { width: 30px; height: 30px; border-radius: 50%; background: transparent; }
+.core-ring.logo .agent-logo svg { width: 22px; height: 22px; }
+.core-ring.logo .agent-logo.codex { color: #fff; }

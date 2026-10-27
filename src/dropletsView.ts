@@ -133,17 +133,23 @@ export class DropletsView {
         this.root.append(el);
         this.els.set(d.id, el);
         // New droplets start tucked in the core, then grow.
-        place(el, tucked(d, layout.core), false);
+        setBox(el, d);
+        pose(el, d, tucked(d, layout.core), false);
+      } else {
+        // Already out: it slides from where it was to where it goes.
+        const was = boxes.get(el)!;
+        setBox(el, d);
+        pose(el, d, was, false);
       }
       el.innerHTML = content(d.id);
     }
     this.layout = layout;
     if (first) this.glass(layout.droplets.map((d) => tucked(d, layout.core)), 0);
-    // Reading layout commits the tucked start, so the move below animates from
+    // Reading layout commits the start pose, so the move below animates from
     // there. No requestAnimationFrame: macOS pauses it for windows it thinks
     // are hidden, which once froze the island mid-grow.
     void this.root.offsetWidth;
-    for (const d of layout.droplets) place(this.els.get(d.id)!, d, true);
+    for (const d of layout.droplets) pose(this.els.get(d.id)!, d, null, true);
     this.glass(glassShapes(layout), this.ms);
   }
 
@@ -198,15 +204,16 @@ export class DropletsView {
     this.root.append(el);
     this.panel = { el, section, home, tint: accentTint() };
 
-    // Lay it out at its final width first, to learn how tall its content is.
-    place(el, target, false);
+    // Lay it out at its final size first, to learn how tall its content is.
+    setBox(el, target);
     const fitted = { ...target, h: this.fitHeight(el, section, target.h) };
+    setBox(el, fitted);
     const start = from ?? tucked(fitted, layout.core);
-    place(el, start, false);
+    pose(el, fitted, start, false);
     this.layout = { ...layout, panel: fitted };
     this.glass([start], 0);
     void this.root.offsetWidth;
-    place(el, fitted, true);
+    pose(el, fitted, null, true);
     this.glass([fitted], this.ms);
     // The section itself always fills the panel; its children change size with their content.
     for (const child of section.children) this.resize.observe(child);
@@ -237,7 +244,9 @@ export class DropletsView {
     if (Math.abs(h - l.panel.h) < 2) return;
     const next = { ...l.panel, h };
     this.layout = { ...l, panel: next };
-    place(p.el, next, true);
+    // A change of height is rare and only this one panel; it may animate its height.
+    p.el.classList.add("refit");
+    setBox(p.el, next);
     this.glass([next], this.ms, p.tint);
     this.onMoved();
   }
@@ -299,12 +308,12 @@ export class DropletsView {
     for (const d of l.droplets) {
       const to = tucked(d, l.core);
       const el = this.els.get(d.id);
-      if (el) place(el, to, true);
+      if (el) pose(el, d, to, true);
       out.push(to);
     }
     if (this.panel && l.panel) {
       const to = tucked(l.panel, l.core);
-      place(this.panel.el, to, true);
+      pose(this.panel.el, l.panel, to, true);
       out.push(to);
     }
     this.glass(out, this.ms, this.panel?.tint);
@@ -319,14 +328,33 @@ export class DropletsView {
   }
 }
 
-function place(el: HTMLElement, s: Shape, animate: boolean) {
-  el.classList.toggle("moving", animate);
-  el.style.transform = `translate(${s.x}px, ${s.y}px)`;
+/** Where each element finally sits, to pose it relative to that. */
+const boxes = new WeakMap<HTMLElement, Shape>();
+
+/** Sets where an element finally sits. Never animated, so nothing is laid out again mid-move. */
+function setBox(el: HTMLElement, s: Shape) {
+  boxes.set(el, s);
+  el.style.left = `${s.x}px`;
+  el.style.top = `${s.y}px`;
   el.style.width = `${s.w}px`;
   el.style.height = `${s.h}px`;
   el.style.borderRadius = `${s.r}px`;
-  // Content fades in once the droplet is big enough to hold it.
-  el.classList.toggle("tucked", s.w <= 60);
+}
+
+/**
+ * Shows an element as `from` using a transform alone, or at rest in `box` with
+ * none. Only the transform animates, so the move stays on the GPU at the
+ * screen's full rate, 120 frames a second where the screen does that.
+ */
+function pose(el: HTMLElement, box: Shape, from: Shape | null, animate: boolean) {
+  el.classList.toggle("moving", animate);
+  // Its words wait until it is full size; they never travel while it scales.
+  el.classList.toggle("tucked", from !== null && from.w < box.w * 0.9);
+  if (!from) {
+    el.style.transform = "none";
+    return;
+  }
+  el.style.transform = `translate(${from.x - box.x}px, ${from.y - box.y}px) scale(${from.w / box.w}, ${from.h / box.h})`;
 }
 
 /** "rgb(12, 34, 56)" or "#0c2238" as numbers, or null when it is neither. */

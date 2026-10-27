@@ -22,6 +22,7 @@ import { GuidePanel, savedGuide } from "./guidePanel";
 import { HomePanel } from "./homePanel";
 import { ModePanel, modeIcon, modeName } from "./modePanel";
 import { needsGuide } from "./onboarding";
+import { agentLogo } from "./agentLogos";
 import { clock, pickCore, type Core } from "./core";
 import { layout, openCore, type DropletId, type Shape } from "./droplets";
 import { DropletsView, parseColor, type GlassKind } from "./dropletsView";
@@ -661,7 +662,10 @@ function coreView(c: Core): string {
     readout = c.total ? `${Math.round((c.bytes / c.total) * 100)}%` : bytes(c.bytes);
   }
   const urgent = c.kind === "ask" || (c.kind === "call" && !c.muted);
-  return `<span class="core-ring${urgent ? " urgent" : ""}" aria-hidden="true"><i></i></span>
+  // An agent's own mark says which one it is; other kinds keep the plain light.
+  const who = c.kind === "ask" ? ai.asks[0]?.agent : c.kind === "agent" ? agents.lead()?.agent : undefined;
+  const mark = who ? agentLogo(who) : "<i></i>";
+  return `<span class="core-ring${urgent ? " urgent" : ""}${who ? " logo" : ""}" aria-hidden="true">${mark}</span>
     <span class="core-text"><b>${esc(title)}</b><span>${esc(sub)}</span></span>
     ${readout ? `<span class="core-readout num">${esc(readout)}</span>` : ""}`;
 }
@@ -868,6 +872,26 @@ const dropletsWanted = (() => {
     return false;
   }
 })();
+// For smoothness tests: frames a second and the slowest frame, sent to the log.
+if (await invoke<boolean>("fps_probe")) {
+  let frames = 0;
+  let worst = 0;
+  let last = performance.now();
+  let since = last;
+  const tick = (now: number) => {
+    frames++;
+    worst = Math.max(worst, now - last);
+    last = now;
+    if (now - since >= 1000) {
+      void invoke("fps_log", { fps: frames, worst });
+      frames = 0;
+      worst = 0;
+      since = now;
+    }
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
 if (dropletsWanted || (await invoke<boolean>("droplets_enabled"))) {
   drops = new DropletsView(
     await invoke<GlassKind>("glass_kind"),

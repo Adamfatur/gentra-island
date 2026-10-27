@@ -83,4 +83,15 @@ describe("the droplet layout", () => {
     expect(t.y + t.h).toBe(l.core.h);
     expect(t.x + t.w / 2).toBe(l.core.x + l.core.w / 2);
   });
+
+  it("tucks a droplet as a small copy of its own shape, so it can grow by scaling", () => {
+    const l = layout(base);
+    for (const d of l.droplets) {
+      const t = tucked(d, l.core);
+      expect(t.w / d.w).toBeCloseTo(t.h / d.h);
+      expect(t.r / d.r).toBeCloseTo(t.w / d.w);
+      expect(t.w).toBeLessThanOrEqual(60 + 1e-9);
+      expect(t.h).toBeLessThanOrEqual(30 + 1e-9);
+    }
+  });
 });

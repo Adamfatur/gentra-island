@@ -17,7 +17,8 @@
     "@fontsource-variable/doto": "5.3.0",
     "@fontsource-variable/plus-jakarta-sans": "5.3.0",
     "@tauri-apps/api": "^2.5.0",
-    "@tauri-apps/plugin-autostart": "^2.7.0"
+    "@tauri-apps/plugin-autostart": "^2.7.0",
+    "simple-icons": "16.36.0"
   },
   "devDependencies": {
     "@phosphor-icons/core": "2.1.1",

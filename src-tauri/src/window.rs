@@ -144,6 +144,7 @@ pub fn setup(win: &WebviewWindow) -> tauri::Result<()> {
     }
     win.set_ignore_cursor_events(true)?;
     platform::elevate(win);
+    platform::allow_high_refresh(win);
     Ok(())
 }
 
@@ -295,6 +296,48 @@ mod platform {
         }
     }
 
+    /// WebKit keeps a page near 60 frames a second unless told otherwise, which
+    /// halves the smoothness on a 120 Hz screen. Its switch is a WebKit feature,
+    /// looked up by name; when a WebKit lacks it, nothing changes.
+    pub fn allow_high_refresh(win: &tauri::WebviewWindow) {
+        let _ = win.with_webview(|wv| {
+            let Some(prefs_class) = AnyClass::get(c"WKPreferences") else { return };
+            // SAFETY: each message below is sent only after the class or object answers it.
+            unsafe {
+                let features_sel = objc2::sel!(_features);
+                let set_sel = objc2::sel!(_setEnabled:forFeature:);
+                if !msg_send![prefs_class, respondsToSelector: features_sel] {
+                    return;
+                }
+                let features: *mut AnyObject = msg_send![prefs_class, _features];
+                if features.is_null() {
+                    return;
+                }
+                let count: usize = msg_send![features, count];
+                let wanted = NSString::from_str("PreferPageRenderingUpdatesNear60FPSEnabled");
+                let mut feature: *mut AnyObject = std::ptr::null_mut();
+                for i in 0..count {
+                    let f: *mut AnyObject = msg_send![features, objectAtIndex: i];
+                    let key: *mut AnyObject = msg_send![f, key];
+                    if !key.is_null() && msg_send![key, isEqualToString: &*wanted] {
+                        feature = f;
+                        break;
+                    }
+                }
+                if feature.is_null() {
+                    return;
+                }
+                let webview = wv.inner() as *mut AnyObject;
+                let config: *mut AnyObject = msg_send![webview, configuration];
+                let prefs: *mut AnyObject = msg_send![config, preferences];
+                if prefs.is_null() || !msg_send![prefs, respondsToSelector: set_sel] {
+                    return;
+                }
+                let _: () = msg_send![prefs, _setEnabled: false, forFeature: feature];
+            }
+        });
+    }
+
     #[link(name = "CoreGraphics", kind = "framework")]
     unsafe extern "C" {
         fn CGWindowListCopyWindowInfo(option: u32, relative_to: u32) -> *mut AnyObject;
@@ -362,6 +405,8 @@ mod platform {
     use super::ScreenInfo;
 
     pub fn elevate(_win: &tauri::WebviewWindow) {}
+
+    pub fn allow_high_refresh(_win: &tauri::WebviewWindow) {}
 
     /// Only checked on macOS so far.
     pub fn top_covered(_band: super::Rect) -> bool {

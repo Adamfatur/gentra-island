@@ -44,6 +44,18 @@ pub fn droplets_enabled() -> bool {
     std::env::var_os("GENTRA_DROPLETS").is_some()
 }
 
+/// A frame-rate probe for testing smoothness: on with GENTRA_FPS=1.
+#[tauri::command]
+pub fn fps_probe() -> bool {
+    std::env::var_os("GENTRA_FPS").is_some()
+}
+
+/// Frames in the last second, and the slowest frame in it (ms).
+#[tauri::command]
+pub fn fps_log(fps: u32, worst: f64) {
+    eprintln!("fps {fps} worst {worst:.1}");
+}
+
 #[tauri::command]
 pub fn glass_kind() -> Kind {
     platform::kind()
