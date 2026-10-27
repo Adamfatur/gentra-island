@@ -30,7 +30,8 @@ url = "2"
 libc = "0.2"
 objc2 = "0.6"
 objc2-foundation = { version = "0.3", features = ["NSString", "NSArray", "NSGeometry", "NSFileManager", "NSURL", "NSError"] }
-objc2-app-kit = { version = "0.3", features = ["NSWindow", "NSPanel", "NSResponder", "NSScreen", "NSPasteboard", "NSWorkspace", "NSRunningApplication", "NSGraphics", "NSSharingService"] }
+objc2-app-kit = { version = "0.3", features = ["NSWindow", "NSPanel", "NSResponder", "NSScreen", "NSPasteboard", "NSWorkspace", "NSRunningApplication", "NSGraphics", "NSSharingService", "NSView", "NSColor", "NSGlassEffectView", "NSVisualEffectView", "NSAnimationContext", "objc2-quartz-core"] }
+objc2-quartz-core = { version = "0.3", features = ["CALayer", "CAMediaTimingFunction"] }
 
 [target.'cfg(all(unix, not(target_os = "macos")))'.dependencies]
 zbus = { version = "5", default-features = false, features = ["blocking-api", "async-io"] }

@@ -14,7 +14,8 @@ use tauri::{AppHandle, Emitter, LogicalPosition, LogicalSize, Manager, WebviewWi
 
 pub const LABEL: &str = "island";
 const WIN_W: f64 = 760.0;
-const WIN_H: f64 = 520.0;
+/// Tall enough for an open droplet view under the core.
+const WIN_H: f64 = 700.0;
 
 #[derive(Default, Clone, Copy, Deserialize)]
 pub struct Rect {
@@ -61,7 +62,8 @@ const COVER_BAND: f64 = 20.0;
 const COVER_HALF: f64 = 110.0;
 
 #[derive(Default)]
-pub struct HitState(pub Mutex<Rect>);
+/// Where the island is: one rectangle, or one per droplet.
+pub struct HitState(pub Mutex<Vec<Rect>>);
 
 #[derive(Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -96,7 +98,18 @@ pub fn top_covered() -> bool {
 
 #[tauri::command]
 pub fn set_hit_rect(state: tauri::State<HitState>, rect: Rect) {
-    *state.0.lock().unwrap() = rect;
+    *state.0.lock().unwrap() = vec![rect];
+}
+
+/// The droplets, each its own shape; the gaps between them stay click-through.
+#[tauri::command]
+pub fn set_hit_rects(state: tauri::State<HitState>, rects: Vec<Rect>) {
+    *state.0.lock().unwrap() = rects;
+}
+
+/// Whether (x, y) is near enough to any shape that hover can change soon.
+fn near_any(rects: &[Rect], x: f64, y: f64) -> bool {
+    rects.iter().any(|r| y < r.y + r.h + 80.0 && x > r.x - 80.0 && x < r.x + r.w + 80.0)
 }
 
 /// Opens the island from a shortcut or the menu bar and lets it take keys.
@@ -172,8 +185,8 @@ pub fn spawn_hit_tester(app: AppHandle) {
                 sent = Instant::now();
                 let _ = app.emit("pointer", (x.round(), y.round()));
             }
-            let rect = *app.state::<HitState>().0.lock().unwrap();
-            let near = y < rect.y + rect.h + 80.0 && x > rect.x - 80.0 && x < rect.x + rect.w + 80.0;
+            let rects = app.state::<HitState>().0.lock().unwrap().clone();
+            let near = near_any(&rects, x, y);
             // Every check wakes the CPU, so poll fast only when hover can change soon:
             // 30 Hz over or near the island while the cursor moves, slower when it
             // rests, and 5 Hz once it has sat still far away. Slower than that and a
@@ -185,12 +198,12 @@ pub fn spawn_hit_tester(app: AppHandle) {
                 (false, true) => 200,
             };
             wait = Duration::from_millis(ms);
-            let catching = catches(&rect, x, y);
+            let catching = rects.iter().any(|r| catches(r, x, y));
             if catching != accepting {
                 accepting = catching;
                 let _ = win.set_ignore_cursor_events(!catching);
             }
-            let now = rect.contains(x, y);
+            let now = rects.iter().any(|r| r.contains(x, y));
             if now != inside {
                 inside = now;
                 let _ = app.emit("island-hover", now);
@@ -371,6 +384,16 @@ mod catch_tests {
         assert!(!r.contains(90.0, 20.0));
         assert!(catches(&r, 90.0, 20.0));
         assert!(!catches(&r, 80.0, 20.0));
+    }
+
+    #[test]
+    fn the_gap_between_two_droplets_stays_click_through() {
+        let rects = [Rect { x: 100.0, y: 40.0, w: 150.0, h: 150.0, tight: false }, Rect { x: 300.0, y: 40.0, w: 150.0, h: 150.0, tight: false }];
+        assert!(rects.iter().any(|r| catches(r, 120.0, 100.0)));
+        assert!(rects.iter().any(|r| catches(r, 440.0, 100.0)));
+        assert!(!rects.iter().any(|r| catches(r, 275.0, 100.0)));
+        assert!(near_any(&rects, 275.0, 100.0));
+        assert!(!near_any(&rects, 275.0, 400.0));
     }
 
     #[test]

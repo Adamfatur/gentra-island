@@ -6,6 +6,7 @@ mod agents;
 mod idle;
 mod screenshots;
 mod downloads;
+mod glass;
 mod clipboard;
 mod hooks;
 mod media;
@@ -137,9 +138,12 @@ pub fn run() {
         .manage(window::HitState::default())
         .invoke_handler(tauri::generate_handler![
             window::set_hit_rect,
+            window::set_hit_rects,
             window::screen_info,
             window::set_eyes,
             window::top_covered,
+            glass::set_glass,
+            glass::glass_kind,
             stats::stats_now,
             stats::set_stats_detail,
             set_features,
@@ -245,6 +249,7 @@ pub fn run() {
             tray.build(app)?;
 
             win.show()?;
+            glass::test_on_start(app.handle());
             Ok(())
         })
         .build(tauri::generate_context!())
