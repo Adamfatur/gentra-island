@@ -302,7 +302,7 @@ The app isn't notarized or code-signed yet, which costs money for a solo, free p
 
 ## Contributing
 
-Issues and pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) first. Security problems go through [SECURITY.md](SECURITY.md), not public issues.
+Issues and pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) first, and the [Code of Conduct](CODE_OF_CONDUCT.md) applies everywhere in the project. Security problems go through [SECURITY.md](SECURITY.md), not public issues.
 
 ## Support
 

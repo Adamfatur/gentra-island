@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping. A few things make reviews quick.
+Thanks for helping. A few things make reviews quick. Everyone taking part follows the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Before you start
 
@@ -20,7 +20,7 @@ See **Build from source** in the [README](README.md). `pnpm dev` with `http://lo
 
 ## Pull requests
 
-Send changes as a pull request against `main`. The `main` branch can't be force-pushed or deleted, so its history and the release tags stay as they are.
+Send changes as a pull request against `main`; the template asks what you changed, where you tried it, and which checks pass. The `main` branch can't be force-pushed or deleted, so its history and the release tags stay as they are.
 
 ## Licensing of contributions
 
