@@ -51,9 +51,20 @@ describe("the droplet layout", () => {
     expect(glassShapes(l)).toEqual([l.panel]);
   });
 
+  it("lets a view ask for less height, never more", () => {
+    expect(layout({ ...base, view: "media", panelH: 400 }).panel!.h).toBe(400);
+    expect(layout({ ...base, view: "media", panelH: 900 }).panel!.h).toBe(540);
+  });
+
   it("fits the open panel in the 700 pt window", () => {
     const p = layout({ ...base, view: "settings" }).panel!;
     expect(p.y + p.h).toBeLessThanOrEqual(700);
+  });
+
+  it("hangs the droplets right under a small core", () => {
+    const l = layout({ ...base, core: { w: 333, h: 32, r: 10 } });
+    expect(l.core).toMatchObject({ y: 0, w: 333, h: 32 });
+    expect(l.droplets[0].y).toBe(48);
   });
 
   it("gives the core a little less height without a notch", () => {

@@ -589,4 +589,7 @@ export const id: Record<Key, Msg> = {
   "drop.dropHere": "Taruh file di sini",
   "drop.settings": "Pengaturan",
   "drop.ai": "Agen AI",
+  "drop.done": "Selesai",
+  "drop.clip.title": "{count} hal yang kamu salin",
+  "drop.media.kicker": "Sedang diputar",
 };

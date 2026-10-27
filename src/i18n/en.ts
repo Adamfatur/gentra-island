@@ -601,6 +601,9 @@ export const en = {
   "drop.dropHere": "Drop files here",
   "drop.settings": "Settings",
   "drop.ai": "AI agents",
+  "drop.done": "Done",
+  "drop.clip.title": "{count} things you copied",
+  "drop.media.kicker": "Now playing",
 };
 
 export type Key = keyof typeof en;

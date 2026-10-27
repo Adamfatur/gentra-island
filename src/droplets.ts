@@ -44,6 +44,10 @@ export interface LayoutInput {
   view: DropletId | "home";
   /** Measured chip widths; a chip without one is CHIP_W wide. */
   chipW?: Partial<Record<DropletId, number>>;
+  /** How tall the open view is, when it needs less than the full panel. */
+  panelH?: number;
+  /** The core's size when it has nothing to say yet; the open core when left out. */
+  core?: { w: number; h: number; r: number };
 }
 
 export const GAP = 12;
@@ -81,10 +85,11 @@ export function openCore(notch: LayoutInput["notch"], winW: number): Shape {
 const radius = (form: Form, h: number) => (form === "card" ? 34 : h / 2);
 
 export function layout(i: LayoutInput): Layout {
-  const core = openCore(i.notch, i.winW);
+  const core = i.core ? { x: (i.winW - i.core.w) / 2, y: 0, ...i.core } : openCore(i.notch, i.winW);
   const top = core.y + core.h + DROP;
   if (i.view !== "home") {
-    const panel = { x: (i.winW - PANEL.w) / 2, y: top, w: PANEL.w, h: PANEL.h, r: PANEL.r };
+    const h = Math.min(PANEL.h, i.panelH ?? PANEL.h);
+    const panel = { x: (i.winW - PANEL.w) / 2, y: top, w: PANEL.w, h, r: PANEL.r };
     return { core, droplets: [], panel };
   }
   const on = new Set(i.on);

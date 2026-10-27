@@ -1,15 +1,25 @@
 // Draws the droplets from a layout and keeps the glass and the hit tester on
 // the same shapes. The droplets move with a CSS transition on the same curve
 // and duration the native glass uses, so the glass and the content arrive together.
+//
+// A droplet that opens grows into a panel. The panel borrows today's section
+// for that feature (its markup, listeners and logic) and gives it back when it
+// closes, so a view keeps working while only its look changes.
 
 import { invoke } from "@tauri-apps/api/core";
 import { CURVE, MOVE_MS, glassShapes, hitShapes, tucked, type DropletId, type Layout, type Shape } from "./droplets";
 
 export type GlassKind = "liquid" | "blur" | "none";
+type Tint = [number, number, number, number];
 
 /** A dark tint in the glass keeps white text readable over any wallpaper. */
-const TINT: [number, number, number, number] = [0.06, 0.08, 0.2, 0.3];
-const tinted = (list: Shape[]) => list.map((s) => ({ ...s, tint: TINT }));
+const TINT: Tint = [0.05, 0.06, 0.16, 0.58];
+
+export interface PanelHead {
+  kicker: string;
+  title: string;
+  done: string;
+}
 
 export class DropletsView {
   private root = document.createElement("div");
@@ -17,29 +27,46 @@ export class DropletsView {
   private layout: Layout | null = null;
   private hideTimer = 0;
   private reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  private panel: { el: HTMLElement; section: HTMLElement; home: [Node, Node | null]; tint: Tint } | null = null;
 
   constructor(
     kind: GlassKind,
-    private onPick: (id: DropletId) => void,
+    private onPick: (id: DropletId, from: Shape) => void,
+    private onDone: () => void,
   ) {
     this.root.className = "droplets";
     // Without system glass the page paints each droplet itself.
     this.root.classList.toggle("solid", kind === "none");
-    this.root.style.setProperty("--move", `${this.reduce ? 120 : MOVE_MS}ms`);
+    this.root.style.setProperty("--move", `${this.ms}ms`);
     this.root.style.setProperty("--curve", CURVE);
     this.root.hidden = true;
     this.root.addEventListener("click", (e) => {
-      const el = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-drop]");
+      const target = e.target as HTMLElement;
+      if (target.closest("[data-dl-done]")) {
+        e.stopPropagation();
+        return this.onDone();
+      }
+      const el = target.closest<HTMLButtonElement>("[data-drop]");
       if (!el) return;
       e.stopPropagation();
-      this.onPick(el.dataset.drop as DropletId);
+      const d = this.layout?.droplets.find((x) => x.id === el.dataset.drop);
+      if (d) this.onPick(d.id, d);
     });
     // The window itself, or the preview's stand-in for it.
     (document.getElementById("stagebox") ?? document.body).append(this.root);
   }
 
+  private get ms() {
+    return this.reduce ? 120 : MOVE_MS;
+  }
+
   get visible(): boolean {
     return this.layout !== null;
+  }
+
+  /** Which droplet has grown into a panel, if any. */
+  get open(): boolean {
+    return this.panel !== null;
   }
 
   /** The shapes that take the pointer while the droplets are out; none while they're away. */
@@ -62,13 +89,18 @@ export class DropletsView {
     return out;
   }
 
+  private glass(shapes: Shape[], ms: number, tint: Tint = TINT) {
+    void invoke("set_glass", { shapes: shapes.map((s) => ({ ...s, tint })), ms });
+  }
+
   /**
    * Grows the droplets out of the core into `layout`, or moves them there if
    * already out. `content` returns each droplet's HTML with every value escaped.
    */
   show(layout: Layout, content: (id: DropletId) => string) {
     clearTimeout(this.hideTimer);
-    const first = !this.layout;
+    const first = !this.layout || this.open;
+    this.dropPanel();
     this.root.hidden = false;
     const keep = new Set(layout.droplets.map((d) => d.id));
     for (const [id, el] of this.els) {
@@ -86,43 +118,127 @@ export class DropletsView {
         el.className = `dl dl-${d.form}`;
         this.root.append(el);
         this.els.set(d.id, el);
-        // New droplets start tucked in the core, then grow on the next frame.
+        // New droplets start tucked in the core, then grow.
         place(el, tucked(d, layout.core), false);
       }
       el.innerHTML = content(d.id);
     }
     this.layout = layout;
-    if (first) void invoke("set_glass", { shapes: tinted(layout.droplets.map((d) => tucked(d, layout.core))), ms: 0 });
+    if (first) this.glass(layout.droplets.map((d) => tucked(d, layout.core)), 0);
     // Reading layout commits the tucked start, so the move below animates from
     // there. No requestAnimationFrame: macOS pauses it for windows it thinks
     // are hidden, which once froze the island mid-grow.
     void this.root.offsetWidth;
     for (const d of layout.droplets) place(this.els.get(d.id)!, d, true);
-    void invoke("set_glass", { shapes: tinted(glassShapes(layout)), ms: this.reduce ? 0 : MOVE_MS });
+    this.glass(glassShapes(layout), this.ms);
   }
 
   /** Redraws what's inside the droplets without moving them. */
   refresh(content: (id: DropletId) => string) {
-    if (!this.layout) return;
+    if (!this.layout || this.open) return;
     for (const [id, el] of this.els) el.innerHTML = content(id);
   }
 
-  /** Tucks the droplets back into the core, then clears them and their glass. */
+  /**
+   * Grows a panel out of the droplet at `from` (or the core) into `layout.panel`,
+   * holding `section`. The other droplets give way to it.
+   */
+  openPanel(layout: Layout, from: Shape | null, section: HTMLElement, head: PanelHead) {
+    const target = layout.panel;
+    if (!target) return;
+    clearTimeout(this.hideTimer);
+    this.dropPanel();
+    this.root.hidden = false;
+    for (const el of this.els.values()) el.remove();
+    this.els.clear();
+
+    const el = document.createElement("div");
+    el.className = "dl-panel";
+    el.setAttribute("role", "region");
+    el.setAttribute("aria-label", head.kicker);
+    const top = document.createElement("div");
+    top.className = "dl-head";
+    const words = document.createElement("div");
+    words.className = "dl-words";
+    const kicker = document.createElement("div");
+    kicker.className = "dl-kicker";
+    kicker.textContent = head.kicker;
+    const title = document.createElement("div");
+    title.className = "dl-title";
+    title.textContent = head.title;
+    words.append(kicker, title);
+    const done = document.createElement("button");
+    done.type = "button";
+    done.className = "dl-done";
+    done.dataset.dlDone = "";
+    done.textContent = head.done;
+    top.append(words, done);
+    const body = document.createElement("div");
+    body.className = "dl-body";
+    const home: [Node, Node | null] = [section.parentNode!, section.nextSibling];
+    body.append(section);
+    el.append(top, body);
+    this.root.append(el);
+    this.panel = { el, section, home, tint: TINT };
+
+    const start = from ?? tucked(target, layout.core);
+    place(el, start, false);
+    this.layout = layout;
+    this.glass([start], 0);
+    void this.root.offsetWidth;
+    place(el, target, true);
+    this.glass([target], this.ms);
+  }
+
+  /** Retitles the open panel, e.g. when the song changes. */
+  retitle(head: Pick<PanelHead, "kicker" | "title">) {
+    if (!this.panel) return;
+    this.panel.el.querySelector(".dl-kicker")!.textContent = head.kicker;
+    this.panel.el.querySelector(".dl-title")!.textContent = head.title;
+  }
+
+  /** Colours the open panel's glass, e.g. with the artwork's colour; null for the usual tint. */
+  tintPanel(rgb: [number, number, number] | null) {
+    if (!this.panel || !this.layout?.panel) return;
+    // Darkened, so white text stays readable on a pale cover too.
+    this.panel.tint = rgb ? [(rgb[0] / 255) * 0.55, (rgb[1] / 255) * 0.55, (rgb[2] / 255) * 0.55, 0.62] : TINT;
+    this.glass([this.layout.panel], 0, this.panel.tint);
+  }
+
+  /** Puts the borrowed section back where it came from and removes the panel. */
+  private dropPanel() {
+    const p = this.panel;
+    if (!p) return;
+    this.panel = null;
+    p.home[0].insertBefore(p.section, p.home[1]);
+    p.el.remove();
+  }
+
+  /** Tucks everything back into the core, then clears it and its glass. */
   hide() {
     const l = this.layout;
     if (!l) return;
     this.layout = null;
+    const out: Shape[] = [];
     for (const d of l.droplets) {
+      const to = tucked(d, l.core);
       const el = this.els.get(d.id);
-      if (el) place(el, tucked(d, l.core), true);
+      if (el) place(el, to, true);
+      out.push(to);
     }
-    void invoke("set_glass", { shapes: tinted(l.droplets.map((d) => tucked(d, l.core))), ms: this.reduce ? 0 : MOVE_MS });
+    if (this.panel && l.panel) {
+      const to = tucked(l.panel, l.core);
+      place(this.panel.el, to, true);
+      out.push(to);
+    }
+    this.glass(out, this.ms, this.panel?.tint);
     this.hideTimer = window.setTimeout(() => {
+      this.dropPanel();
       this.root.hidden = true;
       this.root.replaceChildren();
       this.els.clear();
-      void invoke("set_glass", { shapes: [], ms: 0 });
-    }, this.reduce ? 120 : MOVE_MS);
+      this.glass([], 0);
+    }, this.ms);
   }
 }
 
@@ -134,4 +250,17 @@ function place(el: HTMLElement, s: Shape, animate: boolean) {
   el.style.borderRadius = `${s.r}px`;
   // Content fades in once the droplet is big enough to hold it.
   el.classList.toggle("tucked", s.w <= 60);
+}
+
+/** "rgb(12, 34, 56)" or "#0c2238" as numbers, or null when it is neither. */
+export function parseColor(css: string): [number, number, number] | null {
+  const v = css.trim();
+  const rgb = v.match(/^rgba?\(\s*(\d+)[\s,]+(\d+)[\s,]+(\d+)/i);
+  if (rgb) return [Number(rgb[1]), Number(rgb[2]), Number(rgb[3])];
+  const hex = v.match(/^#([0-9a-f]{6})$/i);
+  if (hex) {
+    const n = parseInt(hex[1], 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+  return null;
 }

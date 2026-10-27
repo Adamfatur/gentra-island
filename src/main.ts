@@ -22,8 +22,8 @@ import { GuidePanel, savedGuide } from "./guidePanel";
 import { HomePanel } from "./homePanel";
 import { ModePanel, modeIcon, modeName } from "./modePanel";
 import { needsGuide } from "./onboarding";
-import { layout, type DropletId } from "./droplets";
-import { DropletsView, type GlassKind } from "./dropletsView";
+import { layout, type DropletId, type Shape } from "./droplets";
+import { DropletsView, parseColor, type GlassKind } from "./dropletsView";
 import { Reminders, type Reminder } from "./reminders";
 import { findTime } from "./timeparse";
 import { isOn, type FeatureId, type ModeState } from "./modes";
@@ -284,6 +284,8 @@ function allowed(t: Tab): Tab {
 function open(t: Tab = tab) {
   clearTimeout(peekTimer);
   if (drops && allowed(t) === "home") return openDroplets();
+  const asDrop = drops ? (Object.keys(DROP_VIEWS) as DropletId[]).find((id) => DROP_TAB[id] === allowed(t)) : undefined;
+  if (asDrop) return openDropView(asDrop, null);
   drops?.hide();
   mode = "open";
   syncEyes();
@@ -361,7 +363,8 @@ function renderHeadMeta() {
 // Content can change height after opening (process list arrives, search
 // filters cards); the island follows it instead of clipping.
 const resize = new ResizeObserver(() => {
-  if (mode === "open") go(openSize(), "grow");
+  // A droplet's view has its own size; the island stays the core around it.
+  if (mode === "open" && !drops?.visible) go(openSize(), "grow");
 });
 document.querySelectorAll(".panel").forEach((p) => resize.observe(p));
 
@@ -609,10 +612,13 @@ const DROP_TAB: Record<DropletId, Tab> = {
 
 const dropName = (id: DropletId) => (id === "settings" ? t("drop.settings") : id === "ai" ? t("drop.ai") : t(`tab.${DROP_TAB[id]}` as Key));
 
+/** Until the core has its own content, it stays the size of the small island. */
+const dropCore = () => ({ w: CW, h: CH, r: R_COMPACT });
+
 function dropLayout() {
   const on = (Object.keys(DROP_TAB) as DropletId[]).filter((id) => id === "settings" || tabOn(modes.state, DROP_TAB[id]));
   const notch = hasNotch ? { w: Math.round(info.notchWidth), h: Math.round(info.notchHeight) } : null;
-  return layout({ winW: WIN_W, notch, on, view: "home", chipW: drops!.measure(on, dropName) });
+  return layout({ winW: WIN_W, notch, on, view: "home", chipW: drops!.measure(on, dropName), core: dropCore() });
 }
 
 /** Each droplet's inside, every value escaped. */
@@ -640,6 +646,41 @@ function dropContent(id: DropletId): string {
   return esc(dropName(id));
 }
 
+/** The views already rebuilt as droplets, and how tall each one is; the rest still open today's panels. */
+const DROP_VIEWS: Partial<Record<DropletId, number>> = { clipboard: 512, media: 400 };
+
+function dropHead(id: DropletId) {
+  if (id === "media") {
+    const n = media.now;
+    return { kicker: n?.app ? t("media.from", { app: n.app }) : t("drop.media.kicker"), title: n?.title || t("drop.nothing") };
+  }
+  const n = clips.items.length;
+  return { kicker: t("tab.clipboard"), title: n ? t("drop.clip.title", { count: n }) : t("drop.nothingCopied") };
+}
+
+/** The song's colour, which the media view already works out, for the panel's glass. */
+function tintMedia() {
+  const player = document.querySelector<HTMLElement>("#mediaPanel .player");
+  drops?.tintPanel(player ? parseColor(getComputedStyle(player).getPropertyValue("--tint")) : null);
+}
+
+function openDropView(id: DropletId, from: Shape | null) {
+  const tabId = DROP_TAB[id];
+  mode = "open";
+  tab = tabId;
+  syncEyes();
+  show("v-compact");
+  const section = $(`.panel[data-panel="${tabId}"]`);
+  document.querySelectorAll<HTMLElement>(".panel").forEach((p) => p.classList.toggle("on", p === section));
+  if (id === "media") media.show();
+  const notch = hasNotch ? { w: Math.round(info.notchWidth), h: Math.round(info.notchHeight) } : null;
+  const l = layout({ winW: WIN_W, notch, on: [id], view: id, panelH: DROP_VIEWS[id], core: dropCore() });
+  drops!.openPanel(l, from, section, { ...dropHead(id), done: t("drop.done") });
+  go({ w: l.core.w, h: l.core.h, r: l.core.r }, "grow");
+  if (id === "media") tintMedia();
+  if (id === "clipboard") window.setTimeout(() => clips.focusSearch(), 60);
+}
+
 function openDroplets() {
   mode = "open";
   tab = "home";
@@ -658,7 +699,11 @@ const dropletsWanted = (() => {
   }
 })();
 if (dropletsWanted || (await invoke<boolean>("droplets_enabled"))) {
-  drops = new DropletsView(await invoke<GlassKind>("glass_kind"), (id) => open(DROP_TAB[id]));
+  drops = new DropletsView(
+    await invoke<GlassKind>("glass_kind"),
+    (id, from) => (DROP_VIEWS[id] ? openDropView(id, from) : open(DROP_TAB[id])),
+    () => openDroplets(),
+  );
 }
 
 /* ---------- modes ---------- */
@@ -753,6 +798,7 @@ let topId = clips.items[0]?.id;
 await listen("clips-changed", async () => {
   const items = await clips.load();
   drops?.refresh(dropContent);
+  if (drops?.open && tab === "clipboard") drops.retitle(dropHead("clipboard"));
   const top = items[0];
   const isNew = top && top.id !== topId;
   topId = top?.id;
@@ -929,13 +975,15 @@ $("#tabs").addEventListener("keydown", (e) => {
 
 document.addEventListener("keydown", (e) => {
   if (mode !== "open") return;
-  if (e.key === "Escape") return compact();
+  // In a droplet's view, Escape steps back to the droplets; there, it closes.
+  if (e.key === "Escape") return drops?.open ? openDroplets() : compact();
   // ⌘1…⌘5 (Ctrl+1… elsewhere) jump straight to a section.
   if ((mac ? e.metaKey : e.ctrlKey) && /^[1-9]$/.test(e.key)) {
     const target = visibleTabs()[Number(e.key) - 1];
     if (target) {
       e.preventDefault();
-      setTab(target.dataset.tab as Tab, true);
+      if (drops) open(target.dataset.tab as Tab);
+      else setTab(target.dataset.tab as Tab, true);
     }
     return;
   }
@@ -1018,6 +1066,10 @@ await listen<NowPlaying | null>("media", ({ payload }) => {
   const changed = payload?.playing && !sameTrack(media.now, payload);
   media.set(payload);
   drops?.refresh(dropContent);
+  if (drops?.open && tab === "media") {
+    drops.retitle(dropHead("media"));
+    tintMedia();
+  }
   syncMeter();
   home.refresh();
   renderCompact(lastStats, badge(), playingArt());
