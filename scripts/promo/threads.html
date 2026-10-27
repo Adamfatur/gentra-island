@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Gentra Island: Threads video</title>
+    <!-- The 4:5 frame for the Threads video. The island runs in the preview
+         below, and its promo scene sends the captions. See scripts/promo.mjs. -->
+    <style>
+      html, body { margin: 0; background: #10131c; color-scheme: dark; }
+      /* The preview's desktop, drawn here so it fills the whole 4:5 frame. */
+      .frame {
+        position: relative; width: 900px; height: 1125px; overflow: hidden; font-family: "Figtree Variable", sans-serif; color: #fff;
+        background: radial-gradient(40% 45% at 12% 30%, #ff8a3d, transparent 62%), radial-gradient(45% 45% at 88% 26%, #2a6cff, transparent 64%),
+          radial-gradient(55% 40% at 55% 72%, #0fb5a6, transparent 62%), #10131c;
+      }
+      /* A Mac menu bar on both sides of the notch, so the first frame reads as a laptop screen. */
+      .menubar { position: absolute; inset: 0 0 auto 0; height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 0 26px; background: rgba(8, 10, 18, 0.38); backdrop-filter: blur(20px); font-size: 19px; font-weight: 600; }
+      .menubar .l { display: flex; gap: 26px; } .menubar .l b { font-weight: 800; }
+      /* The island at 1.25×, so it reads on a phone: the widest view (680 px) still fits, and the stage's empty sides fall outside the frame. */
+      iframe { position: absolute; z-index: 1; left: 70px; top: 0; width: 760px; height: 900px; border: 0; background: transparent; transform: scale(1.25); transform-origin: 50% 0; }
+      /* A soft floor so the words read on any part of the backdrop. */
+      .frame::after { z-index: 1; content: ""; position: absolute; inset: auto 0 0 0; height: 46%; background: linear-gradient(to bottom, transparent, rgba(10, 12, 20, 0.72) 55%); pointer-events: none; }
+      .cap { position: absolute; z-index: 2; transition: opacity 0.2s; left: 70px; right: 70px; bottom: 150px; font-size: 58px; line-height: 1.08; font-weight: 800; letter-spacing: -0.02em; text-wrap: balance; }
+      .cap span { display: block; opacity: 0; translate: 0 28px; filter: blur(8px); transition: opacity 0.45s, translate 0.6s cubic-bezier(0.3, 1.35, 0.5, 1), filter 0.45s; }
+      .cap span.in { opacity: 1; translate: 0 0; filter: none; }
+      .cap span.out { opacity: 0; translate: 0 -18px; filter: blur(6px); position: absolute; inset: 0 auto auto 0; transition-duration: 0.18s; }
+      .end { position: absolute; z-index: 3; left: 70px; right: 70px; bottom: 120px; opacity: 0; translate: 0 30px; transition: opacity 0.6s, translate 0.8s cubic-bezier(0.3, 1.35, 0.5, 1); }
+      .end.in { opacity: 1; translate: 0 0; }
+      .end h1 { margin: 0; font-size: 104px; line-height: 0.95; font-weight: 900; letter-spacing: -0.035em; }
+      .end p { margin: 22px 0 0; font-size: 40px; line-height: 1.15; font-weight: 700; color: #e9ecf5; }
+      .end .url { margin-top: 44px; display: inline-block; padding: 14px 24px; border-radius: 999px; background: #fff; color: #10131c; font-size: 30px; font-weight: 800; }
+      .end .by { margin-top: 26px; font-size: 24px; font-weight: 600; color: #aeb4c6; }
+    </style>
+  </head>
+  <body>
+    <div class="frame">
+      <div class="menubar"><span class="l"><b>Finder</b><span>File</span><span>Edit</span><span>View</span></span><span>Tue 9:41</span></div>
+      <iframe src="/preview.html?scene=promo&theme=dark&lang=en" title="Gentra Island"></iframe>
+      <div class="cap" id="cap"></div>
+      <div class="end" id="end">
+        <h1>Gentra Island</h1>
+        <p>Install it, use it for a day, and tell me what to fix.</p>
+        <div class="url">github.com/Adamfatur/gentra-island</div>
+        <div class="by">Made by Adam Faturahman</div>
+      </div>
+    </div>
+    <script type="module">
+      import "@fontsource-variable/figtree/wght.css";
+      const cap = document.getElementById("cap");
+      const show = (text) => {
+        cap.querySelectorAll("span").forEach((s) => {
+          s.classList.replace("in", "out");
+          setTimeout(() => s.remove(), 500);
+        });
+        if (!text) return;
+        const s = document.createElement("span");
+        s.textContent = text;
+        cap.appendChild(s);
+        requestAnimationFrame(() => requestAnimationFrame(() => s.classList.add("in")));
+      };
+      addEventListener("message", ({ data }) => {
+        if (data?.promo === "cap") show(data.text);
+        if (data?.promo === "end") {
+          show("");
+          cap.style.opacity = "0";
+          document.getElementById("end").classList.add("in");
+        }
+        if (data?.promo === "done") document.body.dataset.done = "1";
+      });
+    </script>
+  </body>
+</html>

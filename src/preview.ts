@@ -3,6 +3,7 @@
 import { emit } from "@tauri-apps/api/event";
 import { mockIPC, mockWindows } from "@tauri-apps/api/mocks";
 import type { ClipItem } from "./clipboard";
+import { LANGUAGES, setLanguage } from "./i18n";
 import type { ShelfItem } from "./shelf";
 import type { Stats } from "./system";
 
@@ -403,6 +404,28 @@ for (const [label, fn] of Object.entries(actions)) {
 /* ---------- scenes for screenshots and the demo video ---------- */
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+/** A pointer that glides to a button and presses it, for the promo video. */
+async function pointAndClick(selector: string) {
+  const el = document.querySelector<HTMLElement>(selector);
+  if (!el) return;
+  const r = el.getBoundingClientRect();
+  const hand = document.createElement("div");
+  hand.innerHTML = `<svg width="26" height="26" viewBox="0 0 24 24"><path d="M4 2l15 10-6.5 1.4L16 21l-3 1.3-3.4-7.4L5 19z" fill="#fff" stroke="#000" stroke-width="1.4" stroke-linejoin="round"/></svg>`;
+  hand.style.cssText = "position:fixed;z-index:99;left:0;top:0;pointer-events:none;transition:translate .8s cubic-bezier(.3,1.2,.5,1),scale .15s;filter:drop-shadow(0 3px 6px rgba(0,0,0,.4))";
+  hand.style.translate = `${r.right + 160}px ${r.bottom + 140}px`;
+  document.body.appendChild(hand);
+  await wait(60);
+  hand.style.translate = `${r.left + r.width / 2}px ${r.top + r.height / 2}px`;
+  await wait(950);
+  hand.style.scale = "0.85";
+  await wait(140);
+  el.click();
+  hand.style.scale = "1";
+  await wait(500);
+  hand.style.opacity = "0";
+  hand.style.transition += ",opacity .3s";
+  setTimeout(() => hand.remove(), 400);
+}
 const play = () => actions["Musik diputar"]();
 const scenes: Record<string, () => Promise<void>> = {
   compact: async () => {
@@ -576,10 +599,58 @@ const scenes: Record<string, () => Promise<void>> = {
     await wait(3000);
     document.body.dataset.done = "1";
   },
+  // The Threads video (scripts/promo.mjs): the same tour, with captions sent to the page around it.
+  promo: async () => {
+    const say = (text: string) => parent.postMessage({ promo: "cap", text }, "*");
+    // The page around it draws the desktop.
+    document.documentElement.style.background = document.body.style.background = "transparent";
+    document.body.dataset.ready = "1";
+    await wait(500);
+    say("Your MacBook notch has been doing nothing.");
+    await wait(2700);
+    say("So I gave it a job.");
+    play();
+    await wait(1900);
+    void emit("open-tab", "media");
+    say("Music, with the whole cover.");
+    await wait(3600);
+    void emit("open-tab", "toggle");
+    connected.claude = true;
+    agentEvent("claude", "start", "", "gentra-island");
+    await wait(900);
+    actions["Claude minta izin"]();
+    say("Claude Code wants to run a command?");
+    await wait(2000);
+    say("Approve it right from the notch.");
+    await pointAndClick('[data-answer="allow"]');
+    await wait(900);
+    copy({ kind: "link", text: "https://shop.example.com/running-shoes?utm_source=newsletter&utm_medium=email&fbclid=IwAR3", app: "Mail" });
+    copy({ kind: "text", text: sampleJwt, app: "Postman" });
+    actions["Salin kunci API"]();
+    await wait(300);
+    void emit("open-tab", "clipboard");
+    say("A clipboard that spots keys, tokens, and trackers.");
+    await wait(3800);
+    void emit("open-tab", "home");
+    say("In 11 languages.");
+    await wait(700);
+    for (const l of LANGUAGES.slice(1)) {
+      setLanguage(l.id);
+      await wait(l.id === "ar" ? 1100 : 480);
+    }
+    setLanguage("en");
+    await wait(500);
+    void emit("open-tab", "toggle");
+    say("Mac, Windows, and Linux. Free and open source.");
+    await wait(2600);
+    parent.postMessage({ promo: "end" }, "*");
+    await wait(4600);
+    parent.postMessage({ promo: "done" }, "*");
+  },
 };
-if (scene === "demo") {
+if (scene === "demo" || scene === "promo") {
   await wait(400);
-  await scenes.demo();
+  await scenes[scene]();
 } else if (scene && scenes[scene]) {
   await wait(400);
   await scenes[scene]();
