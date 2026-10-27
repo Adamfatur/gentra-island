@@ -4,7 +4,7 @@ import { esc } from "./format";
 import { errorText, t } from "./i18n";
 import { icon } from "./icons";
 import { readableAccent, onAccentText } from "./theme";
-import { artTint } from "./tint";
+import { artColors, coverBackdrop } from "./tint";
 import { automationGuide, guideHtml } from "./permission";
 
 export interface NowPlaying {
@@ -53,6 +53,8 @@ export class MediaPanel {
   now: NowPlaying | null = null;
   /** The song's color, readable on the dark island; null for the theme accent. */
   tint: string | null = null;
+  /** The cover's right-edge color, which the open player fades the cover into. */
+  private edge: string | null = null;
   private tintFor = "";
   private root = document.getElementById("mediaPanel")!;
   private tick = 0;
@@ -92,8 +94,9 @@ export class MediaPanel {
     const art = this.now?.art ?? "";
     if (art === this.tintFor) return;
     this.tintFor = art;
-    const raw = art ? await artTint(art) : null;
+    const { tint: raw, edge } = art ? await artColors(art) : { tint: null, edge: null };
     if (this.tintFor !== art) return;
+    this.edge = edge;
     // The panel and meter sit on near-black; keep the color clearly visible there.
     this.tint = raw ? readableAccent(raw, "#141418", 3) : null;
     this.onTint(this.tint);
@@ -206,7 +209,6 @@ export class MediaPanel {
 
   render() {
     const n = this.now;
-    const style = this.tint ? ` style="--tint:${this.tint};--on-tint:${onAccentText(this.tint)}"` : "";
     if (!n) {
       this.root.innerHTML = `<div class="player empty">
         <span class="media-art blank">${icon.music}</span>
@@ -229,7 +231,11 @@ export class MediaPanel {
         ? `<div class="scrub" role="slider" tabindex="0" style="--p:${pct}%" aria-label="${t("media.seek")}" aria-valuemin="0" aria-valuemax="${Math.round(n.duration)}" aria-valuenow="${Math.round(p)}" aria-valuetext="${mmss(p)}"><span class="track"><i></i></span></div>
           <div class="media-times num"><span class="elapsed">${mmss(p)}</span><span class="left">-${mmss(Math.max(0, n.duration - p))}</span></div>`
         : `<p class="media-live"><i></i>${t("media.live")}</p>`;
-    this.root.innerHTML = `<div class="player ${n.playing ? "playing" : "paused"}"${style}>
+    // With artwork, the open player lets the cover fill its left side and fade into the cover's own edge color.
+    const backdrop = n.art && this.edge ? coverBackdrop(this.edge) : null;
+    const bleed = backdrop ? ` bleed ${backdrop.ink}` : "";
+    const vars = `${bleed ? `--cover-edge:${backdrop?.bg};` : ""}${this.tint ? `--tint:${this.tint};--on-tint:${onAccentText(this.tint)};` : ""}`;
+    this.root.innerHTML = `<div class="player ${n.playing ? "playing" : "paused"}${bleed}"${vars ? ` style="${vars}"` : ""}>
       ${art}
       <div class="media-main">
         ${n.app ? `<span class="media-app">${esc(t("media.from", { app: n.app }))}</span>` : ""}

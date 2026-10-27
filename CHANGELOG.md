@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- **The cover fills the music view.** With artwork, the open player lets the cover fill its left side, edge to edge, and fade into the cover's own color, which fills the rest. The words, the bar, and the buttons switch between light and dark ink to stay readable on any cover. Songs without artwork look as before.
+- **Fixed: blurry album art.** Covers were shrunk to 160 pixels, and a YouTube frame ended up a 90 pixel square stretched across the open player. Covers are now sharp 512 pixel squares, and YouTube thumbnails come in their largest size, without the black bars.
+
 ## 1.0.1
 
 - **Updates in one click.** Once a day the island looks for a new version on GitHub. When there is one, Settings, Updates shows **Update and restart**, and the G menu in the menu bar or system tray shows **Update to** the new version. Every update is signed and checked before it installs. Turn the daily check off in Settings.

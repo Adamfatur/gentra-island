@@ -64,7 +64,7 @@ Gentra Island sits at the top of your screen. On a Mac with a notch it hides ins
 | **Approve** Claude Code's requests from the notch | **Copy the text** out of a screenshot |
 | ![A finished download with Open, Show in Finder, and Shelf](docs/screenshots/download.png) | ![A reminder to drink water](docs/screenshots/care-water.png) |
 | **Downloads** in the notch | And to drink some water |
-| ![Media: artwork, the song, a timeline, and controls](docs/screenshots/media.png) | ![Two glowing pixel eyes, one either side of the notch](docs/screenshots/eyes.png) |
+| ![Media: the cover fills the left side and fades into its own color, beside the song, a timeline, and controls](docs/screenshots/media.png) | ![Two glowing pixel eyes, one either side of the notch](docs/screenshots/eyes.png) |
 | **Media** controls whatever is playing | **Eyes** beside the camera follow your pointer |
 | ![Clipboard history with search, filters, copied text, and a screenshot with Copy text](docs/screenshots/clipboard.png) | ![Dev: local servers and terminal command alerts](docs/screenshots/dev.png) |
 | **Clipboard** remembers and understands what you copy | **Dev** watches your local servers and long commands |

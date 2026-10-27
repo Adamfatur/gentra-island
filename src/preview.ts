@@ -34,6 +34,26 @@ function cover(a: string, b: string, c: string) {
   return cv.toDataURL("image/jpeg", 0.9);
 }
 
+/** A pale cover with a dark subject, to see the open player in its light ink. */
+function paleCover() {
+  const s = 360;
+  const cv = document.createElement("canvas");
+  cv.width = cv.height = s;
+  const x = cv.getContext("2d")!;
+  x.fillStyle = "#EFE6D6";
+  x.fillRect(0, 0, s, s);
+  x.fillStyle = "#C8283C";
+  x.font = "800 46px sans-serif";
+  x.fillText("NIGHT BUS", 34, 70);
+  x.fillStyle = "#2A221E";
+  x.beginPath();
+  x.ellipse(s * 0.58, s * 0.64, s * 0.2, s * 0.26, 0, 0, Math.PI * 2);
+  x.fill();
+  x.fillStyle = "#8C6A4A";
+  x.fillRect(s * 0.18, s * 0.6, s * 0.26, s * 0.24);
+  return cv.toDataURL("image/jpeg", 0.9);
+}
+
 function shot(a: string, b: string) {
   const c = document.createElement("canvas");
   c.width = 360;
@@ -400,6 +420,30 @@ const scenes: Record<string, () => Promise<void>> = {
   media: async () => {
     play();
     await wait(3400);
+    void emit("open-tab", "media");
+  },
+  "media-light": async () => {
+    track = { title: "Lampu Kota", artist: "Nadin Amizah", album: "Night Bus", app: "Music", playing: true, duration: 233, elapsed: 15, at: Date.now(), art: paleCover() };
+    void emit("media", track);
+    await wait(600);
+    void emit("open-tab", "media");
+  },
+  "media-dark": async () => {
+    track = { title: "Home Beyond the Vale", artist: "Celtic Ambience", album: "", app: "Google Chrome", playing: true, duration: 11541, elapsed: 19, at: Date.now(), art: cover("#0f2a2e", "#3d6b4a", "#c9d6b0") };
+    void emit("media", track);
+    await wait(600);
+    void emit("open-tab", "media");
+  },
+  "media-paused": async () => {
+    track = { title: "Lampu Kota", artist: "Nadin Amizah", album: "Night Bus", app: "Music", playing: false, duration: 233, elapsed: 15, at: Date.now(), art: paleCover() };
+    void emit("media", track);
+    await wait(600);
+    void emit("open-tab", "media");
+  },
+  "media-noart": async () => {
+    track = { title: "Lathi", artist: "Weird Genius", album: "", app: "Spotify", playing: true, duration: 219, elapsed: 40, at: Date.now(), art: null };
+    void emit("media", track);
+    await wait(600);
     void emit("open-tab", "media");
   },
   clipboard: async () => {

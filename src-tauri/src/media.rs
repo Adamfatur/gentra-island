@@ -188,10 +188,34 @@ fn publish(app: &AppHandle, next: Option<NowPlaying>) {
 
 /// Shrinks artwork of any size to a 160 px JPEG data URL.
 pub fn thumbnail(bytes: &[u8]) -> Option<String> {
-    let img = image::load_from_memory(bytes).ok()?.thumbnail(160, 160).to_rgb8();
+    square_art(image::load_from_memory(bytes).ok()?)
+}
+
+/// Cover art as the player shows it: a centred square, sharp at the open
+/// player's 248 pt on a Retina screen. A wide YouTube frame is cropped
+/// before it is scaled, so the square keeps all the pixels it can.
+fn square_art(img: image::DynamicImage) -> Option<String> {
+    const SIDE: u32 = 512;
+    let side = img.width().min(img.height());
+    let mut img = img.crop_imm((img.width() - side) / 2, (img.height() - side) / 2, side, side);
+    if side > SIDE {
+        img = img.resize_exact(SIDE, SIDE, image::imageops::FilterType::Lanczos3);
+    }
+    let img = img.to_rgb8();
     let mut out = Cursor::new(Vec::new());
-    image::codecs::jpeg::JpegEncoder::new_with_quality(&mut out, 82).encode_image(&img).ok()?;
+    image::codecs::jpeg::JpegEncoder::new_with_quality(&mut out, 88).encode_image(&img).ok()?;
     Some(format!("data:image/jpeg;base64,{}", base64::engine::general_purpose::STANDARD.encode(out.into_inner())))
+}
+
+/// YouTube's 4:3 thumbnails pad a 16:9 frame with black bars; keep the frame.
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+fn unletterbox(img: image::DynamicImage) -> image::DynamicImage {
+    let (w, h) = (img.width(), img.height());
+    let frame = w * 9 / 16;
+    if w * 3 != h * 4 || frame >= h {
+        return img;
+    }
+    img.crop_imm(0, (h - frame) / 2, w, frame)
 }
 
 /// The 11-character video ID from a YouTube address; None for any other site
@@ -326,12 +350,20 @@ mod platform {
         }
     }
 
+    fn fetch(url: &str) -> Option<Vec<u8>> {
+        let out = Command::new("/usr/bin/curl").args(["-sf", "--max-time", "6", "--proto", "=https", url]).output().ok()?;
+        out.status.success().then_some(out.stdout)
+    }
+
     fn thumbnail_for(id: &str) -> Option<String> {
         // youtube_id() guarantees `id` is 11 safe characters.
-        let url = format!("https://i.ytimg.com/vi/{id}/mqdefault.jpg");
-        let out = Command::new("/usr/bin/curl").args(["-sf", "--max-time", "6", "--proto", "=https", &url]).output().ok()?;
-        out.status.success().then_some(())?;
-        super::thumbnail(&out.stdout)
+        // 1280 x 720 when the uploader's video has it; most do.
+        if let Some(b) = fetch(&format!("https://i.ytimg.com/vi/{id}/maxresdefault.jpg")) {
+            return super::thumbnail(&b);
+        }
+        // 480 x 360 with black bars above and below a wide frame; drop them first.
+        let img = image::load_from_memory(&fetch(&format!("https://i.ytimg.com/vi/{id}/hqdefault.jpg"))?).ok()?;
+        super::square_art(super::unletterbox(img))
     }
 
     /// Adds a YouTube thumbnail to browser playback that came without artwork.
@@ -745,6 +777,31 @@ mod platform {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn decoded(data_url: &str) -> image::DynamicImage {
+        let b64 = data_url.strip_prefix("data:image/jpeg;base64,").unwrap();
+        image::load_from_memory(&base64::engine::general_purpose::STANDARD.decode(b64).unwrap()).unwrap()
+    }
+
+    #[test]
+    fn covers_are_sharp_squares() {
+        // A wide YouTube frame becomes a 512 square, not a 90 px sliver.
+        let wide = image::DynamicImage::new_rgb8(1280, 720);
+        let art = decoded(&square_art(wide).unwrap());
+        assert_eq!((art.width(), art.height()), (512, 512));
+        // Small art is kept at its size, never blown up.
+        let small = decoded(&square_art(image::DynamicImage::new_rgb8(300, 200)).unwrap());
+        assert_eq!((small.width(), small.height()), (200, 200));
+    }
+
+    #[test]
+    fn letterbox_bars_are_dropped() {
+        let img = unletterbox(image::DynamicImage::new_rgb8(480, 360));
+        assert_eq!((img.width(), img.height()), (480, 270));
+        // Anything that isn't a 4:3 thumbnail is left alone.
+        let img = unletterbox(image::DynamicImage::new_rgb8(640, 360));
+        assert_eq!((img.width(), img.height()), (640, 360));
+    }
     #[test]
     fn finds_the_youtube_video_id_in_a_tab_address() {
         let id = |u: &str| youtube_id(u);
@@ -823,7 +880,7 @@ mod tests {
     }
 
     #[test]
-    fn artwork_becomes_a_small_jpeg() {
+    fn artwork_becomes_a_square_jpeg() {
         let img = image::RgbImage::from_pixel(600, 600, image::Rgb([200, 40, 90]));
         let mut png = Cursor::new(Vec::new());
         img.write_to(&mut png, image::ImageFormat::Png).unwrap();
@@ -833,7 +890,8 @@ mod tests {
         assert!(url.starts_with("data:image/jpeg;base64,"));
         let bytes = base64::engine::general_purpose::STANDARD.decode(&url[23..]).unwrap();
         let back = image::load_from_memory(&bytes).unwrap();
-        assert!(back.width() <= 160 && back.height() <= 160);
+        // 512 is sharp at the open player's size on a Retina screen.
+        assert_eq!((back.width(), back.height()), (512, 512));
     }
 }
 

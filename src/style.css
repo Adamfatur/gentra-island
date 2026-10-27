@@ -885,6 +885,31 @@ body.notched .eyes-wrap .zzz { left: calc(100% - 4px); top: -6px; }
 .dl-panel .media-controls button svg { width: 22px; height: 22px; }
 .dl-panel .media-controls .play { width: 68px; height: 68px; background: var(--dl-strong); color: var(--dl-strong-ink); box-shadow: 0 10px 24px -10px rgba(0, 0, 0, 0.6); }
 .dl-panel .media-controls .play svg { width: 26px; height: 26px; }
+/* With artwork the cover becomes the panel: it fills the left side, edge to
+   edge, and fades into the color at its own right edge, which fills the rest.
+   The song, the bar, and the buttons sit on that color, in ink chosen for 4.5:1. */
+.dl-panel:has(.player.bleed) { isolation: isolate; --bleed-art: 340px; --bleed-text: 274px; }
+.dl-panel:has(.player.bleed) .dl-head { position: relative; z-index: 1; }
+.dl-panel:has(.player.bleed) .dl-words { padding-left: var(--bleed-text); }
+.dl-panel:has(.player.bleed) .dl-title { font-size: 24px; }
+.dl-panel:has(.player.on-light) { --dl-ink: #14183a; --dl-ink-rgb: 20 24 58; --dl-strong: #14183a; --dl-strong-ink: #fff; }
+.dl-panel:has(.player.on-dark) { --dl-ink: #fff; --dl-ink-rgb: 255 255 255; --dl-strong: #fff; --dl-strong-ink: #14183a; }
+.dl-panel .player.bleed { position: static; min-height: 236px; }
+.dl-panel .player.bleed::before { content: ""; position: absolute; inset: 0; z-index: -2; background: var(--cover-edge); transition: background 0.6s, filter 0.45s; }
+.dl-panel .player.bleed .media-art {
+  position: absolute; left: 0; top: 0; bottom: 0; z-index: -1; width: var(--bleed-art); height: 100%; border-radius: 0; box-shadow: none;
+  -webkit-mask-image: linear-gradient(to right, #000 50%, transparent 92%); mask-image: linear-gradient(to right, #000 50%, transparent 92%);
+  transition: filter 0.45s, transform 0.45s;
+}
+/* Paused, the cover and its color fade together instead of shrinking; it has no edge to shrink from. */
+.dl-panel .player.bleed.paused .media-art { transform: none; }
+/* Saturation only: the ink was picked for this brightness. */
+.dl-panel .player.bleed.paused .media-art, .dl-panel .player.bleed.paused::before { filter: saturate(0.6); }
+.dl-panel .player.bleed .media-main { margin-left: var(--bleed-text); }
+.dl-panel .player.bleed .media-controls button:not(.play) { color: var(--dl-ink); }
+/* The song's own color can vanish into a cover of the same color; the bar uses the ink. */
+.dl-panel .player.bleed .scrub .track { background: rgb(var(--dl-ink-rgb) / 0.2); }
+.dl-panel .player.bleed .scrub .track i, .dl-panel .player.bleed .scrub .track i::after { background: var(--dl-ink); }
 /* Buttons inside a view: capsules, the main one white. */
 .dl-panel .shelf-actions button, .dl-panel .focus-actions button { height: 44px; padding: 0 18px; border-radius: 22px; background: var(--surface); color: var(--text); font-size: 14px; font-weight: 750; }
 .dl-panel button.primary, .dl-panel .shelf-actions button.primary, .dl-panel .focus-actions button.primary { background: var(--dl-strong); color: var(--dl-strong-ink); }
