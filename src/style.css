@@ -761,6 +761,10 @@ body.notched .eyes-wrap .zzz { left: calc(100% - 4px); top: -6px; }
 .dl.moving { transition: transform var(--move) var(--curve), width var(--move) var(--curve), height var(--move) var(--curve), border-radius var(--move) var(--curve); }
 .dl > * { transition: opacity 160ms ease 80ms; }
 .dl.tucked > * { opacity: 0; transition-delay: 0ms; }
+/* Over system glass, a dark layer in the page keeps white text readable: the
+   glass itself turns pale over a white page. Without system glass, the page
+   paints the whole droplet. */
+.dl, .dl-panel { background: rgba(12, 14, 34, 0.78); }
 .droplets.solid .dl { background: rgba(16, 20, 52, 0.82); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 14px 32px rgba(0, 0, 0, 0.3); }
 .dl:focus-visible { outline: 2px solid var(--accent-on-black, #5ac8fa); outline-offset: 3px; }
 .dl-card { padding: 14px; }
@@ -882,5 +886,50 @@ body.notched .eyes-wrap .zzz { left: calc(100% - 4px); top: -6px; }
 .dl-panel .file button { width: 40px; height: 40px; border-radius: 20px; }
 .dl-panel .shelf-actions { margin-top: 14px; }
 .dl-panel .shelf-actions .muted { font-size: 13px; }
+
+/* Shared by the remaining views: cards and rows on the inner tint, round and roomy. */
+.dl-panel .dev h3, .dl-panel .calls h3, .dl-panel .settings h3 { font-size: 13px; font-weight: 700; color: var(--muted); }
+.dl-panel .dev h3 svg, .dl-panel .calls h3 svg { color: var(--muted); }
+.dl-panel .state, .dl-panel .dev-empty, .dl-panel .hook-setup, .dl-panel .agent-card, .dl-panel .ask-card, .dl-panel .mic-card { border-radius: 24px; padding: 16px 18px; background: var(--surface); }
+.dl-panel .agent-card .hook-setup { background: var(--raised); border-radius: 18px; }
+.dl-panel .servers, .dl-panel .dones { gap: 6px; max-height: none; }
+.dl-panel .server, .dl-panel .done, .dl-panel .agent-row { padding: 10px 12px 10px 16px; border-radius: 22px; background: var(--surface); }
+.dl-panel .server .addr { font-size: 13px; }
+.dl-panel .server button { height: 36px; padding: 0 14px; border-radius: 18px; font-size: 13px; font-weight: 700; }
+.dl-panel .link-btn { font-weight: 700; }
+.dl-panel .ask-code { border-radius: 14px; }
+
+/* Calls: one big mic card. */
+.dl-panel .mic-card { padding: 20px 22px; gap: 16px; }
+.dl-panel .mic-card .mic-ic { width: 52px; height: 52px; border-radius: 26px; }
+.dl-panel .mic-text b { font-size: 17px; font-weight: 800; }
+.dl-panel .mic-card button { height: 48px; padding: 0 22px; border-radius: 24px; font-size: 15px; font-weight: 800; }
+.dl-panel .mirror-view { border-radius: 24px; max-height: 240px; }
+.dl-panel .mirror button { height: 44px; padding: 0 18px; border-radius: 22px; font-size: 14px; font-weight: 750; }
+
+/* Cleaner: categories as capsules, one big button. */
+.dl-panel .clean { gap: 16px; }
+.dl-panel .cats { gap: 6px; }
+.dl-panel .cat { padding: 10px 14px; border-radius: 20px; background: var(--surface); }
+.dl-panel .cat:hover { background: var(--raised); }
+.dl-panel .cat .box { border-radius: 6px; border-color: rgba(255, 255, 255, 0.6); }
+.dl-panel .clean-btn { height: 52px; border-radius: 26px; font-size: 15px; font-weight: 800; }
+
+/* Settings and Modes: round segments and cards. */
+.dl-panel .settings { gap: 18px 22px; }
+.dl-panel .segs { border-radius: 20px; padding: 4px; }
+.dl-panel .seg { border-radius: 16px; color: var(--muted); }
+.dl-panel .seg[aria-pressed="true"] { background: #fff; color: #14183a; }
+.dl-panel .swatch[aria-pressed="true"] { box-shadow: 0 0 0 2px #fff; }
+.dl-panel .mode-card { padding: 14px 16px; border-radius: 22px; background: var(--surface); }
+.dl-panel .mode-card b { font-size: 14px; }
+.dl-panel .mode-card span { font-size: 12.5px; }
+.dl-panel .mode-card[aria-pressed="true"], .dl-panel .mode-card[aria-current="true"] { box-shadow: inset 0 0 0 2px #fff; }
+.dl-panel .mode-card[aria-pressed="true"] svg, .dl-panel .mode-card[aria-current="true"] svg { color: #fff; }
+.dl-panel .feat-row { padding: 8px 10px; border-radius: 14px; font-size: 13px; }
+.dl-panel .switch { width: 40px; height: 24px; }
+.dl-panel .switch::after { width: 20px; height: 20px; }
+.dl-panel .switch[aria-checked="true"]::after { translate: 16px 0; }
+.dl-panel .note { font-size: 12.5px; }
 
 @media (prefers-reduced-motion: reduce) { .dl-panel > * { transition: none; } }

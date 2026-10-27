@@ -98,12 +98,20 @@ pub fn top_covered() -> bool {
 
 #[tauri::command]
 pub fn set_hit_rect(state: tauri::State<HitState>, rect: Rect) {
+    if std::env::var_os("GENTRA_HIT_LOG").is_some() {
+        eprintln!("hit 1 {:.0}", rect.y + rect.h);
+    }
     *state.0.lock().unwrap() = vec![rect];
 }
 
 /// The droplets, each its own shape; the gaps between them stay click-through.
 #[tauri::command]
 pub fn set_hit_rects(state: tauri::State<HitState>, rects: Vec<Rect>) {
+    // Lets a click test check the island is still open before it clicks; shapes only.
+    if std::env::var_os("GENTRA_HIT_LOG").is_some() {
+        let bottom = rects.iter().map(|r| r.y + r.h).fold(0.0, f64::max);
+        eprintln!("hit {} {bottom:.0}", rects.len());
+    }
     *state.0.lock().unwrap() = rects;
 }
 

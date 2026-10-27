@@ -6,7 +6,7 @@
 // then a row of small chips. A droplet that opens becomes one large panel and
 // the others go back into the core.
 
-export type DropletId = "media" | "focus" | "system" | "clipboard" | "shelf" | "ai" | "dev" | "cleaner" | "calls" | "settings";
+export type DropletId = "media" | "focus" | "system" | "clipboard" | "shelf" | "ai" | "dev" | "cleaner" | "calls" | "modes" | "settings";
 
 /** card: a wide rounded card. round: a circle. pill: a wide capsule. chip: a small capsule with a name. */
 export type Form = "card" | "round" | "pill" | "chip";
@@ -73,7 +73,7 @@ const ROWS: { id: DropletId; form: Form; w: number; h: number }[][] = [
     { id: "shelf", form: "pill", w: 232, h: 84 },
   ],
 ];
-const CHIPS: DropletId[] = ["ai", "dev", "cleaner", "calls", "settings"];
+const CHIPS: DropletId[] = ["ai", "dev", "cleaner", "calls", "modes", "settings"];
 
 /** The core when the island is open: wide enough for a sentence and a readout. */
 export function openCore(notch: LayoutInput["notch"], winW: number): Shape {
@@ -93,7 +93,8 @@ export function layout(i: LayoutInput): Layout {
     return { core, droplets: [], panel };
   }
   const on = new Set(i.on);
-  // Settings has no feature to switch off; it is always there.
+  // Modes and Settings have no feature to switch off; they are always there.
+  on.add("modes");
   on.add("settings");
   const droplets: Droplet[] = [];
   let y = top;

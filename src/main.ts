@@ -607,16 +607,18 @@ const DROP_TAB: Record<DropletId, Tab> = {
   dev: "dev",
   cleaner: "cleaner",
   calls: "call",
+  modes: "mode",
   settings: "settings",
 };
 
-const dropName = (id: DropletId) => (id === "settings" ? t("drop.settings") : id === "ai" ? t("drop.ai") : t(`tab.${DROP_TAB[id]}` as Key));
+const dropName = (id: DropletId) =>
+  id === "settings" ? t("drop.settings") : id === "modes" ? t("drop.modes") : id === "ai" ? t("drop.ai") : t(`tab.${DROP_TAB[id]}` as Key);
 
 /** Until the core has its own content, it stays the size of the small island. */
 const dropCore = () => ({ w: CW, h: CH, r: R_COMPACT });
 
 function dropLayout() {
-  const on = (Object.keys(DROP_TAB) as DropletId[]).filter((id) => id === "settings" || tabOn(modes.state, DROP_TAB[id]));
+  const on = (Object.keys(DROP_TAB) as DropletId[]).filter((id) => id === "settings" || id === "modes" || tabOn(modes.state, DROP_TAB[id]));
   const notch = hasNotch ? { w: Math.round(info.notchWidth), h: Math.round(info.notchHeight) } : null;
   return layout({ winW: WIN_W, notch, on, view: "home", chipW: drops!.measure(on, dropName), core: dropCore() });
 }
@@ -647,12 +649,26 @@ function dropContent(id: DropletId): string {
 }
 
 /** The views already rebuilt as droplets, and the tallest each may grow (each fits its content); the rest still open today's panels. */
-const DROP_VIEWS: Partial<Record<DropletId, number>> = { clipboard: 540, media: 540, system: 540, focus: 540, shelf: 540 };
+const DROP_VIEWS: Record<DropletId, number> = { clipboard: 540, media: 540, system: 540, focus: 540, shelf: 540, ai: 540, dev: 540, cleaner: 540, calls: 540, modes: 540, settings: 540 };
 const PRESSURE_TITLE: Key[] = ["system.pressure.ok", "system.pressure.tight", "system.pressure.full"];
 /** The droplet whose view is open, if any. */
 let dropView: DropletId | null = null;
 
 function dropHead(id: DropletId) {
+  if (id === "ai") {
+    const lead = agents.lead();
+    const title = !lead ? t("drop.ai.idle") : t(lead.state === "waiting" ? "drop.ai.waiting" : "drop.ai.working", { agent: AGENT_NAME[lead.agent] });
+    return { kicker: t("drop.ai"), title };
+  }
+  if (id === "dev") return { kicker: t("tab.dev"), title: t("drop.dev.title") };
+  if (id === "cleaner") return { kicker: t("tab.cleaner"), title: t("drop.cleaner.title") };
+  if (id === "settings") return { kicker: t("drop.settings"), title: t("drop.settings.title") };
+  if (id === "modes") return { kicker: t("drop.modes"), title: t("drop.modes.title") };
+  if (id === "calls") {
+    const m = call.mic;
+    const title = !m?.inUse ? t("drop.calls.idle") : m.muted ? t("drop.calls.muted") : m.app ? t("drop.calls.live", { app: m.app }) : t("drop.calls.liveNoApp");
+    return { kicker: t("tab.call"), title };
+  }
   if (id === "system") return { kicker: t("tab.system"), title: lastStats ? t(PRESSURE_TITLE[lastStats.pressure]) : t("system.waiting.title") };
   if (id === "focus") {
     const title = !focus.running ? t("drop.focus.idle") : t(focus.paused ? "drop.focus.paused" : "drop.focus.running", { time: focus.label });
@@ -685,13 +701,25 @@ function openDropView(id: DropletId, from: Shape | null) {
   const section = $(`.panel[data-panel="${tabId}"]`);
   document.querySelectorAll<HTMLElement>(".panel").forEach((p) => p.classList.toggle("on", p === section));
   dropView = id;
+  // The same start-up each section gets as a tab; live ones stop when another opens.
+  void invoke("set_stats_detail", { on: id === "system" });
+  if (id === "system" && lastStats) renderSystem(lastStats);
   if (id === "media") media.show();
-  if (id === "system") {
-    void invoke("set_stats_detail", { on: true });
-    if (lastStats) renderSystem(lastStats);
+  else media.hide();
+  if (id === "dev") dev.show();
+  else dev.hide();
+  if (id === "calls") call.show();
+  else call.hide();
+  if (id === "ai") void ai.show();
+  else ai.hide();
+  if (id === "cleaner") {
+    cleaner.render();
+    cleaner.ensureScanned();
   }
   if (id === "focus") focus.render();
   if (id === "shelf") shelf.render();
+  if (id === "settings") settings.render();
+  if (id === "modes") modes.render();
   const notch = hasNotch ? { w: Math.round(info.notchWidth), h: Math.round(info.notchHeight) } : null;
   const l = layout({ winW: WIN_W, notch, on: [id], view: id, panelH: DROP_VIEWS[id], core: dropCore() });
   drops!.openPanel(l, from, section, { ...dropHead(id), done: t("drop.done") });
@@ -720,7 +748,7 @@ const dropletsWanted = (() => {
 if (dropletsWanted || (await invoke<boolean>("droplets_enabled"))) {
   drops = new DropletsView(
     await invoke<GlassKind>("glass_kind"),
-    (id, from) => (DROP_VIEWS[id] ? openDropView(id, from) : open(DROP_TAB[id])),
+    (id, from) => openDropView(id, from),
     () => openDroplets(),
     () => reportHit(morph.current),
   );

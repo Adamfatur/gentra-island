@@ -26,16 +26,16 @@ describe("the droplet layout", () => {
 
   it("leaves out what the mode switched off and closes the gap", () => {
     const l = layout({ ...base, on: ["focus", "system", "clipboard"] });
-    expect(l.droplets.map((d) => d.id)).toEqual(["focus", "system", "clipboard", "settings"]);
+    expect(l.droplets.map((d) => d.id)).toEqual(["focus", "system", "clipboard", "modes", "settings"]);
     expect(l.droplets[0].x).toBe((760 - (150 + 12 + 150)) / 2);
   });
 
-  it("always offers Settings", () => {
-    expect(layout({ ...base, on: [] }).droplets.map((d) => d.id)).toEqual(["settings"]);
+  it("always offers Modes and Settings", () => {
+    expect(layout({ ...base, on: [] }).droplets.map((d) => d.id)).toEqual(["modes", "settings"]);
   });
 
   it("grows droplets out in reading order", () => {
-    expect(layout(base).droplets.map((d) => d.order)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    expect(layout(base).droplets.map((d) => d.order)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
   });
 
   it("sizes chips to their names when measured", () => {

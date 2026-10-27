@@ -609,6 +609,18 @@ export const en = {
   "drop.focus.paused": "Paused, {time} left",
   "drop.shelf.title": "{count} files, ready to drag",
   "drop.shelf.empty": "Keep files handy here",
+  "drop.ai.idle": "Your AI agents",
+  "drop.ai.working": "{agent} is working",
+  "drop.ai.waiting": "{agent} needs you",
+  "drop.dev.title": "Servers and commands",
+  "drop.cleaner.title": "Free up some space",
+  "drop.calls.idle": "No call right now",
+  "drop.calls.live": "You're live in {app}",
+  "drop.calls.liveNoApp": "Your mic is on",
+  "drop.calls.muted": "You're muted",
+  "drop.settings.title": "Make it yours",
+  "drop.modes": "Modes",
+  "drop.modes.title": "Pick what's on",
 };
 
 export type Key = keyof typeof en;

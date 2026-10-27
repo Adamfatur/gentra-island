@@ -13,7 +13,7 @@ export type GlassKind = "liquid" | "blur" | "none";
 type Tint = [number, number, number, number];
 
 /** A dark tint in the glass keeps white text readable over any wallpaper. */
-const TINT: Tint = [0.05, 0.06, 0.16, 0.58];
+const TINT: Tint = [0.05, 0.06, 0.16, 0.25];
 
 export interface PanelHead {
   kicker: string;
@@ -28,6 +28,8 @@ export class DropletsView {
   private hideTimer = 0;
   /** The tallest the open panel may grow. */
   private maxH = 0;
+  /** The shortest it may get: down to where it was clicked, so it never shrinks out from under the pointer. */
+  private minH = 200;
   private reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   private panel: { el: HTMLElement; section: HTMLElement; home: [Node, Node | null]; tint: Tint } | null = null;
   /** Refits the open panel when what's inside changes height (files added, a timer started). */
@@ -153,6 +155,7 @@ export class DropletsView {
     const target = layout.panel;
     if (!target) return;
     this.maxH = target.h;
+    this.minH = from ? Math.min(target.h, Math.max(200, from.y + from.h - target.y)) : 200;
     clearTimeout(this.hideTimer);
     this.dropPanel();
     this.root.hidden = false;
@@ -216,7 +219,7 @@ export class DropletsView {
     const content = section.offsetHeight;
     section.style.cssText = before;
     // A few points spare, so rounding never leaves a scrollbar.
-    return Math.round(Math.min(max, Math.max(200, pad + head + gap + content + 4)));
+    return Math.round(Math.min(max, Math.max(this.minH, pad + head + gap + content + 4)));
   }
 
   private refit() {
