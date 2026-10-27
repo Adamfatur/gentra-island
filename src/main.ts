@@ -113,6 +113,8 @@ let downloads: Download[] = [];
 let mode: Mode = "compact";
 let tab: Tab = "home";
 let hovering = false;
+/** An app window reaches up where the menu bar would be, under the island. */
+let covered = false;
 let openedByShortcut = false;
 let peekTimer = 0;
 let leaveTimer = 0;
@@ -134,10 +136,12 @@ const morph = new Morph(
 function reportHit(s: Size, target?: Size) {
   const w = Math.max(s.w, target?.w ?? 0);
   const h = Math.max(s.h, target?.h ?? 0);
+  // The hidden line takes only the pointer at the very top edge; the app below keeps the rest.
+  const tight = mode === "compact" && look === "hidden" && (target ?? s).h <= 4;
   // A few extra pixels around the compact pill make the notch easy to hit.
-  const pad = mode === "compact" ? 6 : 0;
+  const pad = mode === "compact" && !tight ? 6 : 0;
   void invoke("set_hit_rect", {
-    rect: { x: (WIN_W - w) / 2 - pad, y: TOP > 0 ? TOP - pad : 0, w: w + pad * 2, h: h + pad + (TOP > 0 ? pad : 0) },
+    rect: { x: (WIN_W - w) / 2 - pad, y: TOP > 0 ? TOP - pad : 0, w: w + pad * 2, h: h + pad + (TOP > 0 ? pad : 0), tight },
   });
 }
 
@@ -231,8 +235,8 @@ function moment() {
  */
 function compactSize(): Size {
   const live = !!badge() || playingArt() !== undefined;
-  let next: Look = compactLook(settings.settings.islandSize, { hasNotch, live, hovering });
-  syncEyes(!hasNotch || next !== "full");
+  let next: Look = compactLook(settings.settings.islandSize, { hasNotch, live, hovering, covered });
+  syncEyes(next !== "hidden" && (!hasNotch || next !== "full"));
   // Beside the camera, the eyes take the place of the small icons.
   if (hasNotch && eyesShown) next = "eyes";
   // A running timer needs a little more room on the right.
@@ -243,6 +247,7 @@ function compactSize(): Size {
     document.body.dataset.look = next;
     root.style.setProperty("--cw", `${w - extra}px`);
   }
+  if (next === "hidden") return { w, h: 4, r: 2 };
   return { w, h: CH + (hovering ? 3 : 0), r: R_COMPACT };
 }
 
@@ -750,6 +755,13 @@ await listen<boolean>("island-hover", ({ payload }) => {
     leaveTimer = window.setTimeout(compact, 380);
   }
 });
+
+function setCovered(on: boolean) {
+  covered = on;
+  if (mode === "compact") go(compactSize(), "shrink");
+}
+await listen<boolean>("top-covered", ({ payload }) => setCovered(payload));
+setCovered(await invoke<boolean>("top_covered"));
 
 await listen<Tab | "toggle">("open-tab", ({ payload }) => {
   if (payload === "toggle") {

@@ -748,5 +748,7 @@ body[data-look="slim"] #v-compact .side svg, body[data-look="slim"] .mini-art { 
    eye centers are the notch's width plus one slim side (34 px) apart. */
 body.notched .eyes-wrap .eyes { gap: calc(var(--nw) + 23px); }
 body[data-look="eyes"] #v-compact .side { opacity: 0; }
+/* Hidden over a full-screen window: only the line shows, reachable at the top edge. */
+body[data-look="hidden"] #v-compact { opacity: 0; }
 body.notched .eyes-wrap .zzz { left: calc(100% - 4px); top: -6px; }
 .settings .sub-h { margin-top: 16px; }

@@ -139,6 +139,7 @@ pub fn run() {
             window::set_hit_rect,
             window::screen_info,
             window::set_eyes,
+            window::top_covered,
             stats::stats_now,
             stats::set_stats_detail,
             set_features,

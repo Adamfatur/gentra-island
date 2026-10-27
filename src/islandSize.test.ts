@@ -38,4 +38,13 @@ describe("island size", () => {
     expect(compactWidth(look, { hasNotch: false, notchW: 0 })).toBe(108);
     expect(compactWidth("full", { hasNotch: false, notchW: 0 })).toBe(196);
   });
+
+  it("steps aside over a full-screen window, and comes back at the top edge", () => {
+    const over = { hasNotch: false, live: true, hovering: false, covered: true };
+    expect(compactLook("wide", over)).toBe("hidden");
+    expect(compactWidth("hidden", { hasNotch: false, notchW: 0 })).toBe(64);
+    expect(compactLook("wide", { ...over, hovering: true })).toBe("full");
+    // With a notch, tucked into it already covers nothing.
+    expect(compactLook("compact", { ...over, hasNotch: true })).toBe("tucked");
+  });
 });

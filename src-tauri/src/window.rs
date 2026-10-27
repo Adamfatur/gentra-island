@@ -22,6 +22,9 @@ pub struct Rect {
     pub y: f64,
     pub w: f64,
     pub h: f64,
+    /// No catch margin: the hidden island's line, so the app below it keeps its clicks.
+    #[serde(default)]
+    pub tight: bool,
 }
 
 impl Rect {
@@ -30,7 +33,7 @@ impl Rect {
     }
 
     fn grown(&self, by: f64) -> Rect {
-        Rect { x: self.x - by, y: self.y - by, w: self.w + 2.0 * by, h: self.h + 2.0 * by }
+        Rect { x: self.x - by, y: self.y - by, w: self.w + 2.0 * by, h: self.h + 2.0 * by, tight: self.tight }
     }
 }
 
@@ -38,6 +41,24 @@ impl Rect {
 /// Switching while the pointer is still on its way, this far out, means a
 /// click right after it stops lands on the island, not the app behind it.
 const CATCH_MARGIN: f64 = 16.0;
+
+/// Whether the island takes a click at (x, y) instead of the app behind it.
+fn catches(rect: &Rect, x: f64, y: f64) -> bool {
+    if rect.tight {
+        rect.contains(x, y)
+    } else {
+        rect.grown(CATCH_MARGIN).contains(x, y)
+    }
+}
+
+/// How often to check whether an app window reaches up under the island.
+const COVER_EVERY: Duration = Duration::from_secs(1);
+/// A window whose top is this close to the top of the screen sits where the
+/// menu bar would be: the menu bar is hidden (full screen, or set to hide).
+/// A visible menu bar is at least 24 points tall.
+const COVER_BAND: f64 = 20.0;
+/// Half the width checked either side of the island's middle.
+const COVER_HALF: f64 = 110.0;
 
 #[derive(Default)]
 pub struct HitState(pub Mutex<Rect>);
@@ -62,6 +83,15 @@ const EYES_EVERY: Duration = Duration::from_millis(100);
 #[tauri::command]
 pub fn set_eyes(on: bool) {
     EYES.store(on, Ordering::Relaxed);
+}
+
+/// Whether an app window reaches up under the island, as last checked.
+static COVERED: AtomicBool = AtomicBool::new(false);
+
+/// The state so far, for the frontend once it listens: the first change can come before that.
+#[tauri::command]
+pub fn top_covered() -> bool {
+    COVERED.load(Ordering::Relaxed)
 }
 
 #[tauri::command]
@@ -111,6 +141,7 @@ pub fn spawn_hit_tester(app: AppHandle) {
         // re-read every ~2 s instead of on every tick.
         let mut geometry = None;
         let mut geometry_age = Duration::MAX;
+        let mut cover_age = Duration::MAX;
         loop {
             thread::sleep(wait);
             geometry_age = geometry_age.saturating_add(wait);
@@ -122,6 +153,16 @@ pub fn spawn_hit_tester(app: AppHandle) {
             let (Ok(cursor), Some((origin, scale))) = (win.cursor_position(), geometry) else {
                 continue;
             };
+            cover_age = cover_age.saturating_add(wait);
+            if cover_age >= COVER_EVERY {
+                cover_age = Duration::ZERO;
+                let (left, top) = (origin.x as f64 / scale, origin.y as f64 / scale);
+                let band = Rect { x: left + WIN_W / 2.0 - COVER_HALF, y: top, w: 2.0 * COVER_HALF, h: COVER_BAND, tight: false };
+                let now = platform::top_covered(band);
+                if COVERED.swap(now, Ordering::Relaxed) != now {
+                    let _ = app.emit("top-covered", now);
+                }
+            }
             let x = (cursor.x - origin.x as f64) / scale;
             let y = (cursor.y - origin.y as f64) / scale;
             let moved = (x - last.0).abs() > 0.5 || (y - last.1).abs() > 0.5;
@@ -144,7 +185,7 @@ pub fn spawn_hit_tester(app: AppHandle) {
                 (false, true) => 200,
             };
             wait = Duration::from_millis(ms);
-            let catching = rect.grown(CATCH_MARGIN).contains(x, y);
+            let catching = catches(&rect, x, y);
             if catching != accepting {
                 accepting = catching;
                 let _ = win.set_ignore_cursor_events(!catching);
@@ -163,7 +204,9 @@ mod platform {
     use super::ScreenInfo;
     use objc2::MainThreadMarker;
     use objc2::runtime::{AnyClass, AnyObject, NSObject};
-    use objc2::{define_class, ClassType, MainThreadOnly};
+    use objc2::rc::Retained;
+    use objc2::{define_class, msg_send, ClassType, MainThreadOnly};
+    use objc2_foundation::NSString;
     use objc2_app_kit::{NSPanel, NSResponder, NSScreen, NSWindow, NSWindowCollectionBehavior, NSWindowStyleMask};
 
     define_class!(
@@ -231,6 +274,41 @@ mod platform {
         }
     }
 
+    #[link(name = "CoreGraphics", kind = "framework")]
+    unsafe extern "C" {
+        fn CGWindowListCopyWindowInfo(option: u32, relative_to: u32) -> *mut AnyObject;
+    }
+
+    /// Whether another app's window reaches into `band` (global points). Window
+    /// positions and sizes need no permission; names and contents aren't read.
+    pub fn top_covered(band: super::Rect) -> bool {
+        objc2::rc::autoreleasepool(|_| {
+            // On-screen windows only (1), without desktop icons (16).
+            // SAFETY: returns a +1 CFArray of CFDictionary, toll-free bridged to NSArray.
+            let Some(list) = (unsafe { Retained::from_raw(CGWindowListCopyWindowInfo(1 | 16, 0)) }) else { return false };
+            let get = |d: &AnyObject, k: &str| -> Option<Retained<AnyObject>> {
+                let k = NSString::from_str(k);
+                // SAFETY: objectForKey: on an NSDictionary.
+                unsafe { msg_send![d, objectForKey: &*k] }
+            };
+            // SAFETY: the values read are NSNumbers.
+            let num = |d: &AnyObject, k: &str| get(d, k).map_or(0.0, |n| unsafe { msg_send![&*n, doubleValue] });
+            let me = std::process::id() as f64;
+            // SAFETY: count and objectAtIndex: on an NSArray.
+            let count: usize = unsafe { msg_send![&*list, count] };
+            (0..count).any(|i| {
+                let d: Retained<AnyObject> = unsafe { msg_send![&*list, objectAtIndex: i] };
+                // Layer 0 holds ordinary app windows; menus, the Dock, and panels sit higher.
+                if num(&d, "kCGWindowLayer") != 0.0 || num(&d, "kCGWindowOwnerPID") == me || num(&d, "kCGWindowAlpha") <= 0.0 {
+                    return false;
+                }
+                let Some(b) = get(&d, "kCGWindowBounds") else { return false };
+                let (x, y, w, h) = (num(&b, "X"), num(&b, "Y"), num(&b, "Width"), num(&b, "Height"));
+                h > 40.0 && y < band.y + band.h && y + h > band.y + 2.0 && x < band.x + band.w && x + w > band.x
+            })
+        })
+    }
+
     pub fn screen_info() -> ScreenInfo {
         let mut info = ScreenInfo {
             platform: "macos",
@@ -264,6 +342,11 @@ mod platform {
 
     pub fn elevate(_win: &tauri::WebviewWindow) {}
 
+    /// Only checked on macOS so far.
+    pub fn top_covered(_band: super::Rect) -> bool {
+        false
+    }
+
     pub fn focus(win: &tauri::WebviewWindow) {
         let _ = win.set_focus();
     }
@@ -284,9 +367,18 @@ mod catch_tests {
 
     #[test]
     fn clicks_are_caught_a_little_before_the_edge() {
-        let r = Rect { x: 100.0, y: 0.0, w: 200.0, h: 40.0 };
+        let r = Rect { x: 100.0, y: 0.0, w: 200.0, h: 40.0, tight: false };
         assert!(!r.contains(90.0, 20.0));
-        assert!(r.grown(CATCH_MARGIN).contains(90.0, 20.0));
-        assert!(!r.grown(CATCH_MARGIN).contains(80.0, 20.0));
+        assert!(catches(&r, 90.0, 20.0));
+        assert!(!catches(&r, 80.0, 20.0));
+    }
+
+    #[test]
+    fn the_hidden_line_leaves_clicks_beside_it_to_the_app() {
+        let line = Rect { x: 100.0, y: 0.0, w: 60.0, h: 4.0, tight: true };
+        assert!(catches(&line, 120.0, 2.0));
+        assert!(!catches(&line, 120.0, 10.0));
+        assert!(!catches(&line, 95.0, 2.0));
     }
 }
+
