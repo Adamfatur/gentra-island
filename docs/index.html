@@ -136,6 +136,11 @@
     .demo { width: min(860px, 100% - 32px); margin: 56px auto 0; }
     .demo video, .demo img { width: 100%; height: auto; border-radius: 20px; background: #10131c; }
     .demo p { color: var(--muted); font-size: 15px; text-align: center; margin: 14px 0 0; }
+    /* ---------- tour: the 4:5 film made for social posts ---------- */
+    .tour { display: grid; grid-template-columns: minmax(0, 400px) minmax(0, 1fr); gap: clamp(28px, 6vw, 72px); align-items: center; }
+    .tour video { width: 100%; height: auto; border-radius: 20px; background: #10131c; }
+    .tour p { color: var(--muted); font-size: 18px; line-height: 1.55; margin: 0 0 14px; max-width: 46ch; }
+    @media (max-width: 760px) { .tour { grid-template-columns: minmax(0, 1fr); } .tour video { max-width: 400px; margin-inline: auto; } }
 
     /* ---------- features: rows that alternate, then a compact list ---------- */
     section { padding: clamp(64px, 9vw, 120px) 0 0; }
@@ -345,6 +350,19 @@
   </div>
 
   <main>
+    <section id="tour">
+      <div class="wrap tour">
+        <video controls playsinline preload="none" poster="screenshots/tour.jpg?v=1.0.3" width="1080" height="1350" aria-label="A 50 second tour of Gentra Island: the notch wakes up, shows its droplets, music, a Claude Code permission request, text copied from a screenshot, the clipboard, a reminder, focus, modes, the smaller alerts, and 11 languages">
+          <source src="screenshots/tour.mp4?v=1.0.3" type="video/mp4">
+        </video>
+        <div>
+          <h2>The whole island in 50 seconds</h2>
+          <p>Music, approving Claude Code from the notch, text from a screenshot, a clipboard that hides your keys, reminders, focus, modes, and the small alerts in between.</p>
+          <p>It has music, so turn the sound on if you can.</p>
+        </div>
+      </div>
+    </section>
+
     <section id="all">
       <div class="wrap">
         <h2>Every feature, free</h2>

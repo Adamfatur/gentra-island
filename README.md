@@ -81,7 +81,7 @@ Gentra Island sits at the top of your screen. On a Mac with a notch it hides ins
 | ![Home in the light theme](docs/screenshots/home-light.png) | |
 | Light theme | |
 
-A higher-quality version of the video is in [docs/screenshots/demo.mp4](docs/screenshots/demo.mp4).
+A higher-quality version of the video is in [docs/screenshots/demo.mp4](docs/screenshots/demo.mp4). For a 50-second tour of every feature, with music, watch [docs/screenshots/tour.mp4](docs/screenshots/tour.mp4).
 
 ## What it does
 
