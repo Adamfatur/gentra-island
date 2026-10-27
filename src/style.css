@@ -772,8 +772,12 @@ body.notched .eyes-wrap .zzz { left: calc(100% - 4px); top: -6px; }
 /* Over system glass, a dark layer in the page keeps white text readable: the
    glass itself turns pale over a white page. Without system glass, the page
    paints the whole droplet. */
-.dl, .dl-panel { background: rgba(12, 14, 34, 0.78); }
-.droplets.solid .dl { background: rgba(16, 20, 52, 0.82); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 14px 32px rgba(0, 0, 0, 0.3); }
+/* Leaning a little to the accent, so the island takes the colour you chose;
+   still dark enough for 4.5:1 white text over a white page. */
+.dl, .dl-panel { background: color-mix(in srgb, var(--accent-on-black, var(--accent)) 12%, rgba(12, 14, 34, 0.86)); }
+.dl-toast { position: absolute; left: 50%; translate: -50% 4px; z-index: 2; padding: 9px 16px; border-radius: 18px; background: #fff; color: #14183a; font-size: 13px; font-weight: 750; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.18s, translate 0.25s; box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3); }
+.dl-toast.show { opacity: 1; translate: -50% 0; }
+.droplets.solid .dl { background: color-mix(in srgb, var(--accent-on-black, var(--accent)) 14%, rgba(16, 20, 52, 0.9)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 14px 32px rgba(0, 0, 0, 0.3); }
 .dl:focus-visible { outline: 2px solid var(--accent-on-black, #5ac8fa); outline-offset: 3px; }
 .dl-card { padding: 14px; }
 .dl-round { justify-content: center; text-align: center; flex-direction: column; gap: 2px; }
@@ -795,7 +799,7 @@ body.notched .eyes-wrap .zzz { left: calc(100% - 4px); top: -6px; }
 .dl-panel {
   position: absolute; left: 0; top: 0; pointer-events: auto; box-sizing: border-box; overflow: hidden;
   display: flex; flex-direction: column; gap: 16px; padding: 24px 26px;
-  --surface: rgba(255, 255, 255, 0.14); --raised: rgba(255, 255, 255, 0.24); --island: rgba(0, 0, 0, 0.4);
+  --surface: color-mix(in srgb, var(--accent-on-black, var(--accent)) 10%, rgba(255, 255, 255, 0.13)); --raised: rgba(255, 255, 255, 0.24); --island: rgba(0, 0, 0, 0.4);
   --text: #fff; --muted: rgba(255, 255, 255, 0.8); --line: rgba(255, 255, 255, 0.16);
   color: var(--text);
 }
@@ -804,7 +808,7 @@ body.notched .eyes-wrap .zzz { left: calc(100% - 4px); top: -6px; }
 /* Going away, the words fade first so droplets never carry text across each other. */
 .droplets.leaving .dl > *, .droplets.leaving .dl-panel > * { opacity: 0; transition: opacity 90ms ease; }
 .dl-panel.tucked > * { opacity: 0; transition-delay: 0ms; }
-.droplets.solid .dl-panel { background: rgba(16, 20, 52, 0.9); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 20px 44px rgba(0, 0, 0, 0.35); }
+.droplets.solid .dl-panel { background: color-mix(in srgb, var(--accent-on-black, var(--accent)) 14%, rgba(16, 20, 52, 0.94)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 20px 44px rgba(0, 0, 0, 0.35); }
 .dl-head { display: flex; align-items: flex-start; gap: 16px; flex: none; }
 .dl-words { flex: 1; min-width: 0; }
 .dl-kicker { font-size: 13px; font-weight: 700; color: var(--muted); }

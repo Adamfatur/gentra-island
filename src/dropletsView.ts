@@ -12,8 +12,12 @@ import { CURVE, MOVE_MS, glassShapes, hitShapes, tucked, type DropletId, type La
 export type GlassKind = "liquid" | "blur" | "none";
 type Tint = [number, number, number, number];
 
-/** A dark tint in the glass keeps white text readable over any wallpaper. */
-const TINT: Tint = [0.05, 0.06, 0.16, 0.25];
+/** The glass leans to the accent, darkened, so the whole island takes its colour. */
+function accentTint(): Tint {
+  const css = getComputedStyle(document.documentElement).getPropertyValue("--accent-on-black") || getComputedStyle(document.documentElement).getPropertyValue("--accent");
+  const rgb = parseColor(css) ?? [90, 200, 250];
+  return [(rgb[0] / 255) * 0.35, (rgb[1] / 255) * 0.35, (rgb[2] / 255) * 0.35, 0.3];
+}
 
 export interface PanelHead {
   kicker: string;
@@ -98,7 +102,7 @@ export class DropletsView {
     return out;
   }
 
-  private glass(shapes: Shape[], ms: number, tint: Tint = TINT) {
+  private glass(shapes: Shape[], ms: number, tint: Tint = accentTint()) {
     void invoke("set_glass", { shapes: shapes.map((s) => ({ ...s, tint })), ms });
   }
 
@@ -192,7 +196,7 @@ export class DropletsView {
     body.append(section);
     el.append(top, body);
     this.root.append(el);
-    this.panel = { el, section, home, tint: TINT };
+    this.panel = { el, section, home, tint: accentTint() };
 
     // Lay it out at its final width first, to learn how tall its content is.
     place(el, target, false);
@@ -238,6 +242,28 @@ export class DropletsView {
     this.onMoved();
   }
 
+  /** A short message over the droplets: at the foot of an open view, or under the cluster. */
+  say(msg: string) {
+    const l = this.layout;
+    if (!l) return;
+    let note = this.root.querySelector<HTMLElement>(".dl-toast");
+    if (!note) {
+      note = document.createElement("div");
+      note.className = "dl-toast";
+      note.setAttribute("role", "status");
+      this.root.append(note);
+    }
+    const shapes = l.panel ? [l.panel] : l.droplets;
+    const bottom = Math.max(...shapes.map((s) => s.y + s.h));
+    note.textContent = msg;
+    note.style.top = `${l.panel ? bottom - 56 : bottom + 10}px`;
+    note.classList.add("show");
+    clearTimeout(this.sayTimer);
+    this.sayTimer = window.setTimeout(() => note!.classList.remove("show"), 1800);
+  }
+
+  private sayTimer = 0;
+
   /** Retitles the open panel, e.g. when the song changes. */
   retitle(head: Pick<PanelHead, "kicker" | "title">) {
     if (!this.panel) return;
@@ -249,7 +275,7 @@ export class DropletsView {
   tintPanel(rgb: [number, number, number] | null) {
     if (!this.panel || !this.layout?.panel) return;
     // Darkened, so white text stays readable on a pale cover too.
-    this.panel.tint = rgb ? [(rgb[0] / 255) * 0.55, (rgb[1] / 255) * 0.55, (rgb[2] / 255) * 0.55, 0.62] : TINT;
+    this.panel.tint = rgb ? [(rgb[0] / 255) * 0.55, (rgb[1] / 255) * 0.55, (rgb[2] / 255) * 0.55, 0.62] : accentTint();
     this.glass([this.layout.panel], 0, this.panel.tint);
   }
 

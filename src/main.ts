@@ -336,7 +336,8 @@ function setTab(t: Tab, focusTab = false) {
   if (t === "settings") settings.render();
   if (t === "mode") modes.render();
   if (t === "guide") guide.render();
-  go(openSize(), "grow");
+  // A droplet's view sizes itself; only the old open island follows its tab.
+  if (!drops?.visible) go(openSize(), "grow");
 }
 
 let clearArmed = 0;
@@ -396,6 +397,8 @@ const peekLine = (glyph: string, color: string, title: string, sub: string) =>
 
 let toastTimer = 0;
 function toast(msg: string) {
+  // With droplets out, the message shows over them, not in the core.
+  if (drops?.visible) return drops.say(msg);
   // The toast lives at the bottom of the open island; a closed island is too
   // small to show it, so the message gets a short peek of its own instead.
   if (mode !== "open") {
@@ -906,7 +909,10 @@ function applyMode(s: ModeState, announce = false) {
   $("#modeBtn").innerHTML = `${modeIcon(s)}<span>${modeName(s)}</span>`;
   $("#modeBtn").title = modeName(s);
   clips.render();
-  if (mode === "open") setTab(allowed(tab));
+  // With droplets out, a mode change redraws them (features came or went); an open view stays put.
+  if (mode === "open" && drops?.visible) {
+    if (!drops.open) openDroplets();
+  } else if (mode === "open") setTab(allowed(tab));
   else if (mode === "compact") go(compactSize(), "shrink");
   home.refresh();
   if (announce) toast(t("mode.on", { mode: modeName(s) }));
