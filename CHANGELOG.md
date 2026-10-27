@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.0.1
 
 - **Updates in one click.** Once a day the island looks for a new version on GitHub. When there is one, Settings, Updates shows **Update and restart**, and the G menu in the menu bar or system tray shows **Update to** the new version. Every update is signed and checked before it installs. Turn the daily check off in Settings.
 - **The Mac app keeps its identity between versions.** It's signed with the project's own certificate instead of ad hoc, so macOS keeps the permissions you gave after an update. Coming from 1.0.0, macOS may ask once more.
