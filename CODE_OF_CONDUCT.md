@@ -19,9 +19,9 @@ Gentra Island is made by people from many countries, in many languages. Everyone
 
 ## Reporting
 
-If someone's behavior bothers you, use **Report content** on the comment, issue, or pull request (the `...` menu) and choose to report it to the repository's maintainers. Only the maintainer sees the report. If it's about the maintainer, choose to report it to GitHub instead.
+If someone's behavior bothers you, use **Report content** on the comment, issue, or pull request (the `...` menu). The report goes to GitHub's own team, privately, and it works the same when it's about the maintainer.
 
-Reports are read within 7 days and kept private.
+The maintainer also watches the project and acts on what breaks these rules without waiting for a report.
 
 ## What happens
 
