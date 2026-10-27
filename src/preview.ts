@@ -117,6 +117,8 @@ mockIPC(
       case "clip_clear":
         clips = clips.filter((c) => c.pinned);
         return null;
+      case "clip_usage":
+        return 24_300_000;
       case "clip_write":
         return null;
       case "clip_copy": {
@@ -429,6 +431,22 @@ const scenes: Record<string, () => Promise<void>> = {
     await wait(300);
     void emit("open-tab", "settings");
   },
+  focus: async () => {
+    await wait(300);
+    void emit("open-tab", "focus");
+    await wait(500);
+    document.querySelector<HTMLElement>('[data-act="start:25"]')?.click();
+    await wait(2200);
+  },
+  shelf: async () => {
+    actions["Seret file masuk"]();
+    await wait(800);
+    void emit("open-tab", "shelf");
+  },
+  modes: async () => {
+    await wait(300);
+    void emit("open-tab", "mode");
+  },
   peek: async () => {
     await wait(300);
     actions["Build selesai"]();
@@ -492,17 +510,17 @@ const scenes: Record<string, () => Promise<void>> = {
     document.body.dataset.ready = "1";
     await wait(1200);
     play();
+    connected.claude = true;
+    agentEvent("claude", "start", "", "gentra-island");
     await wait(3800);
     void emit("open-tab", "home");
-    await wait(2600);
+    await wait(3800);
     void emit("open-tab", "media");
     await wait(2600);
     void emit("open-tab", "clipboard");
     await wait(2600);
     void emit("open-tab", "dev");
     await wait(2400);
-    connected.claude = true;
-    agentEvent("claude", "start", "", "gentra-island");
     void emit("open-tab", "ai");
     await wait(2800);
     void emit("open-tab", "toggle");
@@ -511,7 +529,7 @@ const scenes: Record<string, () => Promise<void>> = {
     await wait(3800);
     // A care reminder takes the peek's place.
     (window as unknown as { __care: (k: string, v?: number) => void }).__care("water", 0);
-    await wait(4500);
+    await wait(3000);
     document.body.dataset.done = "1";
   },
 };

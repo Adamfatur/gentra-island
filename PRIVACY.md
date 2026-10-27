@@ -1,7 +1,7 @@
 # Privacy Policy
 
 **Gentra Island**, by Adam Faturahman
-Effective 26 October 2026
+Effective 27 October 2026
 
 [Bahasa Indonesia](#kebijakan-privasi-bahasa-indonesia) is below.
 
@@ -15,7 +15,7 @@ Gentra Island stores these things in your user's app data folder, so that it sti
 
 | What | Why | You can remove it by |
 |---|---|---|
-| Clipboard history: text, links, and small thumbnails of copied images | So you can find and paste earlier copies | **Clear history** in the Clipboard tab, or deleting single items |
+| Clipboard history: text, links, and copied images (as PNG files, at most 60) | So you can find and paste earlier copies | It removes itself after the time you pick in Settings (30 days by default); **Clear history** in Settings, or deleting single items |
 | Reminders: the text you chose (up to 500 characters), the time, and the app it was copied from | So the reminder can show at that time | **Done** or **×** on the reminder |
 | Shelf: the file paths you dropped on the island, not the files | So the shelf lists them again | Removing them from the Shelf |
 | Gentle care: today's count of reminders, which ones you answered, and when the last one showed | So it doesn't repeat itself or spam you after a restart | It resets every day; switching the feature off stops it |
@@ -39,6 +39,7 @@ The folders are:
 - **Local servers.** The port watcher lists processes listening on your computer, only while the Dev tab is open.
 - **New screenshots and downloads.** With smart screenshots on, Gentra Island checks the folder your screenshots go to for new ones and shows a small preview. **Copy text** reads the text on your computer: Vision on macOS, Windows' built-in OCR, or tesseract on Linux. With download progress on, it reads the names and sizes of files your browser is still downloading in your Downloads folder. Nothing is saved or sent.
 - **Permission requests.** If you connect Claude Code, its permission requests (the tool and its input, such as a command) come to the island so you can answer. They are shown, then forgotten.
+- **Where windows are (macOS).** To step aside for full-screen apps, Gentra Island asks the system once a second for the size and position of the windows on screen, and which layer they sit in. It doesn't read their titles or contents, and needs no screen recording permission. Nothing is saved.
 - **Idle time.** While gentle care is on, Gentra Island asks the system once a minute how many seconds have passed since the last keyboard or mouse input. It doesn't see which keys or where you clicked.
 - **AI agent logs.** While the AI agents feature is on, Gentra Island reads the session logs Claude Code and Codex keep on your computer (`~/.claude/projects` and `~/.codex/sessions`) and keeps only token counts, times, and the rate limits Codex reports, in memory. It doesn't read their login files or keys.
 - **AI agent events.** If you connect an agent, its hook sends the island the name of the project folder, the session ID, and, when the agent asks you something, its question. The agent hands its hook the whole event, your prompt included; the hook passes it only to the island on your own computer (`127.0.0.1`), which takes those fields and drops the rest straight away. Nothing is saved.
@@ -81,7 +82,7 @@ Questions about privacy: open an issue on [GitHub](https://github.com/Adamfatur/
 ## Kebijakan Privasi (Bahasa Indonesia)
 
 **Gentra Island**, oleh Adam Faturahman
-Berlaku sejak 26 Oktober 2026
+Berlaku sejak 27 Oktober 2026
 
 ### Ringkasnya
 
@@ -91,7 +92,7 @@ Gentra Island berjalan di komputermu dan menyimpan semuanya di sana. Tidak ada a
 
 | Apa | Untuk apa | Cara menghapusnya |
 |---|---|---|
-| Riwayat clipboard: teks, tautan, dan thumbnail kecil gambar yang disalin | Supaya kamu bisa mencari dan menempel salinan sebelumnya | **Hapus riwayat** di tab Clipboard, atau hapus satu per satu |
+| Riwayat clipboard: teks, tautan, dan gambar yang disalin (sebagai file PNG, maksimal 60) | Supaya kamu bisa mencari dan menempel salinan sebelumnya | Terhapus sendiri setelah waktu yang kamu pilih di Pengaturan (bawaannya 30 hari); **Hapus riwayat** di Pengaturan, atau hapus satu per satu |
 | Pengingat: teks yang kamu pilih (maksimal 500 karakter), waktunya, dan aplikasi asalnya | Supaya pengingat muncul tepat waktu | **Selesai** atau **×** pada pengingat |
 | Rak: lokasi file yang kamu seret ke pulau, bukan file-nya | Supaya rak tetap menampilkannya | Hapus dari Rak |
 | Pengingat sehat: jumlah pengingat hari ini, mana yang kamu jawab, dan kapan terakhir muncul | Supaya tidak berulang atau jadi spam setelah aplikasi dibuka ulang | Ter-reset tiap hari; mematikan fiturnya menghentikannya |
@@ -115,6 +116,7 @@ Lokasi foldernya:
 - **Server lokal.** Pengawas port mendaftar proses yang mendengarkan port di komputermu, hanya selama tab Dev terbuka.
 - **Screenshot dan unduhan baru.** Kalau screenshot pintar menyala, Gentra Island memeriksa folder tempat screenshot disimpan dan menampilkan pratinjau kecil. **Salin teks** membaca teksnya di komputermu: Vision di macOS, OCR bawaan Windows, atau tesseract di Linux. Kalau progres unduhan menyala, yang dibaca hanya nama dan ukuran file yang masih diunduh browser di folder Downloads. Tidak ada yang disimpan atau dikirim.
 - **Permintaan izin.** Kalau kamu menyambungkan Claude Code, permintaan izinnya (alat dan isinya, misalnya sebuah perintah) dikirim ke pulau supaya bisa kamu jawab. Ditampilkan, lalu dilupakan.
+- **Letak jendela (macOS).** Supaya bisa menyingkir saat ada aplikasi layar penuh, Gentra Island bertanya ke sistem sekali sedetik ukuran dan posisi jendela di layar, serta lapisannya. Judul dan isinya tidak dibaca, dan tidak perlu izin rekam layar. Tidak ada yang disimpan.
 - **Waktu diam.** Selama pengingat sehat menyala, Gentra Island bertanya ke sistem sekali semenit sudah berapa detik sejak keyboard atau mouse terakhir disentuh. Tombol apa yang ditekan atau di mana kamu mengeklik tidak terlihat.
 - **Log agen AI.** Selama fitur agen AI menyala, Gentra Island membaca log sesi yang disimpan Claude Code dan Codex di komputermu (`~/.claude/projects` dan `~/.codex/sessions`) dan hanya menyimpan jumlah token, waktu, dan batas pemakaian yang dilaporkan Codex, di memori. File login dan kuncinya tidak dibaca.
 - **Kejadian agen AI.** Kalau kamu menyambungkan agen, hook-nya mengirim ke pulau nama folder proyek, ID sesi, dan, saat agen bertanya, pertanyaannya. Agen memberi hook-nya seluruh data kejadian, termasuk prompt-mu; hook hanya meneruskannya ke pulau di komputermu sendiri (`127.0.0.1`), yang mengambil isian tadi dan langsung membuang sisanya. Tidak ada yang disimpan.

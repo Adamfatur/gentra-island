@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.0.0
+
+- **Droplets, a new look.** A black core grows out of the notch and says the one thing that matters now: an agent that needs you, a call, an agent at work, a focus session, or a download. Droplets hang under it, one for each feature, and grow into a full view when you tap them. **Done** or **Esc** takes you back. Big numbers use Doto, a dot-matrix face like the eyes.
+- **Liquid Glass on macOS 26.** The droplets are real system glass, so your wallpaper shows through. Older Macs get frosted droplets, Windows and Linux solid ones.
+- **Smoother.** Droplets move on the graphics chip, and WebKit's 60 fps cap is lifted for faster screens.
+- **Two droplets while music plays,** the cover and a level meter either side of the notch. A call or a download takes their place, and the call droplet has Mute.
+- **Your accent tints everything,** light theme and dark.
+- **Steps aside for full screen (macOS).** Over a full-screen video or app, the island shrinks to a thin line, and comes back when you leave.
+- **A clipboard that cleans up after itself.** Keep things 1, 7, or 30 days (the default), or until it's full; never more than 60 images, oldest first. Pinned items always stay. Settings shows how much space it takes and has Clear history.
+- **Copy text on any image** in clipboard history, not only new screenshots.
+- **Agent logos.** Claude Code shows its mark; Codex shows a terminal.
+- **Fixed: a guessed reset time for Claude Code.** Claude doesn't share it, so the AI view now shows tokens for the latest session, today, and the last 7 days, and no time.
+- The old island is still there: start the app with `GENTRA_CLASSIC=1`.
+
 ## 0.9.4
 
 - **Fixed: the welcome guide never showed.** On first launch the island opens a short Getting started guide, but another app taking focus closed it before anyone saw it. It now stays until you click Skip or Done, and tells you where to find the island again: the G in the menu bar.

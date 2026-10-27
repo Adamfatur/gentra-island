@@ -28,7 +28,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/demo.gif" alt="Gentra Island opening from the notch: Home, Media, Clipboard, Dev, and AI tabs, then Claude Code asking for permission and a reminder to drink water" width="720">
+  <img src="docs/screenshots/demo.gif" alt="Gentra Island growing from the notch: the core with Claude Code working, Home with its droplets, then Media, Clipboard, Dev, and AI agents, then Claude Code asking for permission and a reminder to drink water" width="720">
 </p>
 
 ---
@@ -37,40 +37,47 @@
 
 Gentra Island sits at the top of your screen. On a Mac with a notch it hides inside the camera housing until something is happening, so your menus stay visible; elsewhere it floats as a small pill. Hover, click, or press **⌥⌘G** (**Ctrl+Alt+G** on Windows and Linux) to open it. It speaks up by itself only when something is worth seeing: Claude Code waiting for your answer, a long build that finished, a call that started, or an hour without a break.
 
-- **AI agents:** see when Claude Code or Codex is working, needs you, or is done, **allow or deny Claude Code's permission requests from the notch**, and see how many tokens you've used in this 5-hour window
+**New in 1.0: Droplets.** The island has a new look. A black core grows out of the notch and says the one thing that matters right now, and droplets hang under it, one per feature. Tap one and it grows into a full view. On macOS 26 the droplets are real Liquid Glass; older Macs get frosted ones, Windows and Linux solid ones.
+
+- **AI agents:** see when Claude Code or Codex is working, needs you, or is done, **allow or deny Claude Code's permission requests from the notch**, and see how many tokens you've used today and this week
 - **Smart screenshots:** copy the text out of any screenshot with one click, saved or copied with ⌃⇧⌘4, read on your computer
 - **Eyes in the notch:** two glowing pixel eyes sit either side of the camera, follow your pointer, and smile when a task is done
 - **Download progress** in the notch, with Open when it's done
 - **Gentle care:** a warm nudge to take a break, drink water, eat, and stop when it gets late, never more than 8 a day
 - **Now playing** for Spotify, Apple Music, YouTube, and more, with artwork and controls
-- **Clipboard history** that understands what you copied, and keeps secrets out of it
+- **Clipboard history** that understands what you copied, keeps secrets out of it, and cleans up after itself
 - **Reminders** from what you copy: copy "meeting Friday at 2 pm" and it offers to remind you
 - **Shelf** for files, **focus timer**, **system monitor**, and a **safe cleaner**
 - **For developers:** see and stop local servers, get told when long commands finish
 - **For calls:** which app has your mic, call time, mute, and a camera mirror
+- **Steps aside** over full-screen videos and apps on a Mac, as a thin line
 
 ## Screenshots
 
 | | |
 |---|---|
-| ![Home: Claude Code at work, what's playing, memory, focus, last copied, and shelf](docs/screenshots/home.png) | ![AI: Claude Code waiting for permission, Codex working, token usage, and Codex limits](docs/screenshots/ai.png) |
-| **Home** shows what matters right now | **AI** shows your agents and how much you've used |
+| ![Home: the core says Claude Code is working; droplets for music, focus, memory, the clipboard, the shelf, and chips for the other views](docs/screenshots/home.png) | ![AI agents: Claude Code waiting for permission, Codex working, and token usage](docs/screenshots/ai.png) |
+| **Home**: the core says what matters, droplets for the rest | **AI agents** shows your agents and how much you've used |
 | ![Claude Code needs you: a peek from the notch with the agent's question](docs/screenshots/agent-peek.png) | ![A break reminder after an hour of work, with Okay, Later, and Not today](docs/screenshots/care.png) |
 | A peek when Claude Code needs your answer | **Gentle care** reminds you to stand up |
 | ![Claude Code asks to run a command; the notch shows it with Allow, Deny, and In terminal](docs/screenshots/agent-ask.png) | ![A new screenshot with Copy text, Copy image, and Shelf](docs/screenshots/screenshot.png) |
 | **Approve** Claude Code's requests from the notch | **Copy the text** out of a screenshot |
 | ![A finished download with Open, Show in Finder, and Shelf](docs/screenshots/download.png) | ![A reminder to drink water](docs/screenshots/care-water.png) |
 | **Downloads** in the notch | And to drink some water |
-| ![Media: artwork-tinted player with a timeline and controls](docs/screenshots/media.png) | ![Two glowing pixel eyes, one either side of the notch](docs/screenshots/eyes.png) |
+| ![Media: artwork, the song, a timeline, and controls](docs/screenshots/media.png) | ![Two glowing pixel eyes, one either side of the notch](docs/screenshots/eyes.png) |
 | **Media** controls whatever is playing | **Eyes** beside the camera follow your pointer |
-| ![Clipboard history with a decoded JWT, a tracked link, and an image](docs/screenshots/clipboard.png) | ![Dev: local servers and terminal command alerts](docs/screenshots/dev.png) |
+| ![Clipboard history with search, filters, copied text, and a screenshot with Copy text](docs/screenshots/clipboard.png) | ![Dev: local servers and terminal command alerts](docs/screenshots/dev.png) |
 | **Clipboard** remembers and understands what you copy | **Dev** watches your local servers and long commands |
-| ![Calls: which app uses the mic, with the call time](docs/screenshots/calls.png) | ![Settings: theme, accent color, language, startup, and About](docs/screenshots/settings.png) |
-| **Calls** shows who has your mic | **Settings** with themes and languages |
+| ![Calls: which app uses the mic, with the call time and Mute mic](docs/screenshots/calls.png) | ![Settings: theme, accent color, small island, clipboard history, and eyes](docs/screenshots/settings.png) |
+| **Calls** shows who has your mic | **Settings**: theme, accent, and how long the clipboard keeps things |
+| ![System: memory with a ring and dot-matrix figures, CPU, network, and the apps using the most memory](docs/screenshots/system.png) | ![Focus: a 25 minute session counting down](docs/screenshots/focus.png) |
+| **System** shows memory, CPU, and network | **Focus** counts down in the core |
+| ![Shelf: two files ready to drag, with Send with AirDrop and Clear shelf](docs/screenshots/shelf.png) | ![Modes: Compact, Everyday, Dev, Meetings, Focus, and Custom, with a switch for every feature](docs/screenshots/modes.png) |
+| **Shelf** holds files until you drag them out | **Modes** pick what's on |
 | ![Copying a message with a time in it: the island offers to remind you](docs/screenshots/reminder-offer.png) | ![A reminder that is due, with Copy again, In 10 min, and Done](docs/screenshots/reminder-due.png) |
 | **Reminders** offered when what you copy has a time in it | A reminder when it's due |
-| ![Reminder times for a clipboard item: as written, in an hour, tonight, tomorrow, or any time](docs/screenshots/reminder-pick.png) | ![The small island, just wider than the notch, with album artwork and a level meter](docs/screenshots/compact.png) |
-| Remind yourself about anything you copied | The small island while music plays, barely wider than the notch |
+| ![Reminder times for a clipboard item: as written, in an hour, tonight, tomorrow, or any time](docs/screenshots/reminder-pick.png) | ![Two small droplets either side of the notch, with album artwork and a level meter](docs/screenshots/compact.png) |
+| Remind yourself about anything you copied | Two droplets beside the notch while music plays |
 | ![Home in the light theme](docs/screenshots/home-light.png) | |
 | Light theme | |
 
@@ -80,9 +87,10 @@ A higher-quality version of the video is in [docs/screenshots/demo.mp4](docs/scr
 
 | | |
 |---|---|
+| **Droplets** | The look since 1.0. A black core grows from the notch and shows the one thing that matters now: an agent that needs you, a call, an agent at work, a focus session, or a download. Droplets hang under it, one per feature; tap one and it grows into a full view, tap **Done** or press **Esc** and it goes back. Liquid Glass on macOS 26 and newer. Set `GENTRA_CLASSIC=1` to start the old island instead. |
 | **Home** | One glance: what's playing, memory, a focus timer, what you copied last, files on your shelf, and a call if one is live. |
-| **Now playing** | Music or video from Spotify, Apple Music, YouTube, and other players. Play, pause, skip, and drag to seek. Artwork and a level meter on the small island. |
-| **Clipboard** | History of text, links, code, colors, and screenshots. Search, pin, filter. Press **⌥⌘V** (**Ctrl+Alt+V**). |
+| **Now playing** | Music or video from Spotify, Apple Music, YouTube, and other players. Play, pause, skip, and drag to seek. Artwork and a level meter in two droplets beside the notch. |
+| **Clipboard** | History of text, links, code, colors, and screenshots. Search, pin, filter. Press **⌥⌘V** (**Ctrl+Alt+V**). Every image has **Copy text**, old ones too. It cleans up after itself: keep things 1, 7, or 30 days, or until it's full, with at most 60 images; pinned items always stay. Settings shows how much space it takes. |
 | **Reminders** | Copy "rapat Jumat jam 14.00" or "meeting moved to 3 pm" and the island offers to remind you, in one click. Any clipboard item can get a reminder: in an hour, tonight, tomorrow morning, or any time. Times are understood in English and Indonesian, on your computer. |
 | **Smart paste** | Decodes JWTs, timestamps, base64, JSON, URL encoding, and cron. Strips link trackers. Masks ID and card numbers on request. |
 | **Secret guard** | API keys and private keys are never written to disk, shown only masked, and leave history and the clipboard after 60 seconds. |
@@ -95,8 +103,9 @@ A higher-quality version of the video is in [docs/screenshots/demo.mp4](docs/scr
 | **Smart screenshots** | A new screenshot shows on the island: **Copy text** reads the text in it on your computer (Vision on macOS, the built-in OCR on Windows, tesseract on Linux), or copy the image, or put it on the shelf. |
 | **Downloads** | Files your browser is downloading show in the notch, then **Open**, **Show in Finder**, or **Shelf** when they're done. |
 | **Gentle care** | Warm reminders for the small things that matter: a break after about 50 minutes of real activity, water every hour and a half, lunch and dinner, and a word when it's past eleven. Five minutes away from the keyboard counts as a break. Never during a call, a focus session, or Focus mode, at least 20 minutes apart, and no more than 8 a day. Every reminder has **Later** and **Not today**. |
-| **AI agents** | Claude Code and Codex on the island: a clock while they work, a nudge when they need you, and a note when a long task is done. Usage from their local logs: tokens per 5-hour window, today, and the last 7 days, plus Codex's own 5-hour and weekly limits when it reports them. |
+| **AI agents** | Claude Code and Codex on the island: a clock while they work, a nudge when they need you, and a note when a long task is done. Usage from their local logs: tokens in the latest session, today, and the last 7 days, plus Codex's own 5-hour and weekly limits when it reports them. Claude doesn't share its plan limit or reset time, so the island doesn't guess them. |
 | **Calls** | Which app is using your mic, the call time on the small island, a system mute button on macOS, and a camera mirror. |
+| **Full screen** | On a Mac, over a full-screen video or app, the island shrinks to a thin line, and comes back when you leave. |
 
 **Modes** keep it as small as you want. Compact, Everyday, Dev, Meetings, and Focus are presets; switch any feature on or off. A switched-off feature stops its background work, not just its tab.
 
@@ -157,9 +166,9 @@ To check your download, compare it with `SHA256SUMS.txt` on the release page. Mo
 
 1. After you open it, the island sits at the top center of your screen, small. A short guide shows up the first time.
 2. **Hover** over it, **click** it, or press **⌥⌘G** (**Ctrl+Alt+G**) to open it. Move away, press **Esc**, or press the shortcut again to close it.
-3. The tabs along the top switch sections. **⌘1** to **⌘9** (**Ctrl+1** to **Ctrl+9**) jump straight to one.
-4. The **mode** button at the top right picks which features are on. Choose **Compact** if you only want memory and the clipboard, or switch features one by one.
-5. The **gear** opens Settings: theme, accent color, language, open at login, and About.
+3. Tap a droplet to open its view, and **Done** or **Esc** to go back. **⌘1** to **⌘9** (**Ctrl+1** to **Ctrl+9**) jump straight to one.
+4. The **Modes** droplet picks which features are on. Choose **Compact** if you only want memory and the clipboard, or switch features one by one.
+5. The **Settings** droplet has the theme, accent color, how long the clipboard keeps things, language, open at login, and About.
 
 **Everyday things**
 
@@ -205,11 +214,12 @@ The full [Privacy Policy](PRIVACY.md) explains what is stored where and how to d
 
 - **Everything stays on your computer.** No accounts, no analytics, no telemetry, no update pings.
 - **No network calls of its own by default.** It reaches the network when you click a link it shows, such as opening a local server in your browser, and, only if you switch on **Show thumbnails** in the Media tab, to load a YouTube video's thumbnail from `i.ytimg.com`.
-- **Reminders** and **clipboard history** are stored in your user's app data folder. Secrets are never written there. Clear it any time from the Clipboard tab.
+- **Reminders** and **clipboard history** are stored in your user's app data folder. Secrets are never written there. History older than you chose (30 days by default) is removed by itself, and **Clear history** in Settings removes it all.
 - **Gentle care** asks the system how long since you last touched the keyboard or mouse, a single number. It never sees what you type.
 - **AI agents.** Usage is read from the agents' own logs on your computer, and only the token counts are kept. Connecting adds a hook that tells the island the project folder name and, when an agent asks you something, its question. Your prompts, code, and logins are never read or sent.
 - **The mic is never opened.** The meeting guard only asks the system whether an app is using it.
 - **The camera** is on only while the mirror is visible, and nothing is recorded.
+- **Full-screen check (macOS).** To step aside, the island asks the system where other apps' windows are. It reads only their size and position, never their titles or contents.
 
 ## How light it is
 
@@ -219,12 +229,14 @@ Measured on a Mac with the release build:
 - **Memory:** about 160 MB in total after start-up, as Activity Monitor counts it: 30 MB for the app, 37 MB for the web view, 63 MB for the system's graphics process, and 23 MB for the now-playing helper (only while that feature is on). The web view briefly uses more while starting.
 - **Download:** about 7 MB on macOS.
 - **Battery:** the window never resizes, nothing animates while the island is still, and background checks slow down when nothing is changing. Features you switch off stop their work.
+- **Motion:** droplets grow and move on the graphics chip (transform and opacity only), and the glass follows with the system's own animation on the same curve, so the page doesn't redraw every frame. WebKit's 60 fps cap is lifted, so faster screens can show more.
 
 ## Known limitations
 
 - **Artwork from browsers on macOS.** Since macOS 15.4, apps other than Apple's may not read what's playing; Gentra Island reads it through a small built-in `osascript` helper. Titles, artists, and controls work, including YouTube in Chrome, but browsers don't share their artwork. For YouTube, you can switch on **Show thumbnails** in the Media tab: Gentra Island then asks your browser (Chrome, Safari, Brave, Edge, Arc, Vivaldi, Opera) which tab is playing and loads the video's thumbnail. Other sites stay without artwork.
 - **Now playing on older macOS.** The reader relies on parts of macOS that may not exist before macOS 15. On macOS 11 to 14 the Media tab may stay empty.
-- **Claude's plan limit isn't public.** Claude Code doesn't share how much of your plan's limit is left, so the island shows the tokens it counted, not a percentage. Codex reports its limits itself, so those are exact.
+- **Claude's plan limit isn't public.** Claude Code doesn't share how much of your plan's limit is left or when it resets, so the island shows the tokens it counted, not a percentage or a time. Codex reports its limits itself, so those are exact.
+- **Liquid Glass needs macOS 26.** Older Macs show frosted droplets, and Windows and Linux solid ones. The droplets have only been checked by eye on macOS 27 so far.
 - **Muting the mic** from the island works on macOS only for now.
 - **Linux on Wayland** decides window positions itself, so the island may not sit exactly at the top. X11 works fully.
 - **Gentle care on Linux** knows when you step away on GNOME and KDE. On other desktops it can't tell, so a break only resets when you answer a reminder.
@@ -265,7 +277,7 @@ No. On a Mac with a notch it blends into the camera housing. On other Macs, and 
 It covers similar ground (now playing, a file shelf, a notch that does something), and adds AI agent status, break and water reminders, clipboard history, reminders, a system monitor, developer tools, and call tools. It's free, and it also runs on Windows and Linux.
 
 **Can it tell me when Claude Code or Codex needs me?**
-Yes. Open the **AI** tab and click **Connect**. When Claude Code asks for permission, the notch shows its question; when a task of 15 seconds or more finishes, it tells you how long it took. It also shows the tokens you've used in the current 5-hour window, today, and this week, read from the logs on your computer. Codex's own 5-hour and weekly limits show as bars.
+Yes. Open the **AI** tab and click **Connect**. When Claude Code asks for permission, the notch shows its question; when a task of 15 seconds or more finishes, it tells you how long it took. It also shows the tokens you've used in your latest session, today, and the last 7 days, read from the logs on your computer. Codex's own 5-hour and weekly limits show as bars.
 
 **Can I approve Claude Code's requests from the notch?**
 Yes. Connect Claude Code in the AI tab. When it asks for permission, the notch shows the exact command with Allow, Deny, and In terminal. Only your click decides, and an unanswered request goes back to Claude Code's own prompt after 30 seconds.
@@ -277,13 +289,13 @@ Yes. Take a screenshot as usual and click **Copy text** on the island. The text 
 Yes, that's **Gentle care**. It counts real keyboard and mouse activity, so time away counts as a break. It suggests a break after about 50 minutes, water every hour and a half, lunch, dinner, and bed when it's late. Never during calls or focus sessions, and at most 8 a day.
 
 **Does it cover my menu bar?**
-No. On a Mac with a notch, the small island stays inside the notch until something is playing or running, and then shows only small icons beside it. You can pick Hide in notch, Compact, or Wide in Settings.
+No. On a Mac with a notch, the small island stays inside the notch until something is playing or running, and then shows only small droplets beside it. You can pick Hide in notch, Compact, or Wide in Settings. Over full-screen apps on a Mac it shrinks to a thin line.
 
 **Does it slow my computer down or drain the battery?**
 It's built to stay out of the way: about 1% CPU while you work, and nothing animates while the island is still. Features you switch off stop running. See [How light it is](#how-light-it-is).
 
 **Is my clipboard safe?**
-Everything stays on your computer, and API keys and private keys are never written to disk. See the [Privacy Policy](PRIVACY.md).
+Everything stays on your computer, and API keys and private keys are never written to disk. History cleans itself up after the time you pick in Settings. See the [Privacy Policy](PRIVACY.md).
 
 **Why does my Mac or Windows warn me when I first open it?**
 The app isn't notarized or code-signed yet, which costs money for a solo, free project. [INSTALL.md](INSTALL.md) shows the one-time steps to open it.
@@ -300,7 +312,7 @@ Gentra Island is free. If it saves you time and you'd like to buy me a coffee: [
 
 Created by **Adam Faturahman**.
 
-Built with [Tauri](https://tauri.app). Icons by [Phosphor](https://phosphoricons.com) (MIT). Interface font [Plus Jakarta Sans](https://github.com/tokotype/PlusJakartaSans) (SIL Open Font License). Logo lettering in Marow Block by Ramandhani, converted to outlines; the font itself is not included.
+Built with [Tauri](https://tauri.app). Icons by [Phosphor](https://phosphoricons.com) (MIT); the Claude mark from [Simple Icons](https://simpleicons.org) (CC0). Interface fonts [Figtree](https://github.com/erikdkennedy/figtree), [Doto](https://github.com/oliverlalan/Doto), and [Plus Jakarta Sans](https://github.com/tokotype/PlusJakartaSans) for the classic island (all SIL Open Font License). Logo lettering in Marow Block by Ramandhani, converted to outlines; the font itself is not included.
 
 ## License
 

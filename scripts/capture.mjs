@@ -2,6 +2,7 @@
 //
 //   pnpm dev                    # in one terminal
 //   node scripts/capture.mjs    # in another
+//   ONLY=settings,home node scripts/capture.mjs   # just those, no demo
 //
 // Needs Google Chrome, and ffmpeg on the PATH for the GIF and MP4.
 import { execFileSync } from "node:child_process";
@@ -12,6 +13,7 @@ import { chromium } from "playwright-core";
 const BASE = process.env.PREVIEW_URL ?? "http://localhost:1420/preview.html";
 const OUT = "docs/screenshots";
 const VIDEO_DIR = "docs/screenshots/.video";
+const ONLY = process.env.ONLY?.split(",");
 
 const SHOTS = [
   ["home", "home"],
@@ -20,6 +22,9 @@ const SHOTS = [
   ["dev", "dev"],
   ["calls", "calls"],
   ["system", "system"],
+  ["focus", "focus"],
+  ["shelf", "shelf"],
+  ["modes", "modes"],
   ["settings", "settings"],
   ["compact", "compact"],
   ["peek", "peek"],
@@ -36,26 +41,29 @@ const SHOTS = [
   ["care-water", "care-water"],
 ];
 
-/** The stage around the island, trimmed below the island's bottom edge. */
+/** The stage around the island, trimmed below whatever hangs lowest: the island, a droplet, or an open view. */
 const stageBox = () =>
   document.querySelector("#stagebox") &&
   (() => {
     const s = document.querySelector("#stagebox").getBoundingClientRect();
-    const i = document.querySelector("#shell").getBoundingClientRect();
-    return { x: s.x, y: s.y, width: s.width, height: Math.min(s.height, i.bottom - s.y + 40) };
+    const parts = [...document.querySelectorAll("#shell, .droplets:not([hidden]) .dl:not([hidden]), .dl-panel")];
+    const bottom = Math.max(...parts.map((p) => p.getBoundingClientRect().bottom));
+    return { x: s.x, y: s.y, width: s.width, height: Math.min(s.height, bottom - s.y + 40) };
   })();
 
 await mkdir(OUT, { recursive: true });
 const browser = await chromium.launch({ channel: "chrome" });
 
 for (const theme of ["dark", "light"]) {
-  const ctx = await browser.newContext({ viewport: { width: 1000, height: 640 }, deviceScaleFactor: 2 });
+  const ctx = await browser.newContext({ viewport: { width: 1000, height: 820 }, deviceScaleFactor: 2 });
   for (const [scene, name] of SHOTS) {
     if (theme === "light" && !["home", "media"].includes(scene)) continue;
+    if (ONLY && !ONLY.includes(scene)) continue;
     const page = await ctx.newPage();
     await page.goto(`${BASE}?scene=${scene}&theme=${theme}`);
     await page.waitForSelector("body[data-ready]", { timeout: 30000 });
-    await page.waitForTimeout(700);
+    // Droplets grow for 360 ms and their words fade in after; let them settle.
+    await page.waitForTimeout(1200);
     const clip = await page.evaluate(stageBox);
     const file = join(OUT, theme === "dark" ? `${name}.png` : `${name}-light.png`);
     await page.screenshot({ path: file, clip });
@@ -65,11 +73,16 @@ for (const theme of ["dark", "light"]) {
   await ctx.close();
 }
 
+if (ONLY) {
+  await browser.close();
+  process.exit(0);
+}
+
 // The demo: Chrome streams frames while the tour plays; ffmpeg stitches them
 // with their real timing, cropped to the island's stage.
 await rm(VIDEO_DIR, { recursive: true, force: true });
 await mkdir(VIDEO_DIR, { recursive: true });
-const ctx = await browser.newContext({ viewport: { width: 1000, height: 640 }, deviceScaleFactor: 1 });
+const ctx = await browser.newContext({ viewport: { width: 1000, height: 820 }, deviceScaleFactor: 1 });
 const page = await ctx.newPage();
 const cdp = await ctx.newCDPSession(page);
 const frames = [];
@@ -83,7 +96,8 @@ await page.goto(`${BASE}?scene=demo&theme=dark`);
 await page.waitForSelector("body[data-ready]", { timeout: 30000 });
 const box = await page.evaluate(() => {
   const s = document.querySelector("#stagebox").getBoundingClientRect();
-  return { x: Math.round(s.x), y: Math.round(s.y), width: Math.round(s.width), height: 330 };
+  // Tall enough for an open droplet view under the core.
+  return { x: Math.round(s.x), y: Math.round(s.y), width: Math.round(s.width), height: 600 };
 });
 await cdp.send("Page.startScreencast", { format: "jpeg", quality: 92, everyNthFrame: 1 });
 await page.waitForSelector("body[data-done]", { timeout: 60000 });
