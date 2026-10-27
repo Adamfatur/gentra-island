@@ -200,6 +200,10 @@ mockIPC(
       case "mic_set_muted":
         mic = { ...mic, muted: a.muted as boolean };
         return null;
+      // A browser has no system glass; the page paints the droplets itself.
+      case "glass_kind":
+      case "set_glass":
+        return "none";
       default:
         return null;
     }
@@ -212,6 +216,8 @@ mockIPC(
 // ?lang=id switch theme and language.
 const params = new URLSearchParams(location.search);
 const scene = params.get("scene");
+// ?droplets=1 tries the 1.0 island, ?droplets=0 goes back.
+if (params.has("droplets")) localStorage.setItem("gentra:droplets", params.get("droplets") === "1" ? "1" : "0");
 if (scene || params.has("shot")) {
   document.body.classList.add("shot");
   localStorage.setItem("gentra:guide", "1");
@@ -230,7 +236,7 @@ if (scene || params.has("shot")) {
   );
 }
 
-// The island lives inside a 760×520 box, the same size as the real window.
+// The island lives inside a 760×700 box, the same size as the real window.
 const html = await (await fetch("/index.html")).text();
 const doc = new DOMParser().parseFromString(html, "text/html");
 const shell = doc.getElementById("shell")!;

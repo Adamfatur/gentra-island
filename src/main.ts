@@ -22,6 +22,8 @@ import { GuidePanel, savedGuide } from "./guidePanel";
 import { HomePanel } from "./homePanel";
 import { ModePanel, modeIcon, modeName } from "./modePanel";
 import { needsGuide } from "./onboarding";
+import { layout, type DropletId } from "./droplets";
+import { DropletsView, type GlassKind } from "./dropletsView";
 import { Reminders, type Reminder } from "./reminders";
 import { findTime } from "./timeparse";
 import { isOn, type FeatureId, type ModeState } from "./modes";
@@ -116,6 +118,8 @@ let hovering = false;
 /** An app window reaches up where the menu bar would be, under the island. */
 let covered = false;
 let openedByShortcut = false;
+/** Droplets, the 1.0 island, while it's built: on with localStorage gentra:droplets = 1. */
+let drops: DropletsView | null = null;
 let peekTimer = 0;
 let leaveTimer = 0;
 
@@ -134,6 +138,10 @@ const morph = new Morph(
 
 /** Tells Rust where the island is so the rest of the window stays click-through. */
 function reportHit(s: Size, target?: Size) {
+  if (drops?.visible) {
+    void invoke("set_hit_rects", { rects: drops.hitShapes().map(({ x, y, w, h }) => ({ x, y, w, h })) });
+    return;
+  }
   const w = Math.max(s.w, target?.w ?? 0);
   const h = Math.max(s.h, target?.h ?? 0);
   // The hidden line takes only the pointer at the very top edge; the app below keeps the rest.
@@ -253,6 +261,7 @@ function compactSize(): Size {
 
 function compact() {
   clearTimeout(peekTimer);
+  drops?.hide();
   dev.hide();
   call.hide();
   media.hide();
@@ -274,6 +283,8 @@ function allowed(t: Tab): Tab {
 
 function open(t: Tab = tab) {
   clearTimeout(peekTimer);
+  if (drops && allowed(t) === "home") return openDroplets();
+  drops?.hide();
   mode = "open";
   syncEyes();
   shell.classList.add("open");
@@ -581,6 +592,75 @@ function badge(): Badge | null {
 /** The song's artwork for the left of the compact island; undefined when nothing plays. */
 const playingArt = () => (media.now?.playing ? media.now.art : undefined);
 
+/* ---------- droplets (1.0, while it's built) ---------- */
+
+const DROP_TAB: Record<DropletId, Tab> = {
+  media: "media",
+  focus: "focus",
+  system: "system",
+  clipboard: "clipboard",
+  shelf: "shelf",
+  ai: "ai",
+  dev: "dev",
+  cleaner: "cleaner",
+  calls: "call",
+  settings: "settings",
+};
+
+const dropName = (id: DropletId) => (id === "settings" ? t("drop.settings") : id === "ai" ? t("drop.ai") : t(`tab.${DROP_TAB[id]}` as Key));
+
+function dropLayout() {
+  const on = (Object.keys(DROP_TAB) as DropletId[]).filter((id) => id === "settings" || tabOn(modes.state, DROP_TAB[id]));
+  const notch = hasNotch ? { w: Math.round(info.notchWidth), h: Math.round(info.notchHeight) } : null;
+  return layout({ winW: WIN_W, notch, on, view: "home", chipW: drops!.measure(on, dropName) });
+}
+
+/** Each droplet's inside, every value escaped. */
+function dropContent(id: DropletId): string {
+  if (id === "media") {
+    const n = media.now;
+    const art = n?.art ? ` style="background-image: url('${esc(n.art)}')"` : "";
+    return `<span class="dl-art"${art}></span><span class="dl-text"><b>${esc(n?.title || t("drop.nothing"))}</b><small>${esc(n ? n.artist : t("drop.playHint"))}</small></span>`;
+  }
+  if (id === "focus") return `<span class="dl-big">${esc(focus.running ? focus.label : "25:00")}</span><span class="dl-sub">${esc(t("tab.focus"))}</span>`;
+  if (id === "system") {
+    const s = lastStats;
+    const mem = s ? Math.round((s.memUsed / s.memTotal) * 100) : 0;
+    return `<span class="dl-big">${mem}%</span><span class="dl-sub">${esc(t("drop.memory"))}</span><span class="dl-sub">${esc(t("drop.cpu", { pct: Math.round(s?.cpu ?? 0) }))}</span>`;
+  }
+  if (id === "clipboard") {
+    const last = clips.items[0];
+    const text = !last ? t("drop.nothingCopied") : last.secret ? t("drop.secret") : last.kind === "image" ? t("tab.clipboard") : (last.text ?? "");
+    return `<span class="dl-text"><small>${esc(t("drop.lastCopied"))}</small><b>${esc(text)}</b></span><span class="dl-btn">${esc(t("drop.seeAll", { count: clips.items.length }))}</span>`;
+  }
+  if (id === "shelf") {
+    const n = shelf.items.length;
+    return `<span class="dl-text"><b>${esc(n ? t("drop.shelf", { count: n }) : t("drop.shelfEmpty"))}</b><small>${esc(t("drop.dropHere"))}</small></span>`;
+  }
+  return esc(dropName(id));
+}
+
+function openDroplets() {
+  mode = "open";
+  tab = "home";
+  syncEyes();
+  show("v-compact");
+  const l = dropLayout();
+  drops!.show(l, dropContent);
+  go({ w: l.core.w, h: l.core.h, r: l.core.r }, "grow");
+}
+
+const dropletsWanted = (() => {
+  try {
+    return localStorage.getItem("gentra:droplets") === "1";
+  } catch {
+    return false;
+  }
+})();
+if (dropletsWanted || (await invoke<boolean>("droplets_enabled"))) {
+  drops = new DropletsView(await invoke<GlassKind>("glass_kind"), (id) => open(DROP_TAB[id]));
+}
+
 /* ---------- modes ---------- */
 
 /** Fokus mode keeps the island quiet; only safety warnings still speak. */
@@ -672,6 +752,7 @@ function describe(item: ClipItem) {
 let topId = clips.items[0]?.id;
 await listen("clips-changed", async () => {
   const items = await clips.load();
+  drops?.refresh(dropContent);
   const top = items[0];
   const isNew = top && top.id !== topId;
   topId = top?.id;
@@ -713,6 +794,7 @@ let lastStatsAt = lastStats ? Date.now() : 0;
 await listen<Stats>("stats", ({ payload }) => {
   lastStats = payload;
   lastStatsAt = Date.now();
+  drops?.refresh(dropContent);
   renderCompact(payload, badge(), playingArt());
   if (mode === "open" && tab === "system") renderSystem(payload);
   home.stats();
@@ -935,6 +1017,7 @@ function syncMeter() {
 await listen<NowPlaying | null>("media", ({ payload }) => {
   const changed = payload?.playing && !sameTrack(media.now, payload);
   media.set(payload);
+  drops?.refresh(dropContent);
   syncMeter();
   home.refresh();
   renderCompact(lastStats, badge(), playingArt());

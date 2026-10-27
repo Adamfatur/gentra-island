@@ -575,4 +575,18 @@ export const id: Record<Key, Msg> = {
   "settings.eyes.note.off": "Tanpa mata. Pulau tetap seperti biasa.",
   "settings.eyes.note.moments": "Hanya saat ada momen: tersenyum saat tugas selesai, melirik saat ada yang butuh kamu, dan menyapa saat kamu kembali.",
   "settings.eyes.note.always": "Selalu ada saat tidak ada yang diputar atau berjalan. Di Mac ber-notch, mata ada di kiri dan kanan kamera, di menu bar, jadi tidak ada yang tertutup di bawahnya.",
+  // Droplets (1.0)
+  "drop.nothing": "Tidak ada yang diputar",
+  "drop.playHint": "Putar sesuatu dan muncul di sini",
+  "drop.memory": "memori",
+  "drop.cpu": "CPU {pct}%",
+  "drop.lastCopied": "Terakhir disalin",
+  "drop.nothingCopied": "Belum ada yang disalin",
+  "drop.secret": "Disembunyikan, sepertinya kata sandi",
+  "drop.seeAll": "Lihat semua {count}",
+  "drop.shelf": "{count} di rak",
+  "drop.shelfEmpty": "Rak",
+  "drop.dropHere": "Taruh file di sini",
+  "drop.settings": "Pengaturan",
+  "drop.ai": "Agen AI",
 };

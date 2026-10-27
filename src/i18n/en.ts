@@ -587,6 +587,20 @@ export const en = {
   "settings.eyes.note.off": "No eyes. The island stays as it is.",
   "settings.eyes.note.moments": "Only when something happens: a smile when a task is done, a look when something needs you, and hello when you come back.",
   "settings.eyes.note.always": "Always there while nothing is playing or running. On a Mac with a notch they sit either side of the camera, in the menu bar, so nothing below is covered.",
+  // Droplets (1.0)
+  "drop.nothing": "Nothing playing",
+  "drop.playHint": "Play something and it shows here",
+  "drop.memory": "memory",
+  "drop.cpu": "CPU {pct}%",
+  "drop.lastCopied": "Last copied",
+  "drop.nothingCopied": "Nothing copied yet",
+  "drop.secret": "Hidden, it looked like a password",
+  "drop.seeAll": "See all {count}",
+  "drop.shelf": "{count} on the shelf",
+  "drop.shelfEmpty": "Shelf",
+  "drop.dropHere": "Drop files here",
+  "drop.settings": "Settings",
+  "drop.ai": "AI agents",
 };
 
 export type Key = keyof typeof en;

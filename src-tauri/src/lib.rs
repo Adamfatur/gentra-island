@@ -144,6 +144,7 @@ pub fn run() {
             window::top_covered,
             glass::set_glass,
             glass::glass_kind,
+            glass::droplets_enabled,
             stats::stats_now,
             stats::set_stats_detail,
             set_features,

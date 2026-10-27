@@ -752,3 +752,28 @@ body[data-look="eyes"] #v-compact .side { opacity: 0; }
 body[data-look="hidden"] #v-compact { opacity: 0; }
 body.notched .eyes-wrap .zzz { left: calc(100% - 4px); top: -6px; }
 .settings .sub-h { margin-top: 16px; }
+
+/* ---------- Droplets (1.0, behind gentra:droplets while it's built) ---------- */
+/* Each droplet sits over its own system glass, drawn behind the page; the page
+   only paints a droplet itself where the system has no glass (.solid). */
+.droplets { position: absolute; inset: 0; pointer-events: none; z-index: 5; color: #fff; }
+.dl { position: absolute; left: 0; top: 0; pointer-events: auto; border: 0; padding: 0; margin: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; overflow: hidden; display: flex; align-items: center; gap: 14px; box-sizing: border-box; }
+.dl.moving { transition: transform var(--move) var(--curve), width var(--move) var(--curve), height var(--move) var(--curve), border-radius var(--move) var(--curve); }
+.dl > * { transition: opacity 160ms ease 80ms; }
+.dl.tucked > * { opacity: 0; transition-delay: 0ms; }
+.droplets.solid .dl { background: rgba(16, 20, 52, 0.82); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 14px 32px rgba(0, 0, 0, 0.3); }
+.dl:focus-visible { outline: 2px solid var(--accent-on-black, #5ac8fa); outline-offset: 3px; }
+.dl-card { padding: 14px; }
+.dl-round { justify-content: center; text-align: center; flex-direction: column; gap: 2px; }
+.dl-pill { padding: 0 12px 0 26px; }
+.dl-chip { justify-content: center; font-size: 14px; font-weight: 700; padding: 0 20px; }
+.dl-art { width: 112px; height: 112px; flex: none; border-radius: 24px; background: rgba(255, 255, 255, 0.12) center / cover no-repeat; }
+.dl-text { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.dl-text b { font-size: 16px; line-height: 1.2; }
+.dl-text small, .dl-sub { font-size: 13px; color: rgba(255, 255, 255, 0.8); }
+.dl-big { font-size: 34px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; line-height: 1.05; }
+.dl-pill .dl-text { flex: 1; }
+.dl-pill .dl-text b { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dl-btn { height: 60px; padding: 0 20px; border-radius: 30px; background: #fff; color: #14183a; font-size: 14px; font-weight: 800; display: grid; place-items: center; white-space: nowrap; }
+.dl-probe { position: fixed; left: 0; top: 0; visibility: hidden; white-space: nowrap; font-size: 14px; font-weight: 700; }
+@media (prefers-reduced-motion: reduce) { .dl > * { transition: none; } }
