@@ -45,6 +45,8 @@ export class DropletsView {
     private onDone: () => void,
     /** Called when the shapes change on their own, so the hit tester can follow. */
     private onMoved: () => void,
+    /** A side droplet that acts in place, such as mute, instead of opening a view. */
+    private onAct: (act: string) => void,
   ) {
     this.root.className = "droplets";
     // Without system glass the page paints each droplet itself.
@@ -64,6 +66,7 @@ export class DropletsView {
       const d = this.layout?.droplets.find((x) => x.id === el.dataset.drop);
       if (d) return this.onPick(d.id, d);
       const side = this.side.find((x) => x.el === el);
+      if (side && el.dataset.act) return this.onAct(el.dataset.act);
       if (side) this.onPick(el.dataset.drop as DropletId, side.shape);
     });
     // The window itself, or the preview's stand-in for it.
@@ -94,14 +97,18 @@ export class DropletsView {
    * Splits small droplets off a closed island, each with escaped HTML, or
    * updates the ones already out. They grow from the notch's edge.
    */
-  showSide(items: { id: DropletId; shape: Shape; html: string; label: string }[], notch: Shape) {
+  showSide(items: { id: DropletId; shape: Shape; html: string; label: string; act?: string; kind: string }[], notch: Shape) {
     if (this.layout) return;
     this.root.hidden = false;
     const fresh = this.side.length === 0;
-    if (!fresh && this.side.length === items.length) {
+    // Same moment, new details (the time, the percent): only the inside changes.
+    if (!fresh && this.side.length === items.length && items.every((it, i) => this.side[i].el.dataset.kind === it.kind)) {
       items.forEach((it, i) => {
-        this.side[i].el.innerHTML = it.html;
-        this.side[i].el.setAttribute("aria-label", it.label);
+        const el = this.side[i].el;
+        el.innerHTML = it.html;
+        el.setAttribute("aria-label", it.label);
+        if (it.act) el.dataset.act = it.act;
+        else delete el.dataset.act;
       });
       return;
     }
@@ -109,8 +116,10 @@ export class DropletsView {
     this.side = items.map((it) => {
       const el = document.createElement("button");
       el.type = "button";
-      el.className = "dl dl-side";
+      el.className = `dl dl-side ${it.kind}`;
       el.dataset.drop = it.id;
+      el.dataset.kind = it.kind;
+      if (it.act) el.dataset.act = it.act;
       el.setAttribute("aria-label", it.label);
       el.innerHTML = it.html;
       this.root.append(el);
@@ -170,7 +179,8 @@ export class DropletsView {
       probe.textContent = label(id);
       // The name, its icon and the padding either side.
       out[id] = Math.ceil(probe.getBoundingClientRect().width) + 56;
-      this.widths.set(label(id), out[id]!);
+      // Kept only once the fonts are in; a fallback font would measure wrong for good.
+      if (document.fonts.status === "loaded") this.widths.set(label(id), out[id]!);
     }
     probe.remove();
     return out;

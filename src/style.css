@@ -1,6 +1,8 @@
 @import "@fontsource-variable/plus-jakarta-sans/wght.css";
 /* Doto: dot-matrix figures for the big readouts, kin to the pixel eyes (OFL). */
 @import "@fontsource-variable/doto/full.css";
+/* Figtree: the Droplets face, rounder and friendlier at small sizes (OFL). */
+@import "@fontsource-variable/figtree/wght.css";
 
 /* Direction lives in DESIGN.md. Two themes share one set of tokens; colour is
    only for state (memory pressure, secrets) and one accent the user can pick. */
@@ -761,10 +763,23 @@ body[data-look="hidden"] #v-compact { opacity: 0; }
 body.notched .eyes-wrap .zzz { left: calc(100% - 4px); top: -6px; }
 .settings .sub-h { margin-top: 16px; }
 
+/* Droplet colours, dark by default; the light theme flips them below. */
+.droplets {
+  --dl-ink: #fff; --dl-ink-rgb: 255 255 255;
+  --dl-strong: #fff; --dl-strong-ink: #14183a;
+  --dl-layer: rgba(12, 14, 34, 0.86); --dl-solid: rgba(16, 20, 52, 0.9);
+}
+/* Light: a pale layer and dark words, still 4.5:1 over a black page behind the glass. */
+:root[data-theme="light"] .droplets {
+  --dl-ink: #14183a; --dl-ink-rgb: 20 24 58;
+  --dl-strong: #14183a; --dl-strong-ink: #fff;
+  --dl-layer: rgba(250, 250, 253, 0.88); --dl-solid: rgba(246, 247, 251, 0.95);
+}
+
 /* ---------- Droplets (1.0, behind gentra:droplets while it's built) ---------- */
 /* Each droplet sits over its own system glass, drawn behind the page; the page
    only paints a droplet itself where the system has no glass (.solid). */
-.droplets { position: absolute; inset: 0; pointer-events: none; z-index: 5; color: #fff; }
+.droplets { position: absolute; inset: 0; pointer-events: none; z-index: 5; color: var(--dl-ink); }
 .dl { position: absolute; left: 0; top: 0; pointer-events: auto; border: 0; padding: 0; margin: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; overflow: hidden; display: flex; align-items: center; gap: 14px; box-sizing: border-box; }
 /* Only transform and opacity animate: the GPU keeps them at the screen's frame rate. */
 .dl, .dl-panel { transform-origin: 0 0; will-change: transform; backface-visibility: hidden; }
@@ -776,23 +791,23 @@ body.notched .eyes-wrap .zzz { left: calc(100% - 4px); top: -6px; }
    paints the whole droplet. */
 /* Leaning a little to the accent, so the island takes the colour you chose;
    still dark enough for 4.5:1 white text over a white page. */
-.dl, .dl-panel { background: color-mix(in srgb, var(--accent-on-black, var(--accent)) 12%, rgba(12, 14, 34, 0.86)); }
-.dl-toast { position: absolute; left: 50%; translate: -50% 4px; z-index: 2; padding: 9px 16px; border-radius: 18px; background: #fff; color: #14183a; font-size: 13px; font-weight: 750; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.18s, translate 0.25s; box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3); }
+.dl, .dl-panel { background: color-mix(in srgb, var(--accent-on-black, var(--accent)) 12%, var(--dl-layer)); }
+.dl-toast { position: absolute; left: 50%; translate: -50% 4px; z-index: 2; padding: 9px 16px; border-radius: 18px; background: var(--dl-strong); color: var(--dl-strong-ink); font-size: 13px; font-weight: 750; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.18s, translate 0.25s; box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3); }
 .dl-toast.show { opacity: 1; translate: -50% 0; }
-.droplets.solid .dl { background: color-mix(in srgb, var(--accent-on-black, var(--accent)) 14%, rgba(16, 20, 52, 0.9)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 14px 32px rgba(0, 0, 0, 0.3); }
+.droplets.solid .dl { background: color-mix(in srgb, var(--accent-on-black, var(--accent)) 14%, var(--dl-solid)); box-shadow: inset 0 1px 0 rgb(var(--dl-ink-rgb) / 0.18), 0 14px 32px rgba(0, 0, 0, 0.3); }
 .dl:focus-visible { outline: 2px solid var(--accent-on-black, #5ac8fa); outline-offset: 3px; }
 .dl-card { padding: 14px; }
 .dl-round { justify-content: center; text-align: center; flex-direction: column; gap: 2px; }
 .dl-pill { padding: 0 12px 0 26px; }
 .dl-chip { justify-content: center; font-size: 14px; font-weight: 700; padding: 0 16px; }
-.dl-art { width: 112px; height: 112px; flex: none; border-radius: 24px; background: rgba(255, 255, 255, 0.12) center / cover no-repeat; }
+.dl-art { width: 112px; height: 112px; flex: none; border-radius: 24px; background: rgb(var(--dl-ink-rgb) / 0.12) center / cover no-repeat; }
 .dl-text { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .dl-text b { font-size: 16px; line-height: 1.2; }
-.dl-text small, .dl-sub { font-size: 13px; color: rgba(255, 255, 255, 0.8); }
+.dl-text small, .dl-sub { font-size: 13px; color: rgb(var(--dl-ink-rgb) / 0.8); }
 .dl-big { font-size: 34px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; line-height: 1.05; }
 .dl-pill .dl-text { flex: 1; }
 .dl-pill .dl-text b { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.dl-btn { height: 60px; padding: 0 20px; border-radius: 30px; background: #fff; color: #14183a; font-size: 14px; font-weight: 800; display: grid; place-items: center; white-space: nowrap; }
+.dl-btn { height: 60px; padding: 0 20px; border-radius: 30px; background: var(--dl-strong); color: var(--dl-strong-ink); font-size: 14px; font-weight: 800; display: grid; place-items: center; white-space: nowrap; }
 .dl-probe { position: fixed; left: 0; top: 0; visibility: hidden; white-space: nowrap; font-size: 14px; font-weight: 700; }
 @media (prefers-reduced-motion: reduce) { .dl > * { transition: none; } }
 
@@ -801,8 +816,8 @@ body.notched .eyes-wrap .zzz { left: calc(100% - 4px); top: -6px; }
 .dl-panel {
   position: absolute; left: 0; top: 0; pointer-events: auto; box-sizing: border-box; overflow: hidden;
   display: flex; flex-direction: column; gap: 16px; padding: 24px 26px;
-  --surface: color-mix(in srgb, var(--accent-on-black, var(--accent)) 10%, rgba(255, 255, 255, 0.13)); --raised: rgba(255, 255, 255, 0.24); --island: rgba(0, 0, 0, 0.4);
-  --text: #fff; --muted: rgba(255, 255, 255, 0.8); --line: rgba(255, 255, 255, 0.16);
+  --surface: color-mix(in srgb, var(--accent-on-black, var(--accent)) 10%, rgb(var(--dl-ink-rgb) / 0.13)); --raised: rgb(var(--dl-ink-rgb) / 0.24); --island: rgba(0, 0, 0, 0.4);
+  --text: var(--dl-ink); --muted: rgb(var(--dl-ink-rgb) / 0.8); --line: rgb(var(--dl-ink-rgb) / 0.16);
   color: var(--text);
 }
 .dl-panel.moving { transition: transform var(--move) var(--curve); }
@@ -811,13 +826,13 @@ body.notched .eyes-wrap .zzz { left: calc(100% - 4px); top: -6px; }
 /* Going away, the words fade first so droplets never carry text across each other. */
 .droplets.leaving .dl > *, .droplets.leaving .dl-panel > * { opacity: 0; transition: opacity 90ms ease; }
 .dl-panel.tucked > * { opacity: 0; transition-delay: 0ms; }
-.droplets.solid .dl-panel { background: color-mix(in srgb, var(--accent-on-black, var(--accent)) 14%, rgba(16, 20, 52, 0.94)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 20px 44px rgba(0, 0, 0, 0.35); }
+.droplets.solid .dl-panel { background: color-mix(in srgb, var(--accent-on-black, var(--accent)) 14%, var(--dl-solid)); box-shadow: inset 0 1px 0 rgb(var(--dl-ink-rgb) / 0.18), 0 20px 44px rgba(0, 0, 0, 0.35); }
 .dl-head { display: flex; align-items: flex-start; gap: 16px; flex: none; }
 .dl-words { flex: 1; min-width: 0; }
 .dl-kicker { font-size: 13px; font-weight: 700; color: var(--muted); }
 .dl-title { font-size: 28px; font-weight: 800; letter-spacing: -0.025em; line-height: 1.12; margin-top: 3px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-.dl-done { flex: none; height: 44px; padding: 0 20px; border-radius: 22px; background: #fff; color: #14183a; font-size: 14px; font-weight: 800; }
-.dl-done:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.dl-done { flex: none; height: 44px; padding: 0 20px; border-radius: 22px; background: var(--dl-strong); color: var(--dl-strong-ink); font-size: 14px; font-weight: 800; }
+.dl-done:focus-visible { outline: 2px solid var(--dl-ink); outline-offset: 3px; }
 .dl-body { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .dl-panel .panel { position: static; inset: auto; opacity: 1; translate: none; pointer-events: auto; max-height: none; flex: 1; min-height: 0; overflow: auto; scrollbar-width: none; }
 
@@ -826,10 +841,10 @@ body.notched .eyes-wrap .zzz { left: calc(100% - 4px); top: -6px; }
 .dl-panel .search { flex: 1 1 100%; height: 48px; padding: 0 18px; border-radius: 24px; }
 .dl-panel .search input { font-size: 15px; font-weight: 600; }
 /* An outline would be cut off by the panel's edge; a ring inside the field is not. */
-.dl-panel .search:focus-within { outline: none; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.7); }
+.dl-panel .search:focus-within { outline: none; box-shadow: inset 0 0 0 2px rgb(var(--dl-ink-rgb) / 0.7); }
 .dl-panel .filters { gap: 6px; flex-wrap: wrap; }
 .dl-panel .filters button { height: 36px; padding: 0 16px; border-radius: 18px; background: var(--surface); color: var(--text); font-size: 13px; font-weight: 750; }
-.dl-panel .filters button[aria-pressed="true"] { background: #fff; color: #14183a; }
+.dl-panel .filters button[aria-pressed="true"] { background: var(--dl-strong); color: var(--dl-strong-ink); }
 .dl-panel .clip-clear { margin-left: auto; }
 .dl-panel .strip { gap: 12px; }
 .dl-panel .card { width: 196px; height: 268px; padding: 16px; border-radius: 28px; gap: 8px; }
@@ -841,13 +856,13 @@ body.notched .eyes-wrap .zzz { left: calc(100% - 4px); top: -6px; }
 .dl-panel .card img { height: 120px; border-radius: 18px; background: rgba(0, 0, 0, 0.25); }
 .dl-panel .card .swatch-fill { height: 110px; border-radius: 18px; }
 .dl-panel .card .foot { font-size: 12px; }
-.dl-panel .card .ocr { height: 34px; padding: 0 14px; border-radius: 17px; font-size: 13px; font-weight: 750; background: rgba(255, 255, 255, 0.92); color: #14183a; }
+.dl-panel .card .ocr { height: 34px; padding: 0 14px; border-radius: 17px; font-size: 13px; font-weight: 750; background: var(--dl-strong); color: var(--dl-strong-ink); }
 .dl-panel .card .ocr svg { width: 14px; height: 14px; }
 .dl-panel .card .pin { top: 10px; right: 10px; width: 32px; height: 32px; }
 /* The bell keeps its place left of the bigger pin. */
 .dl-panel .card .bell { top: 10px; right: 50px; width: 32px; height: 32px; }
 .dl-panel .card .pin svg, .dl-panel .card .bell svg { width: 14px; height: 14px; }
-.dl-panel .strip.navigating .card.sel, .dl-panel .card:focus-visible { box-shadow: inset 0 0 0 2px #fff; }
+.dl-panel .strip.navigating .card.sel, .dl-panel .card:focus-visible { box-shadow: inset 0 0 0 2px var(--dl-ink); }
 
 /* Media: the cover large on the left, the song and controls beside it. */
 .dl-panel .player { flex: 1; align-items: stretch; gap: 24px; padding: 0; border-radius: 0; background: none; }
@@ -862,11 +877,11 @@ body.notched .eyes-wrap .zzz { left: calc(100% - 4px); top: -6px; }
 .dl-panel .media-controls { gap: 12px; margin-top: 12px; }
 .dl-panel .media-controls button { width: 52px; height: 52px; }
 .dl-panel .media-controls button svg { width: 22px; height: 22px; }
-.dl-panel .media-controls .play { width: 68px; height: 68px; background: #fff; color: #14183a; box-shadow: 0 10px 24px -10px rgba(0, 0, 0, 0.6); }
+.dl-panel .media-controls .play { width: 68px; height: 68px; background: var(--dl-strong); color: var(--dl-strong-ink); box-shadow: 0 10px 24px -10px rgba(0, 0, 0, 0.6); }
 .dl-panel .media-controls .play svg { width: 26px; height: 26px; }
 /* Buttons inside a view: capsules, the main one white. */
 .dl-panel .shelf-actions button, .dl-panel .focus-actions button { height: 44px; padding: 0 18px; border-radius: 22px; background: var(--surface); color: var(--text); font-size: 14px; font-weight: 750; }
-.dl-panel button.primary, .dl-panel .shelf-actions button.primary, .dl-panel .focus-actions button.primary { background: #fff; color: #14183a; }
+.dl-panel button.primary, .dl-panel .shelf-actions button.primary, .dl-panel .focus-actions button.primary { background: var(--dl-strong); color: var(--dl-strong-ink); }
 
 /* System: the title already says how memory is; the ring and the number carry the rest. */
 .dl-panel .pressure { display: none; }
@@ -894,12 +909,12 @@ body.notched .eyes-wrap .zzz { left: calc(100% - 4px); top: -6px; }
 .dl-panel .focus { gap: 26px; }
 .dl-panel .focus-ring { width: 150px; height: 150px; }
 .dl-panel .focus-ring .track { stroke: var(--surface); }
-.dl-panel .focus-ring .fill { stroke: #fff; }
+.dl-panel .focus-ring .fill { stroke: var(--dl-ink); }
 .dl-panel .focus-clock { font-size: 64px; font-weight: 800; letter-spacing: -0.03em; }
 .dl-panel .focus-actions { gap: 8px; }
 
 /* Shelf: a round drop zone, files as capsules. */
-.dl-panel .drop { border-radius: 30px; border-color: rgba(255, 255, 255, 0.4); padding: 10px; }
+.dl-panel .drop { border-radius: 30px; border-color: rgb(var(--dl-ink-rgb) / 0.4); padding: 10px; }
 .dl-panel .drop-empty { min-height: 200px; }
 .dl-panel .drop-empty b { font-size: 17px; font-weight: 800; }
 .dl-panel .drop-empty span { font-size: 14px; }
@@ -936,20 +951,20 @@ body.notched .eyes-wrap .zzz { left: calc(100% - 4px); top: -6px; }
 .dl-panel .cats { gap: 6px; }
 .dl-panel .cat { padding: 10px 14px; border-radius: 20px; background: var(--surface); }
 .dl-panel .cat:hover { background: var(--raised); }
-.dl-panel .cat .box { border-radius: 6px; border-color: rgba(255, 255, 255, 0.6); }
+.dl-panel .cat .box { border-radius: 6px; border-color: rgb(var(--dl-ink-rgb) / 0.6); }
 .dl-panel .clean-btn { height: 52px; border-radius: 26px; font-size: 15px; font-weight: 800; }
 
 /* Settings and Modes: round segments and cards. */
 .dl-panel .settings { gap: 18px 22px; }
 .dl-panel .segs { border-radius: 20px; padding: 4px; }
 .dl-panel .seg { border-radius: 16px; color: var(--muted); }
-.dl-panel .seg[aria-pressed="true"] { background: #fff; color: #14183a; }
-.dl-panel .swatch[aria-pressed="true"] { box-shadow: 0 0 0 2px #fff; }
+.dl-panel .seg[aria-pressed="true"] { background: var(--dl-strong); color: var(--dl-strong-ink); }
+.dl-panel .swatch[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--dl-ink); }
 .dl-panel .mode-card { padding: 14px 16px; border-radius: 22px; background: var(--surface); }
 .dl-panel .mode-card b { font-size: 14px; }
 .dl-panel .mode-card span { font-size: 12.5px; }
-.dl-panel .mode-card[aria-pressed="true"], .dl-panel .mode-card[aria-current="true"] { box-shadow: inset 0 0 0 2px #fff; }
-.dl-panel .mode-card[aria-pressed="true"] svg, .dl-panel .mode-card[aria-current="true"] svg { color: #fff; }
+.dl-panel .mode-card[aria-pressed="true"], .dl-panel .mode-card[aria-current="true"] { box-shadow: inset 0 0 0 2px var(--dl-ink); }
+.dl-panel .mode-card[aria-pressed="true"] svg, .dl-panel .mode-card[aria-current="true"] svg { color: var(--dl-ink); }
 .dl-panel .feat-row { padding: 8px 10px; border-radius: 14px; font-size: 13px; }
 .dl-panel .switch { width: 40px; height: 24px; }
 .dl-panel .switch::after { width: 20px; height: 20px; }
@@ -978,28 +993,28 @@ body.notched .eyes-wrap .zzz { left: calc(100% - 4px); top: -6px; }
 .core-readout { font-size: 30px; }
 .dl-ring { position: absolute; left: 9px; top: 9px; width: calc(100% - 18px); height: calc(100% - 18px); transform: rotate(-90deg); pointer-events: none; }
 .dl-ring circle { fill: none; stroke-width: 6; }
-.dl-ring .track { stroke: rgba(255, 255, 255, 0.14); }
+.dl-ring .track { stroke: rgb(var(--dl-ink-rgb) / 0.14); }
 .dl-ring .fill { stroke-linecap: round; transition: stroke-dasharray 0.8s ease, stroke 0.4s; }
 .dl-round-in { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .dl-sub { display: inline-flex; align-items: center; gap: 4px; }
 .dl-sub svg { width: 13px; height: 13px; opacity: 0.85; }
-.dl-sub.faint { color: rgba(255, 255, 255, 0.66); }
-.dl-art.blank { display: grid; place-items: center; color: rgba(255, 255, 255, 0.55); }
+.dl-sub.faint { color: rgb(var(--dl-ink-rgb) / 0.66); }
+.dl-art.blank { display: grid; place-items: center; color: rgb(var(--dl-ink-rgb) / 0.55); }
 .dl-art.blank svg { width: 34px; height: 34px; }
 .dl-card .dl-text { flex: 1; }
 .dl-card .dl-text b { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .dl-pill .dl-text small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.dl-bar { display: block; height: 4px; margin-top: 10px; border-radius: 2px; background: rgba(255, 255, 255, 0.2); overflow: hidden; }
-.dl-bar i { display: block; height: 100%; border-radius: 2px; background: #fff; }
-.dl-state { width: 40px; height: 40px; flex: none; border-radius: 20px; background: rgba(255, 255, 255, 0.14); display: grid; place-items: center; align-self: flex-end; }
+.dl-bar { display: block; height: 4px; margin-top: 10px; border-radius: 2px; background: rgb(var(--dl-ink-rgb) / 0.2); overflow: hidden; }
+.dl-bar i { display: block; height: 100%; border-radius: 2px; background: var(--dl-ink); }
+.dl-state { width: 40px; height: 40px; flex: none; border-radius: 20px; background: rgb(var(--dl-ink-rgb) / 0.14); display: grid; place-items: center; align-self: flex-end; }
 .dl-state svg { width: 16px; height: 16px; }
 .dl-pill { padding: 0 12px 0 16px; }
-.dl-kind { width: 52px; height: 52px; flex: none; border-radius: 26px; background: rgba(255, 255, 255, 0.12); display: grid; place-items: center; overflow: hidden; }
+.dl-kind { width: 52px; height: 52px; flex: none; border-radius: 26px; background: rgb(var(--dl-ink-rgb) / 0.12); display: grid; place-items: center; overflow: hidden; }
 .dl-kind svg { width: 22px; height: 22px; }
 .dl-kind.secret { color: var(--bad); }
 .dl-kind.thumb img { width: 100%; height: 100%; object-fit: cover; }
 .dl-stack { display: flex; flex: none; padding: 0 4px 0 2px; }
-.dl-file { width: 38px; height: 48px; border-radius: 10px; display: grid; place-items: center; color: #fff; font-size: 9.5px; font-weight: 800; letter-spacing: 0.02em; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); }
+.dl-file { width: 38px; height: 48px; border-radius: 10px; display: grid; place-items: center; color: var(--dl-ink); font-size: 9.5px; font-weight: 800; letter-spacing: 0.02em; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); }
 .dl-file + .dl-file { margin-left: -16px; }
 .dl-file svg { width: 18px; height: 18px; }
 .dl-file.f0 { background: #e5484d; rotate: -8deg; }
@@ -1010,7 +1025,7 @@ body.notched .eyes-wrap .zzz { left: calc(100% - 4px); top: -6px; }
 .dl-dot { position: absolute; top: 9px; right: 11px; width: 8px; height: 8px; border-radius: 50%; }
 
 /* Agent marks: Claude's own, a terminal for Codex. */
-.agent-logo { width: 28px; height: 28px; flex: none; border-radius: 9px; display: grid; place-items: center; background: rgba(255, 255, 255, 0.1); }
+.agent-logo { width: 28px; height: 28px; flex: none; border-radius: 9px; display: grid; place-items: center; background: rgb(var(--dl-ink-rgb) / 0.1); }
 .agent-logo svg { width: 17px; height: 17px; }
 .agent-logo.codex { color: var(--text); }
 .card-label .agent-logo { width: 22px; height: 22px; border-radius: 7px; }
@@ -1026,9 +1041,41 @@ body.notched .eyes-wrap .zzz { left: calc(100% - 4px); top: -6px; }
 .dl-side svg { width: 16px; height: 16px; }
 .dl-side-art { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 .dl-eq { display: flex; align-items: center; gap: 2px; height: 14px; }
-.dl-eq i { width: 3px; height: 100%; border-radius: 2px; background: #fff; transform-origin: 50% 50%; animation: dl-eq 0.9s ease-in-out infinite; }
+.dl-eq i { width: 3px; height: 100%; border-radius: 2px; background: var(--dl-ink); transform-origin: 50% 50%; animation: dl-eq 0.9s ease-in-out infinite; }
 .dl-eq i:nth-child(2) { animation-delay: -0.3s; }
 .dl-eq i:nth-child(3) { animation-delay: -0.6s; }
 /* Only while it plays; transform alone, so it costs the page nothing. */
 @keyframes dl-eq { 0%, 100% { transform: scaleY(0.35); } 50% { transform: scaleY(1); } }
 @media (prefers-reduced-motion: reduce) { .dl-eq i { animation: none; transform: scaleY(0.7); } }
+
+/* Side droplets for a call: the app, and a mic you tap to mute. */
+.dl-side.call-mic { background: #ff453a; }
+.dl-side.call-mic.muted { background: color-mix(in srgb, var(--accent-on-black, var(--accent)) 12%, rgba(12, 14, 34, 0.86)); }
+/* For a download: the file, and a ring with how much has arrived. */
+.dl-side.dl-progress { position: absolute; }
+.dl-side-ring { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+.dl-side-ring circle { fill: none; stroke-width: 3; }
+.dl-side-ring .track { stroke: rgb(var(--dl-ink-rgb) / 0.2); }
+.dl-side-ring .fill { stroke: var(--accent-on-black, var(--accent)); stroke-linecap: round; transition: stroke-dasharray 0.6s ease; }
+.dl-side.dl-progress b { position: relative; font-family: var(--readout); font-weight: 900; font-variation-settings: "ROND" 100; font-size: 11px; }
+
+/* Requests show who is asking. */
+.peek-body .ask-ic { background: transparent; }
+.peek-body .ask-ic .agent-logo { width: 34px; height: 34px; border-radius: 10px; }
+.peek-body .ask-ic .agent-logo svg { width: 20px; height: 20px; }
+
+/* Peeks in the Droplets look: a bold line, round marks, capsule buttons. */
+.droplets-on .peek-body { gap: 12px; padding: 4px 16px 14px; }
+.droplets-on .peek-body .ic { width: 38px; height: 38px; border-radius: 50%; background: rgb(var(--dl-ink-rgb) / 0.1); }
+.droplets-on .peek-body .ask-ic .agent-logo { border-radius: 50%; }
+.droplets-on .peek-body .t { font-size: 15px; font-weight: 800; letter-spacing: -0.01em; }
+.droplets-on .peek-body .s { font-size: 12.5px; }
+.droplets-on .peek-acts { gap: 8px; margin-top: 10px; }
+.droplets-on .peek-acts button { height: 34px; padding: 0 16px; border-radius: 17px; background: rgb(var(--dl-ink-rgb) / 0.12); font-size: 13px; font-weight: 750; }
+.droplets-on .peek-acts button.primary { background: var(--accent-on-black, var(--accent)); color: #06121a; }
+.droplets-on .ask-code { border-radius: 12px; padding: 8px 10px; }
+
+/* With Droplets on, the island speaks in Figtree, as in the design. */
+.droplets-on { --font: "Figtree Variable", -apple-system, "Segoe UI Variable Text", "Segoe UI", "PingFang SC", "Hiragino Sans", "Apple SD Gothic Neo",
+    "Microsoft YaHei UI", "Yu Gothic UI", "Malgun Gothic", "Geeza Pro", "Noto Sans CJK SC", "Noto Sans Arabic", Cantarell, system-ui, sans-serif; }
+.droplets-on, .droplets-on button, .droplets-on input { font-family: var(--font); }

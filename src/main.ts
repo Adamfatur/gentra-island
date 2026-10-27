@@ -253,8 +253,8 @@ function moment() {
 function compactSize(): Size {
   const live = !!badge() || playingArt() !== undefined;
   let next: Look = compactLook(settings.settings.islandSize, { hasNotch, live, hovering, covered });
-  // While music plays, its cover and sound split off as droplets; the island itself tucks into the notch.
-  if (sideWanted()) next = "tucked";
+  // While something is live, small droplets split off beside the notch; the island tucks into it.
+  if (sideKind()) next = "tucked";
   syncEyes(next !== "hidden" && (!hasNotch || next !== "full"));
   // Beside the camera, the eyes take the place of the small icons.
   if (hasNotch && eyesShown) next = "eyes";
@@ -271,31 +271,63 @@ function compactSize(): Size {
   return { w, h: CH + (hovering ? 3 : 0), r: R_COMPACT };
 }
 
-/** Whether music playing should split off two droplets beside the notch. */
-function sideWanted(): boolean {
-  return !!drops && hasNotch && mode === "compact" && !hovering && !covered && !!media.now?.playing && isOn(modes.state, "musik");
+/** What splits off beside the closed island, most urgent first: a call, music, a download. */
+function sideKind(): "call" | "music" | "download" | null {
+  if (!drops || !hasNotch || mode !== "compact" || hovering || covered) return null;
+  if (call.mic?.inUse && isOn(modes.state, "meeting")) return "call";
+  if (media.now?.playing && isOn(modes.state, "musik")) return "music";
+  if (downloads.length && isOn(modes.state, "unduh")) return "download";
+  return null;
 }
 
 /** Shows or tucks away the droplets beside the closed island. */
 function syncSide() {
   if (!drops) return;
-  const n = media.now;
-  if (!sideWanted() || !n) return drops.hideSide();
+  const kind = sideKind();
+  if (!kind) return drops.hideSide();
   const nw = Math.round(info.notchWidth);
   const cx = WIN_W / 2;
   const size = 34;
   const gap = 8;
   const left = { x: cx - nw / 2 - gap - size, y: 0, w: size, h: size, r: size / 2 };
   const right = { x: cx + nw / 2 + gap, y: 0, w: size, h: size, r: size / 2 };
-  const cover = n.art ? `<img class="dl-side-art" alt="" src="${esc(n.art)}">` : icon.music;
-  const sound = `<span class="dl-eq" aria-hidden="true"><i></i><i></i><i></i></span>`;
-  drops.showSide(
-    [
-      { id: "media", shape: left, html: cover, label: n.title },
-      { id: "media", shape: right, html: sound, label: n.artist ? `${n.title}, ${n.artist}` : n.title },
-    ],
-    { x: cx - nw / 2, y: 0, w: nw, h: CH, r: 0 },
-  );
+  const notch = { x: cx - nw / 2, y: 0, w: nw, h: CH, r: 0 };
+  if (kind === "call") {
+    const m = call.mic!;
+    const app = m.app ?? t("tab.call");
+    drops.showSide(
+      [
+        { id: "calls", kind: "call-app", shape: left, html: icon.video, label: app },
+        { id: "calls", kind: m.muted ? "call-mic muted" : "call-mic", act: "call:mute", shape: right, html: m.muted ? icon.micOff : icon.mic, label: t(m.muted ? "call.unmute" : "call.mute") },
+      ],
+      notch,
+    );
+  } else if (kind === "music") {
+    const n = media.now!;
+    const cover = n.art ? `<img class="dl-side-art" alt="" src="${esc(n.art)}">` : icon.music;
+    const sound = `<span class="dl-eq" aria-hidden="true"><i></i><i></i><i></i></span>`;
+    drops.showSide(
+      [
+        { id: "media", kind: "music-art", shape: left, html: cover, label: n.title },
+        { id: "media", kind: "music-eq", shape: right, html: sound, label: n.artist ? `${n.title}, ${n.artist}` : n.title },
+      ],
+      notch,
+    );
+  } else {
+    const d = downloads[0];
+    const part = d.total ? Math.min(1, d.bytes / d.total) : null;
+    const ringHtml =
+      part === null
+        ? icon.down
+        : `<svg class="dl-side-ring" viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="14" class="track" pathLength="100"/><circle cx="17" cy="17" r="14" class="fill" pathLength="100" stroke-dasharray="${(part * 100).toFixed(1)} 100"/></svg><b class="num">${Math.round(part * 100)}</b>`;
+    drops.showSide(
+      [
+        { id: "shelf", kind: "dl-file", shape: left, html: icon.file, label: d.name },
+        { id: "shelf", kind: "dl-progress", shape: right, html: ringHtml, label: part === null ? bytes(d.bytes) : `${Math.round(part * 100)}%` },
+      ],
+      notch,
+    );
+  }
   reportHit(morph.current);
 }
 
@@ -942,11 +974,13 @@ if (probing) {
   document.addEventListener("mousedown", (e) => dbg(`press on ${(e.target as HTMLElement).id || (e.target as HTMLElement).className || "?"} at ${e.clientX},${e.clientY}`), true);
 }
 if (dropletsWanted || (await invoke<boolean>("droplets_enabled"))) {
+  document.body.classList.add("droplets-on");
   drops = new DropletsView(
     await invoke<GlassKind>("glass_kind"),
     (id, from) => openDropView(id, from),
     () => openDroplets(),
     () => reportHit(morph.current),
+    (act) => void homeAct(act).then(syncSide),
   );
 }
 
@@ -1492,7 +1526,7 @@ await listen<Ask>("agent-ask", ({ payload: a }) => {
   if (mode === "open") compact();
   chime();
   peek(
-    `<span class="ic" style="color:var(--warn)">${icon.hand}</span>
+    `<span class="ic ask-ic">${agentLogo(a.agent)}</span>
      <div class="peek-main"><div class="t">${esc(t(askVerb(a.tool), { agent: AGENT_NAME[a.agent] }))}</div>
        <code class="ask-code">${esc(a.summary || a.tool)}</code>
        ${a.place ? `<div class="s">${esc(a.place)}</div>` : ""}
