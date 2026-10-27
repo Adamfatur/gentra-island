@@ -56,6 +56,14 @@ pub fn fps_log(fps: u32, worst: f64) {
     eprintln!("fps {fps} worst {worst:.1}");
 }
 
+/// A line from the page for a smoothness test: a click, or a slow frame.
+#[tauri::command]
+pub fn debug_log(line: String) {
+    if std::env::var_os("GENTRA_FPS").is_some() {
+        eprintln!("dbg {line}");
+    }
+}
+
 #[tauri::command]
 pub fn glass_kind() -> Kind {
     platform::kind()

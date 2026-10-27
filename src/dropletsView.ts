@@ -154,8 +154,13 @@ export class DropletsView {
     return this.layout ? hitShapes(this.layout) : [];
   }
 
+  /** Chip widths by name, measured once: measuring forces a layout, which costs frames. */
+  private widths = new Map<string, number>();
+
   /** Measures each chip's name so the layout can size it. */
   measure(ids: DropletId[], label: (id: DropletId) => string): Partial<Record<DropletId, number>> {
+    const known = ids.every((id) => this.widths.has(label(id)));
+    if (known) return Object.fromEntries(ids.map((id) => [id, this.widths.get(label(id))!]));
     const probe = document.createElement("span");
     probe.className = "dl-probe";
     // On the body: the droplets' own layer may still be hidden, and hidden text measures 0.
@@ -165,6 +170,7 @@ export class DropletsView {
       probe.textContent = label(id);
       // The name, its icon and the padding either side.
       out[id] = Math.ceil(probe.getBoundingClientRect().width) + 56;
+      this.widths.set(label(id), out[id]!);
     }
     probe.remove();
     return out;
@@ -202,6 +208,11 @@ export class DropletsView {
         this.root.append(el);
         this.els.set(d.id, el);
         // New droplets start tucked in the core, then grow.
+        setBox(el, d);
+        pose(el, d, tucked(d, layout.core), false);
+      } else if (el.hidden) {
+        // Back from a panel: it grows out of the core again, as if new.
+        el.hidden = false;
         setBox(el, d);
         pose(el, d, tucked(d, layout.core), false);
       } else {
@@ -242,8 +253,8 @@ export class DropletsView {
     clearTimeout(this.hideTimer);
     this.dropPanel();
     this.root.hidden = false;
-    for (const el of this.els.values()) el.remove();
-    this.els.clear();
+    // Kept, out of sight, to come back without being built again.
+    for (const el of this.els.values()) el.hidden = true;
 
     const el = document.createElement("div");
     el.className = "dl-panel";

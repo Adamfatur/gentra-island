@@ -729,11 +729,14 @@ let coreBusy = false;
 window.setInterval(() => {
   if (!drops?.visible || mode !== "open") return;
   const busy = coreNow().kind !== "idle";
-  if (busy !== coreBusy) {
+  // The core changing size moves everything under it. With the pointer on the
+  // island that would pull a droplet away from under it, so it waits.
+  if (busy !== coreBusy && !hovering) {
     if (dropView) openDropView(dropView, null);
     else openDroplets();
     return;
   }
+  if (busy !== coreBusy) return;
   if (busy) $("#v-core").innerHTML = coreView(coreNow());
 }, 1000);
 
@@ -912,14 +915,18 @@ const dropletsWanted = (() => {
     return false;
   }
 })();
-// For smoothness tests: frames a second and the slowest frame, sent to the log.
-if (await invoke<boolean>("fps_probe")) {
+// For smoothness tests: frames a second and the slowest frame, sent to the log,
+// and each slow frame and click with what the island was doing.
+const probing = await invoke<boolean>("fps_probe");
+const dbg = (line: string) => probing && void invoke("debug_log", { line: `${Math.round(performance.now())} ${line}` });
+if (probing) {
   let frames = 0;
   let worst = 0;
   let last = performance.now();
   let since = last;
   const tick = (now: number) => {
     frames++;
+    if (now - last > 50) dbg(`slow frame ${Math.round(now - last)} ms, mode ${mode}, droplets ${drops?.visible ? "out" : "in"}`);
     worst = Math.max(worst, now - last);
     last = now;
     if (now - since >= 1000) {
@@ -931,6 +938,8 @@ if (await invoke<boolean>("fps_probe")) {
     requestAnimationFrame(tick);
   };
   requestAnimationFrame(tick);
+  // A press that never shows here never reached the window at all.
+  document.addEventListener("mousedown", (e) => dbg(`press on ${(e.target as HTMLElement).id || (e.target as HTMLElement).className || "?"} at ${e.clientX},${e.clientY}`), true);
 }
 if (dropletsWanted || (await invoke<boolean>("droplets_enabled"))) {
   drops = new DropletsView(
@@ -1154,6 +1163,7 @@ await win.onFocusChanged(({ payload: focused }) => {
 
 shell.addEventListener("click", (e) => {
   const el = e.target as HTMLElement;
+  dbg(`click on ${el.id || el.className || el.tagName}, mode ${mode}, droplets ${drops ? "on" : "off"}`);
   // Buttons inside a peek act in place instead of opening the island.
   const rem = el.closest<HTMLElement>("[data-rem-act]");
   if (rem) return void reminderAct(rem.closest<HTMLElement>("[data-rem]")!.dataset.rem!, rem.dataset.remAct!);
