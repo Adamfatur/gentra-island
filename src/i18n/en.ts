@@ -621,6 +621,17 @@ export const en = {
   "drop.settings.title": "Make it yours",
   "drop.modes": "Modes",
   "drop.modes.title": "Pick what's on",
+  "core.agent.working": "{agent} is working",
+  "core.agent.waiting": "{agent} needs you",
+  "core.call.live": "Mic on in {app}",
+  "core.call.liveNoApp": "Your mic is on",
+  "core.call.muted": "You're muted",
+  "core.call.sub": "Tap for the call controls",
+  "core.focus": "Focusing",
+  "core.focus.paused": "Focus paused",
+  "core.focus.sub": "Messages can wait",
+  "core.download.sub": "{speed} a second",
+  "drop.copiedFrom": "Last copied, from {app}",
 };
 
 export type Key = keyof typeof en;

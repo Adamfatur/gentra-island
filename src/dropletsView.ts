@@ -91,7 +91,8 @@ export class DropletsView {
     const out: Partial<Record<DropletId, number>> = {};
     for (const id of ids) {
       probe.textContent = label(id);
-      out[id] = Math.ceil(probe.getBoundingClientRect().width) + 40;
+      // The name, its icon and the padding either side.
+      out[id] = Math.ceil(probe.getBoundingClientRect().width) + 56;
     }
     probe.remove();
     return out;
@@ -107,6 +108,7 @@ export class DropletsView {
    */
   show(layout: Layout, content: (id: DropletId) => string) {
     clearTimeout(this.hideTimer);
+    this.root.classList.remove("leaving");
     const first = !this.layout || this.open;
     this.dropPanel();
     this.root.hidden = false;
@@ -154,6 +156,7 @@ export class DropletsView {
   openPanel(layout: Layout, from: Shape | null, section: HTMLElement, head: PanelHead) {
     const target = layout.panel;
     if (!target) return;
+    this.root.classList.remove("leaving");
     this.maxH = target.h;
     this.minH = from ? Math.min(target.h, Math.max(200, from.y + from.h - target.y)) : 200;
     clearTimeout(this.hideTimer);
@@ -265,6 +268,7 @@ export class DropletsView {
     const l = this.layout;
     if (!l) return;
     this.layout = null;
+    this.root.classList.add("leaving");
     const out: Shape[] = [];
     for (const d of l.droplets) {
       const to = tucked(d, l.core);
@@ -280,6 +284,7 @@ export class DropletsView {
     this.glass(out, this.ms, this.panel?.tint);
     this.hideTimer = window.setTimeout(() => {
       this.dropPanel();
+      this.root.classList.remove("leaving");
       this.root.hidden = true;
       this.root.replaceChildren();
       this.els.clear();

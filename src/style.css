@@ -1,4 +1,6 @@
 @import "@fontsource-variable/plus-jakarta-sans/wght.css";
+/* Doto: dot-matrix figures for the big readouts, kin to the pixel eyes (OFL). */
+@import "@fontsource-variable/doto/full.css";
 
 /* Direction lives in DESIGN.md. Two themes share one set of tokens; colour is
    only for state (memory pressure, secrets) and one accent the user can pick. */
@@ -24,6 +26,7 @@
   --font: "Plus Jakarta Sans Variable", -apple-system, "Segoe UI Variable Text", "Segoe UI", "PingFang SC", "Hiragino Sans", "Apple SD Gothic Neo",
     "Microsoft YaHei UI", "Yu Gothic UI", "Malgun Gothic", "Geeza Pro", "Noto Sans CJK SC", "Noto Sans Arabic", Cantarell, system-ui, sans-serif;
   --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --readout: "Doto Variable", var(--font);
   --ease-pop: cubic-bezier(0.3, 1.35, 0.5, 1);
 }
 
@@ -759,7 +762,7 @@ body.notched .eyes-wrap .zzz { left: calc(100% - 4px); top: -6px; }
 .droplets { position: absolute; inset: 0; pointer-events: none; z-index: 5; color: #fff; }
 .dl { position: absolute; left: 0; top: 0; pointer-events: auto; border: 0; padding: 0; margin: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; overflow: hidden; display: flex; align-items: center; gap: 14px; box-sizing: border-box; }
 .dl.moving { transition: transform var(--move) var(--curve), width var(--move) var(--curve), height var(--move) var(--curve), border-radius var(--move) var(--curve); }
-.dl > * { transition: opacity 160ms ease 80ms; }
+.dl > * { transition: opacity 180ms ease 200ms; }
 .dl.tucked > * { opacity: 0; transition-delay: 0ms; }
 /* Over system glass, a dark layer in the page keeps white text readable: the
    glass itself turns pale over a white page. Without system glass, the page
@@ -770,7 +773,7 @@ body.notched .eyes-wrap .zzz { left: calc(100% - 4px); top: -6px; }
 .dl-card { padding: 14px; }
 .dl-round { justify-content: center; text-align: center; flex-direction: column; gap: 2px; }
 .dl-pill { padding: 0 12px 0 26px; }
-.dl-chip { justify-content: center; font-size: 14px; font-weight: 700; padding: 0 20px; }
+.dl-chip { justify-content: center; font-size: 14px; font-weight: 700; padding: 0 16px; }
 .dl-art { width: 112px; height: 112px; flex: none; border-radius: 24px; background: rgba(255, 255, 255, 0.12) center / cover no-repeat; }
 .dl-text { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .dl-text b { font-size: 16px; line-height: 1.2; }
@@ -792,7 +795,9 @@ body.notched .eyes-wrap .zzz { left: calc(100% - 4px); top: -6px; }
   color: var(--text);
 }
 .dl-panel.moving { transition: transform var(--move) var(--curve), width var(--move) var(--curve), height var(--move) var(--curve), border-radius var(--move) var(--curve); }
-.dl-panel > * { transition: opacity 160ms ease 120ms; }
+.dl-panel > * { transition: opacity 180ms ease 200ms; }
+/* Going away, the words fade first so droplets never carry text across each other. */
+.droplets.leaving .dl > *, .droplets.leaving .dl-panel > * { opacity: 0; transition: opacity 90ms ease; }
 .dl-panel.tucked > * { opacity: 0; transition-delay: 0ms; }
 .droplets.solid .dl-panel { background: rgba(16, 20, 52, 0.9); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 20px 44px rgba(0, 0, 0, 0.35); }
 .dl-head { display: flex; align-items: flex-start; gap: 16px; flex: none; }
@@ -808,6 +813,8 @@ body.notched .eyes-wrap .zzz { left: calc(100% - 4px); top: -6px; }
 .dl-panel .clip-top { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 14px; }
 .dl-panel .search { flex: 1 1 100%; height: 48px; padding: 0 18px; border-radius: 24px; }
 .dl-panel .search input { font-size: 15px; font-weight: 600; }
+/* An outline would be cut off by the panel's edge; a ring inside the field is not. */
+.dl-panel .search:focus-within { outline: none; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.7); }
 .dl-panel .filters { gap: 6px; flex-wrap: wrap; }
 .dl-panel .filters button { height: 36px; padding: 0 16px; border-radius: 18px; background: var(--surface); color: var(--text); font-size: 13px; font-weight: 750; }
 .dl-panel .filters button[aria-pressed="true"] { background: #fff; color: #14183a; }
@@ -823,6 +830,9 @@ body.notched .eyes-wrap .zzz { left: calc(100% - 4px); top: -6px; }
 .dl-panel .card .swatch-fill { height: 110px; border-radius: 18px; }
 .dl-panel .card .foot { font-size: 12px; }
 .dl-panel .card .pin { top: 10px; right: 10px; width: 32px; height: 32px; }
+/* The bell keeps its place left of the bigger pin. */
+.dl-panel .card .bell { top: 10px; right: 50px; width: 32px; height: 32px; }
+.dl-panel .card .pin svg, .dl-panel .card .bell svg { width: 14px; height: 14px; }
 .dl-panel .strip.navigating .card.sel, .dl-panel .card:focus-visible { box-shadow: inset 0 0 0 2px #fff; }
 
 /* Media: the cover large on the left, the song and controls beside it. */
@@ -933,3 +943,52 @@ body.notched .eyes-wrap .zzz { left: calc(100% - 4px); top: -6px; }
 .dl-panel .note { font-size: 12.5px; }
 
 @media (prefers-reduced-motion: reduce) { .dl-panel > * { transition: none; } }
+
+/* The core with the droplets out: a ring, one line, and a readout, under the camera. */
+#v-core { width: var(--core-w, 452px); height: var(--core-h, 100px); box-sizing: border-box; padding: 0 28px 18px; display: flex; align-items: flex-end; gap: 14px; color: #fff; cursor: pointer; }
+.core-ring { width: 40px; height: 40px; flex: none; border-radius: 50%; box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--accent-on-black, #5ac8fa) 40%, transparent); display: grid; place-items: center; }
+.core-ring i { width: 10px; height: 10px; border-radius: 50%; background: var(--accent-on-black, #5ac8fa); }
+.core-ring.urgent { box-shadow: inset 0 0 0 3px rgba(255, 181, 71, 0.5); }
+.core-ring.urgent i { background: var(--warn); }
+.core-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.core-text b { font-size: 16px; font-weight: 800; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.core-text span { font-size: 13px; color: #b3b3bd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.core-readout { font-size: 26px; font-weight: 800; color: var(--accent-on-black, #5ac8fa); letter-spacing: -0.02em; }
+
+/* ---------- Droplets: what's inside ---------- */
+/* Full, round dots read best at these sizes; thin ones look hollow. */
+.dl-big, .core-readout, .dl-panel .mem-big b, .dl-panel .focus-clock, .dl-panel .presets b { font-family: var(--readout); font-weight: 900; font-variation-settings: "ROND" 100; letter-spacing: 0.01em; }
+.dl-big { font-size: 40px; line-height: 1; }
+.core-readout { font-size: 30px; }
+.dl-ring { position: absolute; left: 9px; top: 9px; width: calc(100% - 18px); height: calc(100% - 18px); transform: rotate(-90deg); pointer-events: none; }
+.dl-ring circle { fill: none; stroke-width: 6; }
+.dl-ring .track { stroke: rgba(255, 255, 255, 0.14); }
+.dl-ring .fill { stroke-linecap: round; transition: stroke-dasharray 0.8s ease, stroke 0.4s; }
+.dl-round-in { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.dl-sub { display: inline-flex; align-items: center; gap: 4px; }
+.dl-sub svg { width: 13px; height: 13px; opacity: 0.85; }
+.dl-sub.faint { color: rgba(255, 255, 255, 0.66); }
+.dl-art.blank { display: grid; place-items: center; color: rgba(255, 255, 255, 0.55); }
+.dl-art.blank svg { width: 34px; height: 34px; }
+.dl-card .dl-text { flex: 1; }
+.dl-card .dl-text b { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.dl-pill .dl-text small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dl-bar { display: block; height: 4px; margin-top: 10px; border-radius: 2px; background: rgba(255, 255, 255, 0.2); overflow: hidden; }
+.dl-bar i { display: block; height: 100%; border-radius: 2px; background: #fff; }
+.dl-state { width: 40px; height: 40px; flex: none; border-radius: 20px; background: rgba(255, 255, 255, 0.14); display: grid; place-items: center; align-self: flex-end; }
+.dl-state svg { width: 16px; height: 16px; }
+.dl-pill { padding: 0 12px 0 16px; }
+.dl-kind { width: 52px; height: 52px; flex: none; border-radius: 26px; background: rgba(255, 255, 255, 0.12); display: grid; place-items: center; overflow: hidden; }
+.dl-kind svg { width: 22px; height: 22px; }
+.dl-kind.secret { color: var(--bad); }
+.dl-kind.thumb img { width: 100%; height: 100%; object-fit: cover; }
+.dl-stack { display: flex; flex: none; padding: 0 4px 0 2px; }
+.dl-file { width: 38px; height: 48px; border-radius: 10px; display: grid; place-items: center; color: #fff; font-size: 9.5px; font-weight: 800; letter-spacing: 0.02em; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); }
+.dl-file + .dl-file { margin-left: -16px; }
+.dl-file svg { width: 18px; height: 18px; }
+.dl-file.f0 { background: #e5484d; rotate: -8deg; }
+.dl-file.f1 { background: #3b82f6; rotate: 4deg; }
+.dl-file.f2 { background: #1f9d63; rotate: 11deg; }
+.dl-chip { gap: 8px; }
+.dl-chip svg { width: 16px; height: 16px; flex: none; }
+.dl-dot { position: absolute; top: 9px; right: 11px; width: 8px; height: 8px; border-radius: 50%; }

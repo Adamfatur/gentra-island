@@ -74,6 +74,11 @@ export class FocusPanel {
     return this.timer ? clock(remaining(this.timer, Date.now())) : "";
   }
 
+  /** How much of the session is left: 1 at the start, 0 at the end, 0 with none running. */
+  get left() {
+    return this.timer ? remaining(this.timer, Date.now()) / this.timer.total : 0;
+  }
+
   get paused() {
     return this.timer?.pausedLeft != null;
   }

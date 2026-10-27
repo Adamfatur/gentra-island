@@ -12,7 +12,7 @@ import { Care, careHtml } from "./carePanel";
 import type { CareKind } from "./care";
 import { CleanerPanel } from "./cleaner";
 import { DevPanel, doneMeta, doneTitle, type Done } from "./devPanel";
-import { MediaPanel, sameTrack, type NowPlaying } from "./mediaPanel";
+import { MediaPanel, position, sameTrack, type NowPlaying } from "./mediaPanel";
 import { ClipboardPanel, ICON, remindable, secondsLeft, secretName, setSmart, smart, type ClipItem } from "./clipboard";
 import { FocusPanel, chime } from "./focusPanel";
 import { bytes, esc, pct, took, whenLabel } from "./format";
@@ -22,7 +22,8 @@ import { GuidePanel, savedGuide } from "./guidePanel";
 import { HomePanel } from "./homePanel";
 import { ModePanel, modeIcon, modeName } from "./modePanel";
 import { needsGuide } from "./onboarding";
-import { layout, type DropletId, type Shape } from "./droplets";
+import { clock, pickCore, type Core } from "./core";
+import { layout, openCore, type DropletId, type Shape } from "./droplets";
 import { DropletsView, parseColor, type GlassKind } from "./dropletsView";
 import { Reminders, type Reminder } from "./reminders";
 import { findTime } from "./timeparse";
@@ -614,8 +615,90 @@ const DROP_TAB: Record<DropletId, Tab> = {
 const dropName = (id: DropletId) =>
   id === "settings" ? t("drop.settings") : id === "modes" ? t("drop.modes") : id === "ai" ? t("drop.ai") : t(`tab.${DROP_TAB[id]}` as Key);
 
-/** Until the core has its own content, it stays the size of the small island. */
-const dropCore = () => ({ w: CW, h: CH, r: R_COMPACT });
+/** What the core shows while the droplets are out: the most urgent thing going on. */
+function coreNow(): Core {
+  const ask = ai.asks[0];
+  const lead = isOn(modes.state, "ai") ? agents.lead() : null;
+  const m = call.mic;
+  const d = downloads[0];
+  return pickCore({
+    ask: ask ? { agent: AGENT_NAME[ask.agent], summary: ask.summary || ask.tool } : null,
+    call: m?.inUse ? { app: m.app ?? "", muted: !!m.muted } : null,
+    agent: lead ? { agent: AGENT_NAME[lead.agent], project: lead.place, since: lead.started } : null,
+    focus: focus.running ? { endsAt: 0, paused: focus.paused } : null,
+    download: d ? { name: d.name, bytes: d.bytes, total: d.total } : null,
+  });
+}
+
+/** The core's one line, every value escaped. */
+function coreView(c: Core): string {
+  let title = "";
+  let sub = "";
+  let readout = "";
+  if (c.kind === "ask") {
+    const a = ai.asks[0];
+    title = t(askVerb(a?.tool ?? ""), { agent: c.agent });
+    sub = c.summary;
+  } else if (c.kind === "call") {
+    title = c.muted ? t("core.call.muted") : c.app ? t("core.call.live", { app: c.app }) : t("core.call.liveNoApp");
+    sub = t("core.call.sub");
+    readout = clock(Date.now() - (call.mic?.since ?? 0) * 1000);
+  } else if (c.kind === "agent") {
+    const waiting = agents.lead()?.state === "waiting";
+    title = t(waiting ? "core.agent.waiting" : "core.agent.working", { agent: c.agent });
+    sub = c.project;
+    readout = clock(Date.now() - c.since);
+  } else if (c.kind === "focus") {
+    title = t(c.paused ? "core.focus.paused" : "core.focus");
+    sub = t("core.focus.sub");
+    readout = focus.label;
+  } else if (c.kind === "download") {
+    title = c.name;
+    sub = t("core.download.sub", { speed: bytes(downloads[0]?.speed ?? 0) });
+    readout = c.total ? `${Math.round((c.bytes / c.total) * 100)}%` : bytes(c.bytes);
+  }
+  const urgent = c.kind === "ask" || (c.kind === "call" && !c.muted);
+  return `<span class="core-ring${urgent ? " urgent" : ""}" aria-hidden="true"><i></i></span>
+    <span class="core-text"><b>${esc(title)}</b><span>${esc(sub)}</span></span>
+    ${readout ? `<span class="core-readout num">${esc(readout)}</span>` : ""}`;
+}
+
+/** The view a busy core opens when clicked. */
+const CORE_TAB: Partial<Record<Core["kind"], Tab>> = { ask: "ai", agent: "ai", call: "call", focus: "focus" };
+
+/** The core's size: grown for a live line, or the small island when nothing is going on. */
+function dropCore() {
+  const c = coreNow();
+  if (c.kind === "idle") return { w: CW, h: CH, r: R_COMPACT };
+  const { w, h, r } = openCore(hasNotch ? { w: info.notchWidth, h: info.notchHeight } : null, WIN_W);
+  return { w, h, r };
+}
+
+/** Whether the core last had something to say, to notice when that changes. */
+let coreBusy = false;
+
+// Once a second while the droplets are out: the readout ticks, and the core
+// grows or shrinks when something starts or stops.
+window.setInterval(() => {
+  if (!drops?.visible || mode !== "open") return;
+  const busy = coreNow().kind !== "idle";
+  if (busy !== coreBusy) {
+    if (dropView) openDropView(dropView, null);
+    else openDroplets();
+    return;
+  }
+  if (busy) $("#v-core").innerHTML = coreView(coreNow());
+}, 1000);
+
+/** Shows the core's line, or the small island's row when there is nothing to say. */
+function paintCore() {
+  const c = coreNow();
+  coreBusy = c.kind !== "idle";
+  if (c.kind === "idle") return show("v-compact");
+  root.style.setProperty("--core-h", `${openCore(hasNotch ? { w: 0, h: 0 } : null, WIN_W).h}px`);
+  $("#v-core").innerHTML = coreView(c);
+  show("v-core");
+}
 
 function dropLayout() {
   const on = (Object.keys(DROP_TAB) as DropletId[]).filter((id) => id === "settings" || id === "modes" || tabOn(modes.state, DROP_TAB[id]));
@@ -623,29 +706,65 @@ function dropLayout() {
   return layout({ winW: WIN_W, notch, on, view: "home", chipW: drops!.measure(on, dropName), core: dropCore() });
 }
 
+/** A ring around a round droplet: `part` from 0 to 1 of it filled. */
+const ring = (part: number, color: string) =>
+  `<svg class="dl-ring" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="54" class="track" pathLength="100"/><circle cx="60" cy="60" r="54" class="fill" pathLength="100" stroke="${color}" stroke-dasharray="${Math.max(0, Math.min(100, part * 100)).toFixed(1)} 100"/></svg>`;
+
+const CHIP_ICON: Partial<Record<DropletId, string>> = { ai: icon.robot, dev: icon.terminal, cleaner: icon.broom, calls: icon.mic, modes: icon.sliders, settings: icon.gear };
+const PRESSURE_COLOR = ["var(--ok)", "var(--warn)", "var(--bad)"];
+
+/** A chip's small light: on only when there is something live behind it. */
+function chipDot(id: DropletId): string {
+  if (id === "ai" && isOn(modes.state, "ai")) {
+    const lead = agents.lead();
+    if (lead) return lead.state === "waiting" ? "var(--warn)" : "var(--accent-on-black, var(--accent))";
+  }
+  if (id === "calls" && call.mic?.inUse) return call.mic.muted ? "var(--muted)" : "var(--bad)";
+  return "";
+}
+
 /** Each droplet's inside, every value escaped. */
 function dropContent(id: DropletId): string {
   if (id === "media") {
     const n = media.now;
-    const art = n?.art ? ` style="background-image: url('${esc(n.art)}')"` : "";
-    return `<span class="dl-art"${art}></span><span class="dl-text"><b>${esc(n?.title || t("drop.nothing"))}</b><small>${esc(n ? n.artist : t("drop.playHint"))}</small></span>`;
+    const art = n?.art ? `<span class="dl-art" style="background-image: url('${esc(n.art)}')"></span>` : `<span class="dl-art blank">${icon.music}</span>`;
+    const part = n && n.duration > 0 ? Math.min(1, position(n) / n.duration) : 0;
+    const bar = n && n.duration > 0 ? `<span class="dl-bar" aria-hidden="true"><i style="width: ${(part * 100).toFixed(1)}%"></i></span>` : "";
+    const state = n ? `<span class="dl-state">${n.playing ? icon.pause : icon.play}</span>` : "";
+    return `${art}<span class="dl-text"><b>${esc(n?.title || t("drop.nothing"))}</b><small>${esc(n ? n.artist : t("drop.playHint"))}</small>${bar}</span>${state}`;
   }
-  if (id === "focus") return `<span class="dl-big">${esc(focus.running ? focus.label : "25:00")}</span><span class="dl-sub">${esc(t("tab.focus"))}</span>`;
+  if (id === "focus") {
+    const fill = focus.running ? ring(focus.left, "var(--accent-on-black, var(--accent))") : ring(0, "transparent");
+    return `${fill}<span class="dl-round-in"><span class="dl-big num">${esc(focus.running ? focus.label : "25:00")}</span><span class="dl-sub">${icon.timer}${esc(t("tab.focus"))}</span></span>`;
+  }
   if (id === "system") {
     const s = lastStats;
-    const mem = s ? Math.round((s.memUsed / s.memTotal) * 100) : 0;
-    return `<span class="dl-big">${mem}%</span><span class="dl-sub">${esc(t("drop.memory"))}</span><span class="dl-sub">${esc(t("drop.cpu", { pct: Math.round(s?.cpu ?? 0) }))}</span>`;
+    const part = s ? s.memUsed / s.memTotal : 0;
+    return `${ring(part, PRESSURE_COLOR[s?.pressure ?? 0])}<span class="dl-round-in"><span class="dl-big num">${Math.round(part * 100)}%</span><span class="dl-sub">${icon.memory}${esc(t("drop.memory"))}</span><span class="dl-sub faint">${esc(t("drop.cpu", { pct: Math.round(s?.cpu ?? 0) }))}</span></span>`;
   }
   if (id === "clipboard") {
     const last = clips.items[0];
     const text = !last ? t("drop.nothingCopied") : last.secret ? t("drop.secret") : last.kind === "image" ? t("tab.clipboard") : (last.text ?? "");
-    return `<span class="dl-text"><small>${esc(t("drop.lastCopied"))}</small><b>${esc(text)}</b></span><span class="dl-btn">${esc(t("drop.seeAll", { count: clips.items.length }))}</span>`;
+    const lead = !last
+      ? `<span class="dl-kind">${icon.clipboard}</span>`
+      : last.secret
+        ? `<span class="dl-kind secret">${icon.lock}</span>`
+        : last.kind === "image" && last.thumb
+          ? `<span class="dl-kind thumb"><img alt="" src="${esc(last.thumb)}"></span>`
+          : `<span class="dl-kind">${({ text: icon.text, link: icon.link, code: icon.code, color: icon.paint, image: icon.image } as const)[last.kind]}</span>`;
+    const from = last?.app ? t("drop.copiedFrom", { app: last.app }) : t("drop.lastCopied");
+    return `${lead}<span class="dl-text"><small>${esc(from)}</small><b>${esc(text)}</b></span><span class="dl-btn">${esc(t("drop.seeAll", { count: clips.items.length }))}</span>`;
   }
   if (id === "shelf") {
+    const items = shelf.items.slice(0, 3);
+    const stack = items.length
+      ? `<span class="dl-stack" aria-hidden="true">${items.map((f, i) => `<span class="dl-file f${i}">${f.isDir ? icon.folder : `<b>${esc((f.name.split(".").pop() ?? "").slice(0, 4).toUpperCase())}</b>`}</span>`).join("")}</span>`
+      : `<span class="dl-kind">${icon.tray}</span>`;
     const n = shelf.items.length;
-    return `<span class="dl-text"><b>${esc(n ? t("drop.shelf", { count: n }) : t("drop.shelfEmpty"))}</b><small>${esc(t("drop.dropHere"))}</small></span>`;
+    return `${stack}<span class="dl-text"><b>${esc(n ? t("drop.shelf", { count: n }) : t("drop.shelfEmpty"))}</b><small>${esc(t("drop.dropHere"))}</small></span>`;
   }
-  return esc(dropName(id));
+  const dot = chipDot(id);
+  return `${CHIP_ICON[id] ?? ""}<span>${esc(dropName(id))}</span>${dot ? `<i class="dl-dot" style="background: ${dot}"></i>` : ""}`;
 }
 
 /** The views already rebuilt as droplets, and the tallest each may grow (each fits its content); the rest still open today's panels. */
@@ -697,7 +816,7 @@ function openDropView(id: DropletId, from: Shape | null) {
   mode = "open";
   tab = tabId;
   syncEyes();
-  show("v-compact");
+  paintCore();
   const section = $(`.panel[data-panel="${tabId}"]`);
   document.querySelectorAll<HTMLElement>(".panel").forEach((p) => p.classList.toggle("on", p === section));
   dropView = id;
@@ -731,8 +850,9 @@ function openDropView(id: DropletId, from: Shape | null) {
 function openDroplets() {
   mode = "open";
   tab = "home";
+  dropView = null;
   syncEyes();
-  show("v-compact");
+  paintCore();
   const l = dropLayout();
   drops!.show(l, dropContent);
   go({ w: l.core.w, h: l.core.h, r: l.core.r }, "grow");
@@ -992,7 +1112,13 @@ shell.addEventListener("click", (e) => {
     offer = null;
     return compact();
   }
-  if (mode === "compact") open(focus.running ? "focus" : tab === "settings" || tab === "mode" ? "home" : tab);
+  // With droplets, the island always opens on them; the busy core then leads to its view.
+  if (mode === "compact" && drops) open("home");
+  else if (mode === "compact") open(focus.running ? "focus" : tab === "settings" || tab === "mode" ? "home" : tab);
+  else if (mode === "open" && drops?.visible && el.closest("#v-core")) {
+    const to = CORE_TAB[coreNow().kind];
+    if (to) open(to);
+  }
   else if (mode === "peek") open((e.target as HTMLElement).closest(".peek-body") ? "clipboard" : "home");
 });
 
