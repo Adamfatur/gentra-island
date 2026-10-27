@@ -221,8 +221,9 @@ export class AiPanel {
     const bars = [u.primary && this.bar(t("ai.limit.window"), u.primary), u.secondary && this.bar(t("ai.limit.week"), u.secondary)].filter(Boolean);
     if (bars.length) return `<div class="agent-bars">${bars.join("")}</div>`;
     if (!u.weekTokens) return `<p class="muted agent-empty">${t("ai.usage.none")}</p>`;
+    // No reset time here: the agent doesn't say when its limit resets, and a guess would mislead.
     const window = u.windowEnd
-      ? `<div class="agent-stat"><span class="card-label">${t("ai.usage.window")}</span><b class="num">${tokens(u.windowTokens, loc)}</b><span class="card-sub">${resetLabel(u.windowEnd)}</span></div>`
+      ? `<div class="agent-stat"><span class="card-label">${t("ai.usage.window")}</span><b class="num">${tokens(u.windowTokens, loc)}</b><span class="card-sub">${t("ai.usage.tokens")}</span></div>`
       : `<div class="agent-stat"><span class="card-label">${t("ai.usage.window")}</span><b class="num">0</b><span class="card-sub">${t("ai.usage.idle")}</span></div>`;
     const why = agent === "claude" ? `<p class="note">${t("ai.usage.claudeNote")}</p>` : "";
     return `<div class="agent-stats">${window}
