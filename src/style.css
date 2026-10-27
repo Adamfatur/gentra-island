@@ -959,6 +959,8 @@ body.notched .eyes-wrap .zzz { left: calc(100% - 4px); top: -6px; }
 /* Full, round dots read best at these sizes; thin ones look hollow. */
 .dl-big, .core-readout, .dl-panel .mem-big b, .dl-panel .focus-clock, .dl-panel .presets b { font-family: var(--readout); font-weight: 900; font-variation-settings: "ROND" 100; letter-spacing: 0.01em; }
 .dl-big { font-size: 40px; line-height: 1; }
+/* Inside a ring the figure must clear the ring: dot-matrix digits run wide. */
+.dl-round .dl-big { font-size: 30px; }
 .core-readout { font-size: 30px; }
 .dl-ring { position: absolute; left: 9px; top: 9px; width: calc(100% - 18px); height: calc(100% - 18px); transform: rotate(-90deg); pointer-events: none; }
 .dl-ring circle { fill: none; stroke-width: 6; }
