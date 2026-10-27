@@ -620,4 +620,5 @@ export const id: Record<Key, Msg> = {
   "core.focus.sub": "Pesan bisa menunggu",
   "core.download.sub": "{speed} per detik",
   "drop.copiedFrom": "Terakhir disalin, dari {app}",
+  "clip.reading": "Membaca…",
 };

@@ -632,6 +632,7 @@ export const en = {
   "core.focus.sub": "Messages can wait",
   "core.download.sub": "{speed} a second",
   "drop.copiedFrom": "Last copied, from {app}",
+  "clip.reading": "Reading…",
 };
 
 export type Key = keyof typeof en;

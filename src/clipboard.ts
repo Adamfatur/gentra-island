@@ -109,6 +109,8 @@ export class ClipboardPanel {
     private onCopied: (item: ClipItem) => void,
     private toast: (msg: string) => void,
     private remind: (item: ClipItem, at: Date) => void,
+    /** Reads the text in an image from the history and copies it. */
+    private copyText: (id: number) => Promise<void>,
   ) {
     this.input.addEventListener("input", () => {
       this.query = this.input.value.trim().toLowerCase();
@@ -129,6 +131,18 @@ export class ClipboardPanel {
       if (pin) return void this.pin(Number(pin.dataset.pin));
       const bell = t.closest<HTMLElement>("[data-remind]");
       if (bell) return this.chooseTime(Number(bell.dataset.remind));
+      const ocr = t.closest<HTMLButtonElement>("[data-ocr]");
+      if (ocr) {
+        // Reading can take a moment on a big screenshot; say so instead of looking stuck.
+        const label = ocr.querySelector("span");
+        const was = label?.textContent ?? "";
+        ocr.disabled = true;
+        if (label) label.textContent = this.readingLabel();
+        return void this.copyText(Number(ocr.dataset.ocr)).finally(() => {
+          ocr.disabled = false;
+          if (label) label.textContent = was;
+        });
+      }
       const card = t.closest<HTMLElement>(".card");
       if (card) this.copy(Number(card.dataset.id));
     });
@@ -328,7 +342,9 @@ export class ClipboardPanel {
     let body: string;
     if (i.kind === "image") {
       const dims = i.size ? `${i.size[0]} × ${i.size[1]}` : kindName("image");
-      body = `<img alt="" src="${i.thumb ?? ""}"><div class="body" style="-webkit-line-clamp:1">${dims}</div>`;
+      // Any image in the history, an old screenshot too, can give up its text.
+      body = `<img alt="" src="${i.thumb ?? ""}"><div class="body" style="-webkit-line-clamp:1">${dims}</div>
+        <button class="ocr" data-ocr="${i.id}">${icon.text}<span>${t("shot.text")}</span></button>`;
     } else if (i.kind === "color") {
       body = `<div class="swatch-fill" style="background:${CSS.supports("color", i.text!) ? text : "transparent"}"></div><div class="body">${text}</div>`;
     } else {
@@ -345,6 +361,10 @@ export class ClipboardPanel {
       ${i.secret ? "" : `<button class="pin${i.pinned ? " on" : ""}" data-pin="${i.id}" aria-label="${t(i.pinned ? "clip.unpin" : "clip.pin")}">${PIN}</button>`}
       ${this.remindOn && remindable(i) ? `<button class="bell" data-remind="${i.id}" aria-label="${t("remind.button")}" title="${t("remind.button")}">${icon.bell}</button>` : ""}
     </div>`;
+  }
+
+  private readingLabel() {
+    return t("clip.reading");
   }
 
   private renderInspector() {

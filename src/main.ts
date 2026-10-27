@@ -467,7 +467,7 @@ const pasteKey = mac ? "⌘V" : "Ctrl+V";
 const clips = new ClipboardPanel(() => {
   toast(t("clip.copied", { key: pasteKey }));
   window.setTimeout(compact, 700);
-}, toast, (item, at) => remindAt(item.text ?? "", at, item.app));
+}, toast, (item, at) => remindAt(item.text ?? "", at, item.app), (id) => copyTextFrom(id, false));
 await clips.load();
 
 const cleaner = new CleanerPanel();
@@ -1328,9 +1328,9 @@ await listen<Shot>("screenshot", ({ payload: s }) => {
   );
 });
 
-/** Copy text for an image in the clipboard history. */
-async function copyTextFrom(id: number) {
-  compact();
+/** Copy text for an image in the clipboard history; from a peek, the island closes first. */
+async function copyTextFrom(id: number, close = true) {
+  if (close) compact();
   try {
     const text = await invoke<string>("clip_text", { id });
     if (!text.trim()) return toast(t("shot.noText"));

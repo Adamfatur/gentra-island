@@ -265,6 +265,11 @@ p { margin: 0; }
 .card .hint { font-size: 11px; line-height: 1.3; color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* Contain, not cover: a screenshot shows whole, so text in it isn't cut off. */
 .card img { width: 100%; height: 66px; object-fit: contain; border-radius: 7px; display: block; background: var(--raised); }
+/* Copy text on an image card: reads the text in it, on this computer. */
+.card .ocr { display: inline-flex; align-items: center; gap: 5px; align-self: flex-start; padding: 4px 9px; border-radius: 8px; background: var(--raised); color: var(--text); font-size: 11.5px; font-weight: 650; }
+.card .ocr svg { width: 12px; height: 12px; }
+.card .ocr:hover { filter: brightness(1.12); }
+.card .ocr:disabled { opacity: 0.7; cursor: progress; }
 .card .swatch-fill { height: 56px; border-radius: 7px; box-shadow: inset 0 0 0 1px var(--line); }
 .card .foot { display: flex; justify-content: space-between; gap: 6px; font-size: 10.5px; color: var(--muted); }
 .card .foot span:first-child { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -829,6 +834,8 @@ body.notched .eyes-wrap .zzz { left: calc(100% - 4px); top: -6px; }
 .dl-panel .card img { height: 120px; border-radius: 18px; background: rgba(0, 0, 0, 0.25); }
 .dl-panel .card .swatch-fill { height: 110px; border-radius: 18px; }
 .dl-panel .card .foot { font-size: 12px; }
+.dl-panel .card .ocr { height: 34px; padding: 0 14px; border-radius: 17px; font-size: 13px; font-weight: 750; background: rgba(255, 255, 255, 0.92); color: #14183a; }
+.dl-panel .card .ocr svg { width: 14px; height: 14px; }
 .dl-panel .card .pin { top: 10px; right: 10px; width: 32px; height: 32px; }
 /* The bell keeps its place left of the bigger pin. */
 .dl-panel .card .bell { top: 10px; right: 50px; width: 32px; height: 32px; }
