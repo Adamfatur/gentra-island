@@ -646,10 +646,22 @@ function dropContent(id: DropletId): string {
   return esc(dropName(id));
 }
 
-/** The views already rebuilt as droplets, and how tall each one is; the rest still open today's panels. */
-const DROP_VIEWS: Partial<Record<DropletId, number>> = { clipboard: 512, media: 400 };
+/** The views already rebuilt as droplets, and the tallest each may grow (each fits its content); the rest still open today's panels. */
+const DROP_VIEWS: Partial<Record<DropletId, number>> = { clipboard: 540, media: 540, system: 540, focus: 540, shelf: 540 };
+const PRESSURE_TITLE: Key[] = ["system.pressure.ok", "system.pressure.tight", "system.pressure.full"];
+/** The droplet whose view is open, if any. */
+let dropView: DropletId | null = null;
 
 function dropHead(id: DropletId) {
+  if (id === "system") return { kicker: t("tab.system"), title: lastStats ? t(PRESSURE_TITLE[lastStats.pressure]) : t("system.waiting.title") };
+  if (id === "focus") {
+    const title = !focus.running ? t("drop.focus.idle") : t(focus.paused ? "drop.focus.paused" : "drop.focus.running", { time: focus.label });
+    return { kicker: t("tab.focus"), title };
+  }
+  if (id === "shelf") {
+    const n = shelf.items.length;
+    return { kicker: t("tab.shelf"), title: n ? t("drop.shelf.title", { count: n }) : t("drop.shelf.empty") };
+  }
   if (id === "media") {
     const n = media.now;
     return { kicker: n?.app ? t("media.from", { app: n.app }) : t("drop.media.kicker"), title: n?.title || t("drop.nothing") };
@@ -672,7 +684,14 @@ function openDropView(id: DropletId, from: Shape | null) {
   show("v-compact");
   const section = $(`.panel[data-panel="${tabId}"]`);
   document.querySelectorAll<HTMLElement>(".panel").forEach((p) => p.classList.toggle("on", p === section));
+  dropView = id;
   if (id === "media") media.show();
+  if (id === "system") {
+    void invoke("set_stats_detail", { on: true });
+    if (lastStats) renderSystem(lastStats);
+  }
+  if (id === "focus") focus.render();
+  if (id === "shelf") shelf.render();
   const notch = hasNotch ? { w: Math.round(info.notchWidth), h: Math.round(info.notchHeight) } : null;
   const l = layout({ winW: WIN_W, notch, on: [id], view: id, panelH: DROP_VIEWS[id], core: dropCore() });
   drops!.openPanel(l, from, section, { ...dropHead(id), done: t("drop.done") });
@@ -703,6 +722,7 @@ if (dropletsWanted || (await invoke<boolean>("droplets_enabled"))) {
     await invoke<GlassKind>("glass_kind"),
     (id, from) => (DROP_VIEWS[id] ? openDropView(id, from) : open(DROP_TAB[id])),
     () => openDroplets(),
+    () => reportHit(morph.current),
   );
 }
 
@@ -841,6 +861,8 @@ await listen<Stats>("stats", ({ payload }) => {
   lastStats = payload;
   lastStatsAt = Date.now();
   drops?.refresh(dropContent);
+  // The stats tick every couple of seconds, often enough to keep an open view's title current.
+  if (drops?.open && dropView) drops.retitle(dropHead(dropView));
   renderCompact(payload, badge(), playingArt());
   if (mode === "open" && tab === "system") renderSystem(payload);
   home.stats();

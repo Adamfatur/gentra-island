@@ -592,4 +592,9 @@ export const id: Record<Key, Msg> = {
   "drop.done": "Selesai",
   "drop.clip.title": "{count} hal yang kamu salin",
   "drop.media.kicker": "Sedang diputar",
+  "drop.focus.idle": "Satu hal dalam satu waktu",
+  "drop.focus.running": "Sedang fokus, sisa {time}",
+  "drop.focus.paused": "Dijeda, sisa {time}",
+  "drop.shelf.title": "{count} file, siap ditarik",
+  "drop.shelf.empty": "Simpan file di sini biar dekat",
 };

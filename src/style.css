@@ -836,4 +836,51 @@ body.notched .eyes-wrap .zzz { left: calc(100% - 4px); top: -6px; }
 .dl-panel .media-controls button svg { width: 22px; height: 22px; }
 .dl-panel .media-controls .play { width: 68px; height: 68px; background: #fff; color: #14183a; box-shadow: 0 10px 24px -10px rgba(0, 0, 0, 0.6); }
 .dl-panel .media-controls .play svg { width: 26px; height: 26px; }
+/* Buttons inside a view: capsules, the main one white. */
+.dl-panel .shelf-actions button, .dl-panel .focus-actions button { height: 44px; padding: 0 18px; border-radius: 22px; background: var(--surface); color: var(--text); font-size: 14px; font-weight: 750; }
+.dl-panel button.primary, .dl-panel .shelf-actions button.primary, .dl-panel .focus-actions button.primary { background: #fff; color: #14183a; }
+
+/* System: the title already says how memory is; the ring and the number carry the rest. */
+.dl-panel .pressure { display: none; }
+.dl-panel .sys { gap: 16px 22px; }
+.dl-panel .ring { width: 150px; height: 150px; }
+.dl-panel .ring .track { stroke: var(--surface); }
+.dl-panel .mem { gap: 22px; }
+.dl-panel .mem-big { font-size: 15px; }
+.dl-panel .mem-big b { font-size: 44px; font-weight: 800; letter-spacing: -0.03em; }
+.dl-panel #swap { font-size: 14px; }
+.dl-panel .side-stats { border-radius: 24px; padding: 16px 18px; }
+.dl-panel .list-title { font-size: 13px; font-weight: 700; color: var(--muted); margin-bottom: 8px; }
+.dl-panel .procs { gap: 8px 14px; }
+.dl-panel .procs li { padding: 12px 16px; border-radius: 20px; background: var(--surface); font-size: 14px; font-weight: 650; }
+.dl-panel .procs li .meter { height: 4px; background: var(--raised); }
+.dl-panel .procs li .meter b { background: var(--text); }
+
+/* Focus: big round lengths, then a big clock while it runs. */
+.dl-panel .focus-intro b { display: none; }
+.dl-panel .focus-intro span { font-size: 15px; }
+.dl-panel .presets { gap: 12px; }
+.dl-panel .presets button { padding: 22px 8px; border-radius: 28px; }
+.dl-panel .presets b { font-size: 38px; font-weight: 800; letter-spacing: -0.02em; }
+.dl-panel .presets span { font-size: 13px; }
+.dl-panel .focus { gap: 26px; }
+.dl-panel .focus-ring { width: 150px; height: 150px; }
+.dl-panel .focus-ring .track { stroke: var(--surface); }
+.dl-panel .focus-ring .fill { stroke: #fff; }
+.dl-panel .focus-clock { font-size: 64px; font-weight: 800; letter-spacing: -0.03em; }
+.dl-panel .focus-actions { gap: 8px; }
+
+/* Shelf: a round drop zone, files as capsules. */
+.dl-panel .drop { border-radius: 30px; border-color: rgba(255, 255, 255, 0.4); padding: 10px; }
+.dl-panel .drop-empty { min-height: 200px; }
+.dl-panel .drop-empty b { font-size: 17px; font-weight: 800; }
+.dl-panel .drop-empty span { font-size: 14px; }
+.dl-panel .files { gap: 8px; }
+.dl-panel .file { padding: 10px 10px 10px 16px; border-radius: 24px; background: var(--surface); }
+.dl-panel .file .n { font-size: 15px; font-weight: 700; }
+.dl-panel .file .h { font-size: 12px; }
+.dl-panel .file button { width: 40px; height: 40px; border-radius: 20px; }
+.dl-panel .shelf-actions { margin-top: 14px; }
+.dl-panel .shelf-actions .muted { font-size: 13px; }
+
 @media (prefers-reduced-motion: reduce) { .dl-panel > * { transition: none; } }

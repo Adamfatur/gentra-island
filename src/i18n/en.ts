@@ -604,6 +604,11 @@ export const en = {
   "drop.done": "Done",
   "drop.clip.title": "{count} things you copied",
   "drop.media.kicker": "Now playing",
+  "drop.focus.idle": "One thing at a time",
+  "drop.focus.running": "Focusing, {time} left",
+  "drop.focus.paused": "Paused, {time} left",
+  "drop.shelf.title": "{count} files, ready to drag",
+  "drop.shelf.empty": "Keep files handy here",
 };
 
 export type Key = keyof typeof en;

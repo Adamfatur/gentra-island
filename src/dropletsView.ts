@@ -26,13 +26,19 @@ export class DropletsView {
   private els = new Map<DropletId, HTMLButtonElement>();
   private layout: Layout | null = null;
   private hideTimer = 0;
+  /** The tallest the open panel may grow. */
+  private maxH = 0;
   private reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   private panel: { el: HTMLElement; section: HTMLElement; home: [Node, Node | null]; tint: Tint } | null = null;
+  /** Refits the open panel when what's inside changes height (files added, a timer started). */
+  private resize = new ResizeObserver(() => this.refit());
 
   constructor(
     kind: GlassKind,
     private onPick: (id: DropletId, from: Shape) => void,
     private onDone: () => void,
+    /** Called when the shapes change on their own, so the hit tester can follow. */
+    private onMoved: () => void,
   ) {
     this.root.className = "droplets";
     // Without system glass the page paints each droplet itself.
@@ -146,6 +152,7 @@ export class DropletsView {
   openPanel(layout: Layout, from: Shape | null, section: HTMLElement, head: PanelHead) {
     const target = layout.panel;
     if (!target) return;
+    this.maxH = target.h;
     clearTimeout(this.hideTimer);
     this.dropPanel();
     this.root.hidden = false;
@@ -181,13 +188,48 @@ export class DropletsView {
     this.root.append(el);
     this.panel = { el, section, home, tint: TINT };
 
-    const start = from ?? tucked(target, layout.core);
+    // Lay it out at its final width first, to learn how tall its content is.
+    place(el, target, false);
+    const fitted = { ...target, h: this.fitHeight(el, section, target.h) };
+    const start = from ?? tucked(fitted, layout.core);
     place(el, start, false);
-    this.layout = layout;
+    this.layout = { ...layout, panel: fitted };
     this.glass([start], 0);
     void this.root.offsetWidth;
-    place(el, target, true);
-    this.glass([target], this.ms);
+    place(el, fitted, true);
+    this.glass([fitted], this.ms);
+    // The section itself always fills the panel; its children change size with their content.
+    for (const child of section.children) this.resize.observe(child);
+  }
+
+  /** The panel's height for its content: never more than `max`, never a sliver. */
+  private fitHeight(el: HTMLElement, section: HTMLElement, max: number): number {
+    const style = getComputedStyle(el);
+    const pad = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+    const head = el.querySelector<HTMLElement>(".dl-head")!.offsetHeight;
+    const gap = parseFloat(style.rowGap) || 0;
+    // The section fills the panel, so measure it at its own height for a moment.
+    const before = section.style.cssText;
+    section.style.flex = "none";
+    section.style.height = "auto";
+    section.style.overflow = "visible";
+    const content = section.offsetHeight;
+    section.style.cssText = before;
+    // A few points spare, so rounding never leaves a scrollbar.
+    return Math.round(Math.min(max, Math.max(200, pad + head + gap + content + 4)));
+  }
+
+  private refit() {
+    const p = this.panel;
+    const l = this.layout;
+    if (!p || !l?.panel) return;
+    const h = this.fitHeight(p.el, p.section, this.maxH);
+    if (Math.abs(h - l.panel.h) < 2) return;
+    const next = { ...l.panel, h };
+    this.layout = { ...l, panel: next };
+    place(p.el, next, true);
+    this.glass([next], this.ms, p.tint);
+    this.onMoved();
   }
 
   /** Retitles the open panel, e.g. when the song changes. */
@@ -209,6 +251,7 @@ export class DropletsView {
   private dropPanel() {
     const p = this.panel;
     if (!p) return;
+    this.resize.disconnect();
     this.panel = null;
     p.home[0].insertBefore(p.section, p.home[1]);
     p.el.remove();
