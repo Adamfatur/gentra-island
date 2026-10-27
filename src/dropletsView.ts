@@ -62,7 +62,9 @@ export class DropletsView {
       if (!el) return;
       e.stopPropagation();
       const d = this.layout?.droplets.find((x) => x.id === el.dataset.drop);
-      if (d) this.onPick(d.id, d);
+      if (d) return this.onPick(d.id, d);
+      const side = this.side.find((x) => x.el === el);
+      if (side) this.onPick(el.dataset.drop as DropletId, side.shape);
     });
     // The window itself, or the preview's stand-in for it.
     (document.getElementById("stagebox") ?? document.body).append(this.root);
@@ -74,6 +76,72 @@ export class DropletsView {
 
   get visible(): boolean {
     return this.layout !== null;
+  }
+
+  /** The small droplets beside a closed island (music playing), if showing. */
+  private side: { el: HTMLButtonElement; shape: Shape }[] = [];
+
+  get sideVisible(): boolean {
+    return this.side.length > 0 && !this.layout;
+  }
+
+  /** Their shapes, for the hit tester. */
+  sideShapes(): Shape[] {
+    return this.layout ? [] : this.side.map((x) => x.shape);
+  }
+
+  /**
+   * Splits small droplets off a closed island, each with escaped HTML, or
+   * updates the ones already out. They grow from the notch's edge.
+   */
+  showSide(items: { id: DropletId; shape: Shape; html: string; label: string }[], notch: Shape) {
+    if (this.layout) return;
+    this.root.hidden = false;
+    const fresh = this.side.length === 0;
+    if (!fresh && this.side.length === items.length) {
+      items.forEach((it, i) => {
+        this.side[i].el.innerHTML = it.html;
+        this.side[i].el.setAttribute("aria-label", it.label);
+      });
+      return;
+    }
+    this.clearSide();
+    this.side = items.map((it) => {
+      const el = document.createElement("button");
+      el.type = "button";
+      el.className = "dl dl-side";
+      el.dataset.drop = it.id;
+      el.setAttribute("aria-label", it.label);
+      el.innerHTML = it.html;
+      this.root.append(el);
+      setBox(el, it.shape);
+      // Out of the notch's side, toward where it settles.
+      const from = { ...it.shape, x: it.shape.x < notch.x ? notch.x : notch.x + notch.w - it.shape.w, w: it.shape.w };
+      pose(el, it.shape, { ...from, w: it.shape.w * 0.4, h: it.shape.h * 0.4, x: from.x + it.shape.w * 0.3, y: it.shape.y + it.shape.h * 0.3, r: it.shape.r * 0.4 }, false);
+      return { el, shape: it.shape };
+    });
+    this.glass(this.side.map((x) => ({ ...x.shape, w: x.shape.w * 0.4, h: x.shape.h * 0.4, r: x.shape.r * 0.4, x: x.shape.x + x.shape.w * 0.3, y: x.shape.y + x.shape.h * 0.3 })), 0);
+    void this.root.offsetWidth;
+    for (const x of this.side) pose(x.el, x.shape, null, true);
+    this.glass(this.side.map((x) => x.shape), this.ms);
+  }
+
+  /** Takes the side droplets back into the notch. */
+  hideSide() {
+    if (!this.side.length) return;
+    const going = this.side;
+    this.side = [];
+    for (const x of going) pose(x.el, x.shape, { ...x.shape, w: x.shape.w * 0.4, h: x.shape.h * 0.4, x: x.shape.x + x.shape.w * 0.3, y: x.shape.y + x.shape.h * 0.3, r: x.shape.r * 0.4 }, true);
+    if (!this.layout) this.glass([], this.ms);
+    window.setTimeout(() => {
+      for (const x of going) x.el.remove();
+      if (!this.layout && !this.side.length) this.root.hidden = true;
+    }, this.ms);
+  }
+
+  private clearSide() {
+    for (const x of this.side) x.el.remove();
+    this.side = [];
   }
 
   /** Which droplet has grown into a panel, if any. */
@@ -113,6 +181,7 @@ export class DropletsView {
   show(layout: Layout, content: (id: DropletId) => string) {
     clearTimeout(this.hideTimer);
     this.root.classList.remove("leaving");
+    this.clearSide();
     const first = !this.layout || this.open;
     this.dropPanel();
     this.root.hidden = false;
@@ -167,6 +236,7 @@ export class DropletsView {
     const target = layout.panel;
     if (!target) return;
     this.root.classList.remove("leaving");
+    this.clearSide();
     this.maxH = target.h;
     this.minH = from ? Math.min(target.h, Math.max(200, from.y + from.h - target.y)) : 200;
     clearTimeout(this.hideTimer);
@@ -320,10 +390,15 @@ export class DropletsView {
     this.hideTimer = window.setTimeout(() => {
       this.dropPanel();
       this.root.classList.remove("leaving");
-      this.root.hidden = true;
-      this.root.replaceChildren();
+      for (const el of this.els.values()) el.remove();
       this.els.clear();
-      this.glass([], 0);
+      this.root.querySelector(".dl-toast")?.remove();
+      // Droplets that split off the closed island meanwhile stay.
+      if (this.side.length) this.glass(this.side.map((x) => x.shape), 0);
+      else {
+        this.root.hidden = true;
+        this.glass([], 0);
+      }
     }, this.ms);
   }
 }

@@ -140,6 +140,13 @@ const morph = new Morph(
 
 /** Tells Rust where the island is so the rest of the window stays click-through. */
 function reportHit(s: Size, target?: Size) {
+  if (drops?.sideVisible && mode === "compact") {
+    const w = Math.max(s.w, target?.w ?? 0);
+    const h = Math.max(s.h, target?.h ?? 0);
+    const core = { x: (WIN_W - w) / 2 - 6, y: 0, w: w + 12, h: h + 6 };
+    void invoke("set_hit_rects", { rects: [core, ...drops.sideShapes().map(({ x, y, w, h }) => ({ x, y, w, h }))] });
+    return;
+  }
   if (drops?.visible) {
     void invoke("set_hit_rects", { rects: drops.hitShapes().map(({ x, y, w, h }) => ({ x, y, w, h })) });
     return;
@@ -246,6 +253,8 @@ function moment() {
 function compactSize(): Size {
   const live = !!badge() || playingArt() !== undefined;
   let next: Look = compactLook(settings.settings.islandSize, { hasNotch, live, hovering, covered });
+  // While music plays, its cover and sound split off as droplets; the island itself tucks into the notch.
+  if (sideWanted()) next = "tucked";
   syncEyes(next !== "hidden" && (!hasNotch || next !== "full"));
   // Beside the camera, the eyes take the place of the small icons.
   if (hasNotch && eyesShown) next = "eyes";
@@ -257,8 +266,37 @@ function compactSize(): Size {
     document.body.dataset.look = next;
     root.style.setProperty("--cw", `${w - extra}px`);
   }
+  queueMicrotask(syncSide);
   if (next === "hidden") return { w, h: 4, r: 2 };
   return { w, h: CH + (hovering ? 3 : 0), r: R_COMPACT };
+}
+
+/** Whether music playing should split off two droplets beside the notch. */
+function sideWanted(): boolean {
+  return !!drops && hasNotch && mode === "compact" && !hovering && !covered && !!media.now?.playing && isOn(modes.state, "musik");
+}
+
+/** Shows or tucks away the droplets beside the closed island. */
+function syncSide() {
+  if (!drops) return;
+  const n = media.now;
+  if (!sideWanted() || !n) return drops.hideSide();
+  const nw = Math.round(info.notchWidth);
+  const cx = WIN_W / 2;
+  const size = 34;
+  const gap = 8;
+  const left = { x: cx - nw / 2 - gap - size, y: 0, w: size, h: size, r: size / 2 };
+  const right = { x: cx + nw / 2 + gap, y: 0, w: size, h: size, r: size / 2 };
+  const cover = n.art ? `<img class="dl-side-art" alt="" src="${esc(n.art)}">` : icon.music;
+  const sound = `<span class="dl-eq" aria-hidden="true"><i></i><i></i><i></i></span>`;
+  drops.showSide(
+    [
+      { id: "media", shape: left, html: cover, label: n.title },
+      { id: "media", shape: right, html: sound, label: n.artist ? `${n.title}, ${n.artist}` : n.title },
+    ],
+    { x: cx - nw / 2, y: 0, w: nw, h: CH, r: 0 },
+  );
+  reportHit(morph.current);
 }
 
 function compact() {
@@ -375,6 +413,8 @@ document.querySelectorAll(".panel").forEach((p) => resize.observe(p));
 function peek(html: string, ms = 1800, wide = false) {
   if (mode === "open") return;
   mode = "peek";
+  // A peek widens over the notch's sides; the droplets there step back meanwhile.
+  drops?.hideSide();
   syncEyes();
   $("#v-peek").classList.toggle("wide", wide);
   $("#peekBody").innerHTML = html;

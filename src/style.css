@@ -1020,3 +1020,15 @@ body.notched .eyes-wrap .zzz { left: calc(100% - 4px); top: -6px; }
 .core-ring.logo .agent-logo { width: 30px; height: 30px; border-radius: 50%; background: transparent; }
 .core-ring.logo .agent-logo svg { width: 22px; height: 22px; }
 .core-ring.logo .agent-logo.codex { color: #fff; }
+
+/* Droplets beside a closed island while music plays: the cover, and the sound. */
+.dl-side { justify-content: center; padding: 0; }
+.dl-side svg { width: 16px; height: 16px; }
+.dl-side-art { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.dl-eq { display: flex; align-items: center; gap: 2px; height: 14px; }
+.dl-eq i { width: 3px; height: 100%; border-radius: 2px; background: #fff; transform-origin: 50% 50%; animation: dl-eq 0.9s ease-in-out infinite; }
+.dl-eq i:nth-child(2) { animation-delay: -0.3s; }
+.dl-eq i:nth-child(3) { animation-delay: -0.6s; }
+/* Only while it plays; transform alone, so it costs the page nothing. */
+@keyframes dl-eq { 0%, 100% { transform: scaleY(0.35); } 50% { transform: scaleY(1); } }
+@media (prefers-reduced-motion: reduce) { .dl-eq i { animation: none; transform: scaleY(0.7); } }
