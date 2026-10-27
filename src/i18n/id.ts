@@ -621,4 +621,13 @@ export const id: Record<Key, Msg> = {
   "core.download.sub": "{speed} per detik",
   "drop.copiedFrom": "Terakhir disalin, dari {app}",
   "clip.reading": "Membaca…",
+  "settings.clip": "Riwayat clipboard",
+  "settings.clip.keep.1": "1 hari",
+  "settings.clip.keep.7": "7 hari",
+  "settings.clip.keep.30": "30 hari",
+  "settings.clip.keep.0": "Sampai penuh",
+  "settings.clip.note": "Item yang disematkan selalu disimpan. Lewat dari 60 gambar, yang paling lama dihapus duluan.",
+  "settings.clip.usage": "Memakai {size} di komputer ini.",
+  "settings.clip.clear": "Hapus riwayat",
+  "settings.clip.clearConfirm": "Klik lagi untuk menghapus",
 };

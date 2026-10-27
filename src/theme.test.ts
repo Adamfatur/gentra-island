@@ -57,15 +57,21 @@ describe("loadSettings", () => {
   });
 
   test("reads a valid saved setting", () => {
-    expect(loadSettings('{"theme":"light","accent":"#FF6A3D"}')).toEqual({ theme: "light", accent: "#FF6A3D", islandSize: "notch", eyes: "always" });
+    expect(loadSettings('{"theme":"light","accent":"#FF6A3D"}')).toEqual({ theme: "light", accent: "#FF6A3D", islandSize: "notch", eyes: "always", clipKeep: 30 });
   });
 
   test("falls back to defaults for missing or broken data", () => {
-    expect(loadSettings(null)).toEqual({ theme: "auto", accent: null, islandSize: "notch", eyes: "always" });
-    expect(loadSettings("{not json")).toEqual({ theme: "auto", accent: null, islandSize: "notch", eyes: "always" });
+    expect(loadSettings(null)).toEqual({ theme: "auto", accent: null, islandSize: "notch", eyes: "always", clipKeep: 30 });
+    expect(loadSettings("{not json")).toEqual({ theme: "auto", accent: null, islandSize: "notch", eyes: "always", clipKeep: 30 });
   });
 
   test("drops values that are not a theme or a hex colour", () => {
-    expect(loadSettings('{"theme":"neon","accent":"red;background:url(x)"}')).toEqual({ theme: "auto", accent: null, islandSize: "notch", eyes: "always" });
+    expect(loadSettings('{"theme":"neon","accent":"red;background:url(x)"}')).toEqual({ theme: "auto", accent: null, islandSize: "notch", eyes: "always", clipKeep: 30 });
+  });
+
+  test("keeps a chosen clipboard history length, and only real choices", () => {
+    expect(loadSettings('{"clipKeep":30}').clipKeep).toBe(30);
+    expect(loadSettings('{"clipKeep":0}').clipKeep).toBe(0);
+    expect(loadSettings('{"clipKeep":5}').clipKeep).toBe(30);
   });
 });

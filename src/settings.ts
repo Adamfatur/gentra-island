@@ -4,7 +4,8 @@ import { APP_AUTHOR, LANGUAGES, errorText, lang, setLanguage, t, type Key, type 
 import wordmark from "../assets/brand/gentra-island-wordmark.svg?raw";
 import { icon } from "./icons";
 import { ISLAND_SIZES, type IslandSize } from "./islandSize";
-import { DEFAULTS, EYES_MODES, loadSettings, onAccentText, readableAccent, resolveTheme, type EyesMode, type Settings, type ThemeMode } from "./theme";
+import { CLIP_KEEPS, DEFAULTS, EYES_MODES, loadSettings, onAccentText, readableAccent, resolveTheme, type ClipKeep, type EyesMode, type Settings, type ThemeMode } from "./theme";
+import { bytes } from "./format";
 
 const KEY = "gentra:settings";
 
@@ -36,7 +37,9 @@ export class SettingsPanel {
   private root = document.getElementById("settingsPanel")!;
 
   /** Set by main once the toast and guide exist. */
-  hooks: { toast: (msg: string) => void; replayGuide: () => void; resized: () => void } | null = null;
+  hooks: { toast: (msg: string) => void; replayGuide: () => void; resized: () => void; clearClips: () => Promise<void> } | null = null;
+  /** When Clear history was first clicked; a second click within 3 s clears. */
+  private clearArmed = 0;
 
   constructor() {
     this.media.addEventListener("change", () => this.apply());
@@ -72,6 +75,18 @@ export class SettingsPanel {
         this.update({ eyes });
         return this.hooks?.resized();
       }
+      const keep = target.closest<HTMLElement>("[data-clip-keep]")?.dataset.clipKeep;
+      if (keep !== undefined) return this.update({ clipKeep: Number(keep) as ClipKeep });
+      if (target.closest("#clipClearAll")) {
+        if (Date.now() - this.clearArmed > 3000) {
+          this.clearArmed = Date.now();
+          return this.render();
+        }
+        this.clearArmed = 0;
+        // The clipboard says it was cleared; Settings only shows the new size.
+        void this.hooks?.clearClips().then(() => this.render());
+        return;
+      }
       const size = target.closest<HTMLElement>("[data-island-size]")?.dataset.islandSize as IslandSize | undefined;
       if (size) {
         this.update({ islandSize: size });
@@ -102,6 +117,8 @@ export class SettingsPanel {
   apply() {
     const theme = resolveTheme(this.settings.theme, this.media.matches);
     document.documentElement.dataset.theme = theme;
+    // The clipboard prunes on its side; it learns the choice here, at start and on change.
+    void invoke("clip_set_keep", { days: this.settings.clipKeep });
     const base = THEME[theme];
     const accent = readableAccent(this.settings.accent ?? base.accent, base.surface);
     document.documentElement.style.setProperty("--accent", accent);
@@ -156,6 +173,12 @@ export class SettingsPanel {
         <p class="note">${t(`settings.eyes.note.${this.settings.eyes}` as Key)}</p>
       </section>
       <section>
+        <h3>${t("settings.clip")}</h3>
+        <div class="segs" role="group" aria-label="${t("settings.clip")}">${CLIP_KEEPS.map((d) => `<button class="seg" data-clip-keep="${d}" aria-pressed="${this.settings.clipKeep === d}"><span>${t(`settings.clip.keep.${d}` as Key)}</span></button>`).join("")}</div>
+        <p class="note">${t("settings.clip.note")} <span id="clipUsage"></span></p>
+        <button class="link-btn${Date.now() - this.clearArmed <= 3000 ? " danger" : ""}" id="clipClearAll">${t(Date.now() - this.clearArmed <= 3000 ? "settings.clip.clearConfirm" : "settings.clip.clear")}</button>
+      </section>
+      <section>
         <h3>${t("settings.language")}</h3>
         <div class="segs" role="group" aria-label="${t("settings.language")}">${languages}</div>
         <p class="note">${t("settings.language.note")}</p>
@@ -177,6 +200,11 @@ export class SettingsPanel {
         </div>
       </section>
     </div>`;
+    // What the history takes on disk, read fresh each time.
+    void invoke<number>("clip_usage").then((n) => {
+      const el = this.root.querySelector("#clipUsage");
+      if (el) el.textContent = t("settings.clip.usage", { size: bytes(n) });
+    });
     // The login item lives in the OS; read it fresh each time Settings opens.
     void loginLaunch().then((on) => this.root.querySelector("#loginSw")?.setAttribute("aria-checked", String(on)));
   }

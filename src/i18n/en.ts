@@ -633,6 +633,15 @@ export const en = {
   "core.download.sub": "{speed} a second",
   "drop.copiedFrom": "Last copied, from {app}",
   "clip.reading": "Reading…",
+  "settings.clip": "Clipboard history",
+  "settings.clip.keep.1": "1 day",
+  "settings.clip.keep.7": "7 days",
+  "settings.clip.keep.30": "30 days",
+  "settings.clip.keep.0": "Until full",
+  "settings.clip.note": "Pinned items always stay. Past 60 images, the oldest go first.",
+  "settings.clip.usage": "It takes {size} on this computer.",
+  "settings.clip.clear": "Clear history",
+  "settings.clip.clearConfirm": "Click again to clear",
 };
 
 export type Key = keyof typeof en;

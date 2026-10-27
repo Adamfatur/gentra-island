@@ -7,6 +7,9 @@ import { isIslandSize, type IslandSize } from "./islandSize";
 export type ThemeMode = "auto" | "dark" | "light";
 export type EyesMode = "off" | "moments" | "always";
 export const EYES_MODES: EyesMode[] = ["off", "moments", "always"];
+/** Days the clipboard keeps unpinned items; 0 keeps them until the history is full. */
+export type ClipKeep = 1 | 7 | 30 | 0;
+export const CLIP_KEEPS: ClipKeep[] = [1, 7, 30, 0];
 
 export interface Settings {
   theme: ThemeMode;
@@ -16,9 +19,11 @@ export interface Settings {
   islandSize: IslandSize;
   /** Eyes in the notch: never, for moments (on hover and when something happens), or always. */
   eyes: EyesMode;
+  /** How long the clipboard history keeps what isn't pinned. */
+  clipKeep: ClipKeep;
 }
 
-export const DEFAULTS: Settings = { theme: "auto", accent: null, islandSize: "notch", eyes: "always" };
+export const DEFAULTS: Settings = { theme: "auto", accent: null, islandSize: "notch", eyes: "always", clipKeep: 30 };
 
 export function resolveTheme(mode: ThemeMode, systemDark: boolean): "dark" | "light" {
   if (mode === "auto") return systemDark ? "dark" : "light";
@@ -72,7 +77,8 @@ export function loadSettings(raw: string | null): Settings {
     const islandSize = isIslandSize(v.islandSize) ? v.islandSize : DEFAULTS.islandSize;
     // 0.9 stored an on/off switch; off stays off, on becomes the new default.
     const eyes: EyesMode = EYES_MODES.includes(v.eyes) ? v.eyes : v.islandEyes === false ? "off" : DEFAULTS.eyes;
-    return { theme, accent, islandSize, eyes };
+    const clipKeep: ClipKeep = CLIP_KEEPS.includes(v.clipKeep) ? v.clipKeep : DEFAULTS.clipKeep;
+    return { theme, accent, islandSize, eyes, clipKeep };
   } catch {
     return { ...DEFAULTS };
   }

@@ -37,11 +37,11 @@ pub enum Kind {
     None,
 }
 
-/// Droplets, the 1.0 island, while it's built: on with GENTRA_DROPLETS=1
-/// (or localStorage gentra:droplets = 1 in the page).
+/// The island before Droplets, kept for comparing while 1.0 settles: on with
+/// GENTRA_CLASSIC=1 (or localStorage gentra:droplets = 0 in the page).
 #[tauri::command]
-pub fn droplets_enabled() -> bool {
-    std::env::var_os("GENTRA_DROPLETS").is_some()
+pub fn classic_island() -> bool {
+    std::env::var_os("GENTRA_CLASSIC").is_some()
 }
 
 /// A frame-rate probe for testing smoothness: on with GENTRA_FPS=1.

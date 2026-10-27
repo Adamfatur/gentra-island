@@ -144,7 +144,7 @@ pub fn run() {
             window::top_covered,
             glass::set_glass,
             glass::glass_kind,
-            glass::droplets_enabled,
+            glass::classic_island,
             glass::fps_probe,
             glass::fps_log,
             glass::debug_log,
@@ -191,6 +191,8 @@ pub fn run() {
             clipboard::clip_pin,
             clipboard::clip_delete,
             clipboard::clip_clear,
+            clipboard::clip_set_keep,
+            clipboard::clip_usage,
         ])
         .setup(|app| {
             // No Dock icon: the island lives in the menu bar area only.

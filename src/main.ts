@@ -120,7 +120,7 @@ let hovering = false;
 /** An app window reaches up where the menu bar would be, under the island. */
 let covered = false;
 let openedByShortcut = false;
-/** Droplets, the 1.0 island, while it's built: on with localStorage gentra:droplets = 1. */
+/** Droplets, the 1.0 island; null only for the classic one (GENTRA_CLASSIC=1). */
 let drops: DropletsView | null = null;
 let peekTimer = 0;
 let leaveTimer = 0;
@@ -940,9 +940,10 @@ function openDroplets() {
   go({ w: l.core.w, h: l.core.h, r: l.core.r }, "grow");
 }
 
-const dropletsWanted = (() => {
+/** Droplets is the island; the one before it stays reachable for comparing while 1.0 settles. */
+const classicWanted = (() => {
   try {
-    return localStorage.getItem("gentra:droplets") === "1";
+    return localStorage.getItem("gentra:droplets") === "0";
   } catch {
     return false;
   }
@@ -973,7 +974,7 @@ if (probing) {
   // A press that never shows here never reached the window at all.
   document.addEventListener("mousedown", (e) => dbg(`press on ${(e.target as HTMLElement).id || (e.target as HTMLElement).className || "?"} at ${e.clientX},${e.clientY}`), true);
 }
-if (dropletsWanted || (await invoke<boolean>("droplets_enabled"))) {
+if (!classicWanted && !(await invoke<boolean>("classic_island"))) {
   document.body.classList.add("droplets-on");
   drops = new DropletsView(
     await invoke<GlassKind>("glass_kind"),
@@ -1056,7 +1057,7 @@ function showGuide() {
   open("guide");
 }
 
-settings.hooks = { toast, replayGuide: showGuide, resized: () => mode === "compact" && go(compactSize(), "hover") };
+settings.hooks = { toast, replayGuide: showGuide, resized: () => mode === "compact" && go(compactSize(), "hover"), clearClips: () => clips.clear() };
 
 function describe(item: ClipItem) {
   if (item.secret) {

@@ -216,7 +216,7 @@ mockIPC(
 // ?lang=id switch theme and language.
 const params = new URLSearchParams(location.search);
 const scene = params.get("scene");
-// ?droplets=1 tries the 1.0 island, ?droplets=0 goes back.
+// The preview shows Droplets; ?droplets=0 shows the classic island, ?droplets=1 comes back.
 if (params.has("droplets")) localStorage.setItem("gentra:droplets", params.get("droplets") === "1" ? "1" : "0");
 if (scene || params.has("shot")) {
   document.body.classList.add("shot");

@@ -10,7 +10,7 @@ use std::fs;
 use std::hash::{Hash, Hasher};
 use std::io::Cursor;
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Mutex;
 use std::thread;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
@@ -23,6 +23,11 @@ use tauri::{AppHandle, Emitter, Manager};
 use crate::secret;
 
 const MAX_ITEMS: usize = 300;
+/// Images are the heavy part of the history; past this many, the oldest go.
+const MAX_IMAGES: usize = 60;
+const DAY_MS: u64 = 24 * 60 * 60 * 1000;
+/// How long unpinned items stay, in days; 0 keeps them until the history is full.
+static KEEP_DAYS: AtomicU64 = AtomicU64::new(30);
 const THUMB_W: u32 = 360;
 /// Card surface colour; transparent pixels are blended onto it.
 const THUMB_BG: [u8; 3] = [0x17, 0x17, 0x1b];
@@ -120,14 +125,17 @@ impl ClipStore {
         true
     }
 
-    fn trim(&self, items: &mut Vec<ClipItem>) {
-        while items.len() > MAX_ITEMS {
-            let Some(pos) = items.iter().rposition(|i| !i.pinned) else { break };
-            let gone = items.remove(pos);
-            if gone.kind == "image" {
-                let _ = fs::remove_file(self.image_path(gone.id));
-            }
+    /// Drops what the history should no longer keep, with its image files.
+    fn trim(&self, items: &mut Vec<ClipItem>) -> bool {
+        let drop = to_drop(items, now_ms(), KEEP_DAYS.load(Ordering::Relaxed));
+        if drop.is_empty() {
+            return false;
         }
+        for gone in items.iter().filter(|i| drop.contains(&i.id) && i.kind == "image") {
+            let _ = fs::remove_file(self.image_path(gone.id));
+        }
+        items.retain(|i| !drop.contains(&i.id));
+        true
     }
 }
 
@@ -147,9 +155,19 @@ pub fn init(app: &AppHandle) -> tauri::Result<()> {
             Err(e) => return eprintln!("gentra-island: clipboard unavailable: {e}"),
         };
         let mut last_text_hash = 0u64;
+        let mut last_prune = std::time::Instant::now();
         loop {
             thread::sleep(Duration::from_millis(400));
             let store = app.state::<ClipStore>();
+            // Items age out even when nothing new is copied.
+            if last_prune.elapsed() >= Duration::from_secs(3600) {
+                last_prune = std::time::Instant::now();
+                let mut items = store.items.lock().unwrap();
+                if store.trim(&mut items) {
+                    store.save(&items);
+                    let _ = app.emit("clips-changed", ());
+                }
+            }
             let count = platform::change_count();
             // History switched off by the user's mode: keep the counter in
             // step so nothing copied meanwhile is recorded when it comes back.
@@ -404,6 +422,51 @@ pub fn clip_delete(store: tauri::State<ClipStore>, id: u64) {
     store.save(&items);
 }
 
+/// Which items to drop, newest first in `items`: unpinned ones older than
+/// `keep_days` (0 keeps them), then beyond MAX_IMAGES images and MAX_ITEMS in all.
+/// Pinned items always stay.
+pub fn to_drop(items: &[ClipItem], now: u64, keep_days: u64) -> Vec<u64> {
+    let mut drop = Vec::new();
+    let mut images = 0;
+    let mut kept = 0;
+    for i in items {
+        if i.pinned {
+            kept += 1;
+            continue;
+        }
+        let too_old = keep_days > 0 && now.saturating_sub(i.created) > keep_days * DAY_MS;
+        let too_many_images = i.kind == "image" && images >= MAX_IMAGES;
+        if too_old || too_many_images || kept >= MAX_ITEMS {
+            drop.push(i.id);
+            continue;
+        }
+        if i.kind == "image" {
+            images += 1;
+        }
+        kept += 1;
+    }
+    drop
+}
+
+/// Sets how many days the history keeps unpinned items (0: until it's full), and applies it now.
+#[tauri::command]
+pub fn clip_set_keep(app: AppHandle, store: tauri::State<ClipStore>, days: u64) {
+    KEEP_DAYS.store(days, Ordering::Relaxed);
+    let mut items = store.items.lock().unwrap();
+    if store.trim(&mut items) {
+        store.save(&items);
+        let _ = app.emit("clips-changed", ());
+    }
+}
+
+/// How many bytes the history takes on disk: its list and its images.
+#[tauri::command]
+pub fn clip_usage(store: tauri::State<ClipStore>) -> u64 {
+    let size = |p: PathBuf| fs::metadata(p).map(|m| m.len()).unwrap_or(0);
+    let images = fs::read_dir(store.dir.join("images")).map(|rd| rd.flatten().filter_map(|e| e.metadata().ok()).map(|m| m.len()).sum::<u64>()).unwrap_or(0);
+    images + size(store.dir.join("history.json"))
+}
+
 /// Removes everything except pinned items.
 #[tauri::command]
 pub fn clip_clear(store: tauri::State<ClipStore>) {
@@ -521,5 +584,33 @@ mod tests {
     #[test]
     fn ordinary_items_reach_the_ui_unchanged() {
         assert_eq!(for_ui(&item(1, "halo", None)).text.as_deref(), Some("halo"));
+    }
+}
+
+#[cfg(test)]
+mod keep_tests {
+    use super::*;
+
+    fn item(id: u64, kind: &str, age_days: u64, pinned: bool) -> ClipItem {
+        ClipItem { id, kind: kind.into(), text: None, thumb: None, size: None, app: None, hash: id, created: 100 * DAY_MS - age_days * DAY_MS, pinned, secret: None, expires: None }
+    }
+
+    #[test]
+    fn old_items_go_unless_pinned_or_kept_forever() {
+        let items = vec![item(1, "text", 1, false), item(2, "text", 10, false), item(3, "text", 40, true)];
+        assert_eq!(to_drop(&items, 100 * DAY_MS, 7), vec![2]);
+        assert!(to_drop(&items, 100 * DAY_MS, 0).is_empty());
+    }
+
+    #[test]
+    fn only_the_newest_images_stay() {
+        let items: Vec<ClipItem> = (0..MAX_IMAGES as u64 + 3).map(|i| item(i, "image", 0, false)).collect();
+        assert_eq!(to_drop(&items, 100 * DAY_MS, 7), vec![60, 61, 62]);
+    }
+
+    #[test]
+    fn the_history_never_grows_past_its_size() {
+        let items: Vec<ClipItem> = (0..MAX_ITEMS as u64 + 2).map(|i| item(i, "text", 0, false)).collect();
+        assert_eq!(to_drop(&items, 100 * DAY_MS, 0), vec![300, 301]);
     }
 }
