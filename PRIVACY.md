@@ -55,8 +55,9 @@ Only when you click **Connect** in the AI tab: Gentra Island adds one hook entry
 
 ## When it uses the internet
 
-Gentra Island makes no network requests of its own, with one optional exception:
+Gentra Island makes only these network requests of its own, and you can turn each off:
 
+- **Update check**, on unless you turn it off in Settings, Updates: once a day the app downloads `latest.json`, a small file that names the newest version, from the project's GitHub releases. When you click Update, it downloads that version from the same place. Nothing about you or your use is sent; as with any download, GitHub receives your IP address under [GitHub's privacy statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement). Each update is signed, and the app installs it only if the signature matches the project's key.
 - **YouTube thumbnails**, only if you switch them on: the app downloads the thumbnail of the playing video from `i.ytimg.com`. As with any download, Google receives your IP address and the video ID under [Google's Privacy Policy](https://policies.google.com/privacy).
 
 Links you click in the app (opening a local server, the PayPal page in About, these documents) open in your browser and are then governed by that site's own policy.
@@ -132,8 +133,9 @@ Hanya saat kamu menekan **Sambungkan** di tab AI: Gentra Island menambahkan satu
 
 ### Kapan memakai internet
 
-Gentra Island tidak membuat permintaan jaringan sendiri, kecuali satu yang opsional:
+Gentra Island hanya membuat permintaan jaringan berikut, dan masing-masing bisa kamu matikan:
 
+- **Cek pembaruan**, menyala kecuali kamu matikan di Pengaturan, Pembaruan: sekali sehari aplikasi mengunduh `latest.json`, file kecil berisi nama versi terbaru, dari halaman rilis GitHub proyek ini. Saat kamu klik Perbarui, versi itu diunduh dari tempat yang sama. Tidak ada data tentang kamu atau pemakaianmu yang dikirim; seperti unduhan lain, GitHub menerima alamat IP-mu sesuai [pernyataan privasi GitHub](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement). Setiap pembaruan ditandatangani, dan aplikasi hanya memasangnya kalau tanda tangannya cocok dengan kunci proyek.
 - **Thumbnail YouTube**, hanya kalau kamu menyalakannya: aplikasi mengunduh thumbnail video yang diputar dari `i.ytimg.com`. Seperti unduhan lain, Google menerima alamat IP dan ID videonya sesuai [Kebijakan Privasi Google](https://policies.google.com/privacy?hl=id).
 
 Tautan yang kamu klik di aplikasi (membuka server lokal, halaman PayPal di Tentang, dokumen ini) terbuka di browser dan mengikuti kebijakan situs tersebut.

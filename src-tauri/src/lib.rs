@@ -15,11 +15,12 @@ mod ports;
 mod secret;
 mod shelf;
 mod stats;
+mod updates;
 mod window;
 
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
 use tauri::tray::TrayIconBuilder;
-use tauri::Manager;
+use tauri::{Emitter, Manager};
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
 /// The user's mode decides which background work runs at all.
@@ -97,9 +98,13 @@ fn open_privacy_settings(kind: String) -> Result<(), String> {
 
 /// Tray menu items, kept so their labels follow the UI language.
 struct TrayItems {
+    menu: Menu<tauri::Wry>,
     about: MenuItem<tauri::Wry>,
     open: MenuItem<tauri::Wry>,
     quit: MenuItem<tauri::Wry>,
+    /// "Update to …", in the menu only while an update is waiting.
+    update: MenuItem<tauri::Wry>,
+    update_shown: std::sync::atomic::AtomicBool,
 }
 
 #[tauri::command]
@@ -107,6 +112,25 @@ fn set_tray_labels(items: tauri::State<TrayItems>, about: String, open: String, 
     let _ = items.about.set_text(about);
     let _ = items.open.set_text(open);
     let _ = items.quit.set_text(quit);
+}
+
+/// Shows the update item with this label, or takes it away with none.
+#[tauri::command]
+fn set_tray_update(items: tauri::State<TrayItems>, label: Option<String>) {
+    use std::sync::atomic::Ordering;
+    match label {
+        Some(label) => {
+            let _ = items.update.set_text(label);
+            if !items.update_shown.swap(true, Ordering::Relaxed) {
+                let _ = items.menu.insert(&items.update, 3);
+            }
+        }
+        None => {
+            if items.update_shown.swap(false, Ordering::Relaxed) {
+                let _ = items.menu.remove(&items.update);
+            }
+        }
+    }
 }
 
 /// ⌥⌘ on macOS, Ctrl+Alt elsewhere (Win+V is taken by Windows' own clipboard).
@@ -123,6 +147,7 @@ pub fn run() {
         .plugin(tauri_plugin_drag::init())
         // A LaunchAgent on macOS, the Run key on Windows, a .desktop file on Linux.
         .plugin(tauri_plugin_autostart::init(tauri_plugin_autostart::MacosLauncher::LaunchAgent, None))
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(
             tauri_plugin_global_shortcut::Builder::new()
                 .with_handler(|app, pressed, event| {
@@ -136,6 +161,7 @@ pub fn run() {
                 .build(),
         )
         .manage(window::HitState::default())
+        .manage(updates::Pending::default())
         .invoke_handler(tauri::generate_handler![
             window::set_hit_rect,
             window::set_hit_rects,
@@ -152,6 +178,7 @@ pub fn run() {
             stats::set_stats_detail,
             set_features,
             set_tray_labels,
+            set_tray_update,
             open_support,
             open_doc,
             open_privacy_settings,
@@ -193,6 +220,9 @@ pub fn run() {
             clipboard::clip_clear,
             clipboard::clip_set_keep,
             clipboard::clip_usage,
+            updates::update_set_auto,
+            updates::update_check,
+            updates::update_install,
         ])
         .setup(|app| {
             // No Dock icon: the island lives in the menu bar area only.
@@ -217,6 +247,7 @@ pub fn run() {
             agents::spawn(app.handle().clone());
             screenshots::spawn(app.handle().clone());
             downloads::spawn(app.handle().clone());
+            updates::spawn(app.handle().clone());
 
             for code in [Code::KeyV, Code::KeyG] {
                 if let Err(e) = app.global_shortcut().register(shortcut(code)) {
@@ -231,14 +262,23 @@ pub fn run() {
             let version = app.package_info().version.to_string();
             let about = MenuItem::with_id(app, "about", format!("Gentra Island {version}, made by Adam Faturahman"), false, None::<&str>)?;
             let line = PredefinedMenuItem::separator(app)?;
+            let update = MenuItem::with_id(app, "update", "Update", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&about, &line, &open, &quit])?;
-            app.manage(TrayItems { about: about.clone(), open: open.clone(), quit: quit.clone() });
+            app.manage(TrayItems { menu: menu.clone(), about: about.clone(), open: open.clone(), quit: quit.clone(), update, update_shown: Default::default() });
             let mut tray = TrayIconBuilder::with_id("main")
                 .tooltip("Gentra Island")
                 .menu(&menu)
                 .on_menu_event(|app, event| {
                     match event.id.as_ref() {
                         "open" => window::summon(app, "home"),
+                        "update" => {
+                            let app = app.clone();
+                            tauri::async_runtime::spawn(async move {
+                                if let Err(e) = updates::update_install(app.clone()).await {
+                                    let _ = app.emit("update-error", e);
+                                }
+                            });
+                        }
                         "quit" => app.exit(0),
                         _ => {}
                     }

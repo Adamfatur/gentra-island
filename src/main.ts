@@ -1173,6 +1173,16 @@ function setCovered(on: boolean) {
   if (mode === "compact") go(compactSize(), "shrink");
 }
 await listen<boolean>("top-covered", ({ payload }) => setCovered(payload));
+// The daily check found a new version: Settings and the menu bar offer it in one click.
+await listen<{ version: string }>("update-ready", ({ payload }) => {
+  settings.updateFound(payload.version);
+  toast(t("update.toast", { version: payload.version }));
+});
+await listen<{ done: number; total: number | null }>("update-progress", ({ payload }) => settings.updateProgress(payload.done, payload.total));
+await listen<string>("update-error", ({ payload }) => {
+  settings.updateFailed(payload);
+  toast(errorText(payload));
+});
 setCovered(await invoke<boolean>("top_covered"));
 
 await listen<Tab | "toggle">("open-tab", ({ payload }) => {

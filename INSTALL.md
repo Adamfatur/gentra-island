@@ -37,6 +37,8 @@ Pick one:
 - Hover over the island to open it, or press `⌥⌘G` (Mac) or `Ctrl+Alt+G` (Windows and Linux).
 - A short guide shows up the first time. You can replay it from Settings.
 - To start Gentra Island when you log in, turn it on in the guide or in Settings.
+- **Updates take one click** from 1.0.1 on. When a new version is out, Settings, Updates shows **Update and restart**, and the G menu shows **Update to** the new version. Version 1.0.0 doesn't have this yet, so download 1.0.1 by hand once.
+- On a Mac, 1.0.1 is signed with the project's own certificate instead of ad hoc. macOS may ask once more for the camera and automation permissions after you move from 1.0.0; after that, updates keep them.
 
 ## Uninstall
 

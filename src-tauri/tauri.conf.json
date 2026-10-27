@@ -56,5 +56,16 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ]
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IENDMzIwODUzN0Y4MEI5N0MKUldSOHVZQi9Vd2d5ekhVNGZtQnZRNEo0TVBQUDltZWRKa0hSY1ZzOTdiZ2kycHFramhGYWRtcUoK",
+      "endpoints": [
+        "https://github.com/Adamfatur/gentra-island/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
   }
 }

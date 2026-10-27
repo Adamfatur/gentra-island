@@ -56,17 +56,23 @@ describe("loadSettings", () => {
     expect(loadSettings('{"islandSize":"huge"}').islandSize).toBe("notch");
   });
 
+  test("keeps the daily update check unless it was turned off", () => {
+    expect(loadSettings('{"autoUpdate":false}').autoUpdate).toBe(false);
+    expect(loadSettings('{"autoUpdate":"no"}').autoUpdate).toBe(true);
+    expect(loadSettings(null).autoUpdate).toBe(true);
+  });
+
   test("reads a valid saved setting", () => {
-    expect(loadSettings('{"theme":"light","accent":"#FF6A3D"}')).toEqual({ theme: "light", accent: "#FF6A3D", islandSize: "notch", eyes: "always", clipKeep: 30 });
+    expect(loadSettings('{"theme":"light","accent":"#FF6A3D"}')).toEqual({ theme: "light", accent: "#FF6A3D", islandSize: "notch", eyes: "always", clipKeep: 30, autoUpdate: true });
   });
 
   test("falls back to defaults for missing or broken data", () => {
-    expect(loadSettings(null)).toEqual({ theme: "auto", accent: null, islandSize: "notch", eyes: "always", clipKeep: 30 });
-    expect(loadSettings("{not json")).toEqual({ theme: "auto", accent: null, islandSize: "notch", eyes: "always", clipKeep: 30 });
+    expect(loadSettings(null)).toEqual({ theme: "auto", accent: null, islandSize: "notch", eyes: "always", clipKeep: 30, autoUpdate: true });
+    expect(loadSettings("{not json")).toEqual({ theme: "auto", accent: null, islandSize: "notch", eyes: "always", clipKeep: 30, autoUpdate: true });
   });
 
   test("drops values that are not a theme or a hex colour", () => {
-    expect(loadSettings('{"theme":"neon","accent":"red;background:url(x)"}')).toEqual({ theme: "auto", accent: null, islandSize: "notch", eyes: "always", clipKeep: 30 });
+    expect(loadSettings('{"theme":"neon","accent":"red;background:url(x)"}')).toEqual({ theme: "auto", accent: null, islandSize: "notch", eyes: "always", clipKeep: 30, autoUpdate: true });
   });
 
   test("keeps a chosen clipboard history length, and only real choices", () => {

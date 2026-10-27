@@ -656,6 +656,12 @@ button.danger { color: var(--bad); }
 .guide-nav button.primary { background: var(--accent); color: var(--on-accent); }
 .settings .startup { display: grid; gap: 6px; align-content: start; }
 .settings .startup h3 { margin-bottom: 2px; }
+.settings .updates { display: grid; gap: 6px; align-content: start; }
+.settings .updates h3 { margin-bottom: 2px; }
+.update-box { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; min-height: 30px; }
+.update-status { font-size: 12.5px; font-weight: 600; }
+.update-box button.primary { padding: 7px 12px; border-radius: 9px; font-size: 12.5px; font-weight: 650; }
+.update-box button.primary:hover { filter: brightness(1.08); }
 .lang-seg { flex-direction: row; padding: 9px 6px; }
 .link-btn { justify-self: start; color: var(--accent); font-weight: 650; font-size: 12.5px; padding: 2px 0; }
 

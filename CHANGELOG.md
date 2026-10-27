@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- **Updates in one click.** Once a day the island looks for a new version on GitHub. When there is one, Settings, Updates shows **Update and restart**, and the G menu in the menu bar or system tray shows **Update to** the new version. Every update is signed and checked before it installs. Turn the daily check off in Settings.
+- **The Mac app keeps its identity between versions.** It's signed with the project's own certificate instead of ad hoc, so macOS keeps the permissions you gave after an update. Coming from 1.0.0, macOS may ask once more.
+
 ## 1.0.0
 
 - **Droplets, a new look.** A black core grows out of the notch and says the one thing that matters now: an agent that needs you, a call, an agent at work, a focus session, or a download. Droplets hang under it, one for each feature, and grow into a full view when you tap them. **Done** or **Esc** takes you back. Big numbers use Doto, a dot-matrix face like the eyes.

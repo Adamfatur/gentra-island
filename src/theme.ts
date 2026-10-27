@@ -21,9 +21,11 @@ export interface Settings {
   eyes: EyesMode;
   /** How long the clipboard history keeps what isn't pinned. */
   clipKeep: ClipKeep;
+  /** Look for a new version once a day. */
+  autoUpdate: boolean;
 }
 
-export const DEFAULTS: Settings = { theme: "auto", accent: null, islandSize: "notch", eyes: "always", clipKeep: 30 };
+export const DEFAULTS: Settings = { theme: "auto", accent: null, islandSize: "notch", eyes: "always", clipKeep: 30, autoUpdate: true };
 
 export function resolveTheme(mode: ThemeMode, systemDark: boolean): "dark" | "light" {
   if (mode === "auto") return systemDark ? "dark" : "light";
@@ -78,7 +80,8 @@ export function loadSettings(raw: string | null): Settings {
     // 0.9 stored an on/off switch; off stays off, on becomes the new default.
     const eyes: EyesMode = EYES_MODES.includes(v.eyes) ? v.eyes : v.islandEyes === false ? "off" : DEFAULTS.eyes;
     const clipKeep: ClipKeep = CLIP_KEEPS.includes(v.clipKeep) ? v.clipKeep : DEFAULTS.clipKeep;
-    return { theme, accent, islandSize, eyes, clipKeep };
+    const autoUpdate = typeof v.autoUpdate === "boolean" ? v.autoUpdate : DEFAULTS.autoUpdate;
+    return { theme, accent, islandSize, eyes, clipKeep, autoUpdate };
   } catch {
     return { ...DEFAULTS };
   }

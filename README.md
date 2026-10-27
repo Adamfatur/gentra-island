@@ -168,7 +168,7 @@ To check your download, compare it with `SHA256SUMS.txt` on the release page. Mo
 2. **Hover** over it, **click** it, or press **⌥⌘G** (**Ctrl+Alt+G**) to open it. Move away, press **Esc**, or press the shortcut again to close it.
 3. Tap a droplet to open its view, and **Done** or **Esc** to go back. **⌘1** to **⌘9** (**Ctrl+1** to **Ctrl+9**) jump straight to one.
 4. The **Modes** droplet picks which features are on. Choose **Compact** if you only want memory and the clipboard, or switch features one by one.
-5. The **Settings** droplet has the theme, accent color, how long the clipboard keeps things, language, open at login, and About.
+5. The **Settings** droplet has the theme, accent color, how long the clipboard keeps things, language, open at login, one-click updates, and About.
 
 **Everyday things**
 
@@ -212,8 +212,8 @@ Nothing else needs a permission prompt. Seeing which app uses the mic doesn't re
 
 The full [Privacy Policy](PRIVACY.md) explains what is stored where and how to delete it. In short:
 
-- **Everything stays on your computer.** No accounts, no analytics, no telemetry, no update pings.
-- **No network calls of its own by default.** It reaches the network when you click a link it shows, such as opening a local server in your browser, and, only if you switch on **Show thumbnails** in the Media tab, to load a YouTube video's thumbnail from `i.ytimg.com`.
+- **Everything stays on your computer.** No accounts, no analytics, no telemetry.
+- **Few network calls, each one you can turn off.** Once a day it downloads `latest.json` from this repo's releases to see if there's a new version (turn it off in Settings, Updates); nothing about you is sent. It also reaches the network when you click a link it shows, such as opening a local server in your browser, and, only if you switch on **Show thumbnails** in the Media tab, to load a YouTube video's thumbnail from `i.ytimg.com`.
 - **Reminders** and **clipboard history** are stored in your user's app data folder. Secrets are never written there. History older than you chose (30 days by default) is removed by itself, and **Clear history** in Settings removes it all.
 - **Gentle care** asks the system how long since you last touched the keyboard or mouse, a single number. It never sees what you type.
 - **AI agents.** Usage is read from the agents' own logs on your computer, and only the token counts are kept. Connecting adds a hook that tells the island the project folder name and, when an agent asks you something, its question. Your prompts, code, and logins are never read or sent.
