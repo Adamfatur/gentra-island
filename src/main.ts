@@ -570,6 +570,7 @@ const dev = new DevPanel(info.platform, toast);
 const call = new CallPanel(toast, info.platform);
 const agents = new Agents();
 const ASK_KEY = "gentra:ask";
+const ASK_READS_KEY = "gentra:ask-reads";
 const ai = new AiPanel(
   agents,
   toast,
@@ -584,13 +585,26 @@ const ai = new AiPanel(
     void invoke("agents_set_ask", { on });
     ai.refresh();
   },
+  (ids) => void answerAll(ids),
+  (on) => {
+    ai.askReads = on;
+    try {
+      localStorage.setItem(ASK_READS_KEY, on ? "1" : "0");
+    } catch {
+      /* this session only */
+    }
+    void invoke("agents_set_ask_reads", { on });
+    ai.refresh();
+  },
 );
 try {
   ai.askOn = localStorage.getItem(ASK_KEY) !== "0";
+  ai.askReads = localStorage.getItem(ASK_READS_KEY) !== "0";
 } catch {
   /* on by default */
 }
 void invoke("agents_set_ask", { on: ai.askOn });
+void invoke("agents_set_ask_reads", { on: ai.askReads });
 
 /** Sends your answer to a waiting permission request. */
 async function answerAsk(id: string, answer: string) {
@@ -603,6 +617,16 @@ async function answerAsk(id: string, answer: string) {
   ai.asks = ai.asks.filter((a) => a.id !== id);
   ai.refresh();
   if (mode === "peek" && $("#peekBody").querySelector(`[data-id="${CSS.escape(id)}"]`)) compact();
+}
+
+/** Allows several reads at once. Ones that already ended are skipped quietly. */
+async function answerAll(ids: string[]) {
+  const sent = await Promise.all(ids.map((id) => invoke("agents_answer", { id, answer: "allow" }).then(() => true, () => false)));
+  const n = sent.filter(Boolean).length;
+  toast(n ? t("ask.allowedAll", { count: n }) : t("ask.gone"));
+  ai.asks = ai.asks.filter((a) => !ids.includes(a.id));
+  ai.refresh();
+  if (mode === "peek" && ids.some((id) => $("#peekBody").querySelector(`[data-id="${CSS.escape(id)}"]`))) compact();
 }
 const media = new MediaPanel(toast, (tint) => {
   if (tint) root.style.setProperty("--media-tint", tint);
@@ -1231,6 +1255,8 @@ shell.addEventListener("click", (e) => {
   if (shotBtn) return void shotAct(shotBtn.dataset.shot!);
   const ans = el.closest<HTMLElement>("[data-act=answer]");
   if (ans) return void answerAsk(ans.dataset.id!, ans.dataset.answer!);
+  const all = el.closest<HTMLElement>("[data-act=answer-all]");
+  if (all) return void answerAll(all.dataset.ids!.split(" "));
   const to = el.closest<HTMLElement>("[data-open]");
   if (to) return open(to.dataset.open as Tab);
   const off = el.closest<HTMLElement>("[data-offer]");
@@ -1543,7 +1569,7 @@ await listen<Ask>("agent-ask", ({ payload: a }) => {
      <div class="peek-main"><div class="t">${esc(t(askVerb(a.tool), { agent: AGENT_NAME[a.agent] }))}</div>
        <code class="ask-code">${esc(a.summary || a.tool)}</code>
        ${a.place ? `<div class="s">${esc(a.place)}</div>` : ""}
-       ${askButtons(a.id)}</div>`,
+       ${askButtons(a, ai.asks)}</div>`,
     30_000,
     true,
   );

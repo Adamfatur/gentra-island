@@ -202,6 +202,7 @@ mockIPC(
         setTimeout(() => void emit("agent-ask-done", a.id), 50);
         return null;
       case "agents_set_ask":
+      case "agents_set_ask_reads":
         return null;
       case "idle_secs":
         return 3;
@@ -376,6 +377,10 @@ const actions: Record<string, () => void> = {
     void emit("screenshot", { path: "/Users/kamu/Desktop/Screenshot 2026-10-26 at 09.41.12.png", name: "Screenshot 2026-10-26 at 09.41.12.png", thumb: shot("#5ac8fa", "#b18cff"), size: [2940, 1912] }),
   "Claude minta izin": () =>
     void emit("agent-ask", { id: `ask-${n++}`, agent: "claude", place: "gentra-island", session: "claude-1", tool: "Bash", summary: "npm test -- --coverage && git push origin main" }),
+  "Claude minta baca 3 file": () => {
+    for (const [tool, summary] of [["Read", "/Users/kamu/notes/todo.md"], ["Grep", "TODO"], ["Glob", "**/*.md"]])
+      void emit("agent-ask", { id: `ask-${n++}`, agent: "claude", place: "gentra-island", session: "claude-1", tool, summary });
+  },
   "Codex mulai": () => agentEvent("codex", "start", "", "gentra-island"),
   "Codex selesai": () => agentEvent("codex", "stop", "", "gentra-island"),
   "Codex 85%": () => {

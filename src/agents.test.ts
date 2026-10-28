@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Agents, askVerb, elapsed, tokens, type AgentEvent } from "./agents";
+import { Agents, askVerb, elapsed, readBatch, tokens, type AgentEvent, type Ask } from "./agents";
 
 const ev = (event: AgentEvent["event"], extra: Partial<AgentEvent> = {}): AgentEvent => ({
   agent: "claude",
@@ -59,6 +59,21 @@ describe("askVerb", () => {
     expect(askVerb("Write")).toBe("ask.edit");
     expect(askVerb("WebFetch")).toBe("ask.web");
     expect(askVerb("mcp__github__create_issue")).toBe("ask.use");
+  });
+});
+
+describe("readBatch", () => {
+  const ask = (id: string, tool: string, session = "s1", agent: Ask["agent"] = "claude"): Ask => ({ id, agent, place: "shop", session, tool, summary: "" });
+  const asks = [ask("1", "Read"), ask("2", "Bash"), ask("3", "Grep"), ask("4", "Read", "s2"), ask("5", "Glob")];
+
+  it("gathers reads from the same session", () => {
+    expect(readBatch(asks, asks[0]).map((a) => a.id)).toEqual(["1", "3", "5"]);
+    expect(readBatch(asks, asks[3]).map((a) => a.id)).toEqual(["4"]);
+  });
+
+  it("never batches a command or an edit", () => {
+    expect(readBatch(asks, asks[1])).toEqual([]);
+    expect(readBatch([ask("1", "Edit"), ask("2", "Write")], ask("1", "Edit"))).toEqual([]);
   });
 });
 

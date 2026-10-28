@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- **Allow several reads at once.** When Claude Code asks to read more than one file at the same time, the request shows **Allow all** with the count. Commands and edits are never grouped: each one still gets its own answer. Thanks to autotomy.dev for the idea.
+- **Keep reads off the island.** A new switch in the AI view, **Show requests to read files**, sends those requests back to Claude Code's own window, so the island only interrupts you for commands and edits. It's on by default, as before.
+- **Fixed: commands read backwards in Arabic.** The box with the command now always reads left to right.
+
 ## 1.0.3
 
 - **Nine more languages.** Español, Português, Français, Deutsch, 日本語, 한국어, 简体中文, हिन्दी, and العربية join English and Bahasa Indonesia. Arabic lays the island out right to left. Pick one in Settings, Language. These translations were drafted with AI help; corrections from native speakers are welcome. Reminders still read times in English and Indonesian only.

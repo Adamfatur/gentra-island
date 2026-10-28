@@ -22,11 +22,20 @@ export interface Ask {
   summary: string;
 }
 
+/** Tools that only look at files, the same list as `reads_only` in agents.rs. */
+export const readsOnly = (tool: string) => ["Read", "Glob", "Grep", "LS", "NotebookRead"].includes(tool);
+
+/** Reads waiting from the same session as `a`, `a` included, so they can be allowed at once. Commands and edits are never batched. */
+export function readBatch(asks: Ask[], a: Ask): Ask[] {
+  if (!readsOnly(a.tool)) return [];
+  return asks.filter((x) => readsOnly(x.tool) && x.agent === a.agent && x.session === a.session);
+}
+
 /** What the agent wants to do, in words: the i18n key for the peek title. */
 export function askVerb(tool: string): "ask.run" | "ask.edit" | "ask.read" | "ask.web" | "ask.use" {
   if (tool === "Bash") return "ask.run";
   if (["Edit", "Write", "MultiEdit", "NotebookEdit"].includes(tool)) return "ask.edit";
-  if (["Read", "Glob", "Grep"].includes(tool)) return "ask.read";
+  if (readsOnly(tool)) return "ask.read";
   if (["WebFetch", "WebSearch"].includes(tool)) return "ask.web";
   return "ask.use";
 }

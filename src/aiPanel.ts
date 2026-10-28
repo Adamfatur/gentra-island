@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { AGENT_NAME, askVerb, elapsed, tokens, type AgentId, type Agents, type Ask, type Session } from "./agents";
+import { AGENT_NAME, askVerb, elapsed, readBatch, tokens, type AgentId, type Agents, type Ask, type Session } from "./agents";
 import { esc, pct, took, whenLabel } from "./format";
 import { errorText, lang, t } from "./i18n";
 import { agentLogo } from "./agentLogos";
@@ -36,11 +36,19 @@ const FILE: Record<AgentId, string> = { claude: "~/.claude/settings.json", codex
 export const resetLabel = (ms: number) => t("ai.usage.resets", { time: whenLabel(new Date(ms)) });
 const level = (p: number) => (p >= 90 ? "var(--bad)" : p >= 75 ? "var(--warn)" : "var(--ok)");
 
-/** Allow, Deny, and In terminal, for the peek and the AI tab alike. */
-export const askButtons = (id: string) =>
-  `<div class="peek-acts ask-acts"><button class="primary" data-act="answer" data-answer="allow" data-id="${esc(id)}">${t("ask.allow")}</button>
-    <button data-act="answer" data-answer="deny" data-id="${esc(id)}">${t("ask.deny")}</button>
-    <button data-act="answer" data-answer="terminal" data-id="${esc(id)}">${t("ask.terminal")}</button></div>`;
+/** Allow, Deny, and In terminal, for the peek and the AI tab alike. With other
+ * reads waiting from the same session, one more button allows them all. */
+export function askButtons(a: Ask, asks: Ask[]) {
+  const id = esc(a.id);
+  const batch = readBatch(asks, a);
+  const all =
+    batch.length > 1
+      ? `<button class="primary" data-act="answer-all" data-ids="${esc(batch.map((x) => x.id).join(" "))}">${t("ask.allowAll", { count: batch.length })}</button>`
+      : "";
+  return `<div class="peek-acts ask-acts">${all}<button${all ? "" : ' class="primary"'} data-act="answer" data-answer="allow" data-id="${id}">${t("ask.allow")}</button>
+    <button data-act="answer" data-answer="deny" data-id="${id}">${t("ask.deny")}</button>
+    <button data-act="answer" data-answer="terminal" data-id="${id}">${t("ask.terminal")}</button></div>`;
+}
 
 export function sessionLine(s: Session, now = Date.now()): string {
   if (s.state === "waiting") return s.message || t("ai.waiting");
@@ -60,12 +68,16 @@ export class AiPanel {
   /** Permission requests waiting for an answer, newest last. */
   asks: Ask[] = [];
   askOn = true;
+  /** Off: requests that only read files stay in Claude Code's window. */
+  askReads = true;
 
   constructor(
     private agents: Agents,
     private toast: (msg: string) => void,
     private answer: (id: string, answer: string) => void,
     private setAskOn: (on: boolean) => void,
+    private answerAll: (ids: string[]) => void,
+    private setAskReads: (on: boolean) => void,
   ) {
     this.root.addEventListener("click", (e) => void this.click(e));
   }
@@ -129,8 +141,13 @@ export class AiPanel {
           break;
         case "answer":
           return this.answer(b.dataset.id!, b.dataset.answer!);
+        case "answer-all":
+          return this.answerAll(b.dataset.ids!.split(" "));
         case "ask-switch":
           this.setAskOn(!this.askOn);
+          break;
+        case "ask-reads":
+          this.setAskReads(!this.askReads);
           break;
         case "disconnect":
           await invoke("agents_disconnect", { agent });
@@ -162,7 +179,7 @@ export class AiPanel {
         (a) => `<section class="ask-card"><span class="card-label">${agentLogo(a.agent)}${esc(t(askVerb(a.tool), { agent: AGENT_NAME[a.agent] }))}</span>
           ${a.place ? `<span class="card-sub">${esc(a.place)}</span>` : ""}
           <code class="ask-code">${esc(a.summary || a.tool)}</code>
-          ${askButtons(a.id)}</section>`,
+          ${askButtons(a, this.asks)}</section>`,
       )
       .join("");
   }
@@ -211,7 +228,10 @@ export class AiPanel {
       agent !== "claude" || !connected
         ? ""
         : st?.canAsk
-          ? `<div class="setting-row ask-row"><span>${t("ask.switch")}<small>${t("ask.switch.note")}</small></span><button class="switch" role="switch" data-act="ask-switch" data-agent="claude" aria-checked="${this.askOn}" aria-label="${t("ask.switch")}"></button></div>`
+          ? `<div class="setting-row ask-row"><span>${t("ask.switch")}<small>${t("ask.switch.note")}</small></span><button class="switch" role="switch" data-act="ask-switch" data-agent="claude" aria-checked="${this.askOn}" aria-label="${t("ask.switch")}"></button></div>` +
+            (this.askOn
+              ? `<div class="setting-row ask-row"><span>${t("ask.reads")}<small>${t("ask.reads.note")}</small></span><button class="switch" role="switch" data-act="ask-reads" data-agent="claude" aria-checked="${this.askReads}" aria-label="${t("ask.reads")}"></button></div>`
+              : "")
           : `<div class="ask-row"><p class="note">${t("ask.reconnect")}</p><button class="agent-btn" data-act="connect" data-agent="claude">${t("ask.reconnect.button")}</button></div>`;
     return `<section class="agent-card">${head(button, sub)}${st ? this.usageHtml(agent, st.usage) : ""}${asks}${fresh}</section>`;
   }

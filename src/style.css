@@ -728,7 +728,8 @@ body[data-look="slim"] #v-compact .num { display: none; }
 body[data-look="slim"] #v-compact .side svg, body[data-look="slim"] .mini-art { width: 16px; height: 16px; }
 
 /* Permission requests: the command in full, so you know what you allow. */
-.ask-code { display: block; font: 500 12px/1.45 var(--mono); color: #f4f4f6; background: #1c1c22; border-radius: 8px; padding: 7px 9px; margin-top: 4px; max-height: 66px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; }
+/* Commands and paths read left to right, in a right-to-left language too. */
+.ask-code { direction: ltr; text-align: left; display: block; font: 500 12px/1.45 var(--mono); color: #f4f4f6; background: #1c1c22; border-radius: 8px; padding: 7px 9px; margin-top: 4px; max-height: 66px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; }
 .ask-acts { margin-top: 8px; }
 .ask-card { display: grid; gap: 6px; padding: 12px; border-radius: 14px; background: color-mix(in srgb, var(--warn) 10%, var(--surface)); }
 .ask-card .card-label { color: var(--text); }

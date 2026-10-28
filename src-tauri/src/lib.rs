@@ -191,6 +191,7 @@ pub fn run() {
             agents::agents_set_offset,
             agents::agents_answer,
             agents::agents_set_ask,
+            agents::agents_set_ask_reads,
             idle::idle_secs,
             screenshots::shot_text,
             screenshots::shot_copy,

@@ -185,6 +185,8 @@ const ASK_CURL_SECS: u64 = 40;
 const ASK_HOOK_TIMEOUT: u64 = 45;
 
 static ASK_ON: AtomicBool = AtomicBool::new(true);
+/// Off: requests that only read files stay in the agent's own window.
+static ASK_READS: AtomicBool = AtomicBool::new(true);
 static ASK_ID: AtomicU64 = AtomicU64::new(1);
 static ASKS: Mutex<Option<HashMap<String, mpsc::Sender<Answer>>>> = Mutex::new(None);
 
@@ -273,10 +275,20 @@ pub fn answer_json(answer: Answer) -> String {
     json!({ "hookSpecificOutput": { "hookEventName": "PermissionRequest", "decision": decision } }).to_string()
 }
 
+/// Tools that only look at files. Reads that Claude Code allows on its own
+/// never ask; the ones that do (outside the project, say) can stay off the island.
+/// Web tools aren't here: a fetch or a search sends something out.
+pub fn reads_only(tool: &str) -> bool {
+    ["Read", "Glob", "Grep", "LS", "NotebookRead"].contains(&tool)
+}
+
 /// Shows the request on the island and waits for your answer, or gives up
 /// after ASK_WAIT so the agent asks in its own window.
 pub fn ask(app: &AppHandle, req: AskRequest) -> String {
     if !ENABLED.load(Ordering::Relaxed) || !ASK_ON.load(Ordering::Relaxed) {
+        return String::new();
+    }
+    if reads_only(&req.tool) && !ASK_READS.load(Ordering::Relaxed) {
         return String::new();
     }
     let (tx, rx) = mpsc::channel();
@@ -304,6 +316,11 @@ pub fn agents_answer(id: String, answer: String) -> Result<(), String> {
 #[tauri::command]
 pub fn agents_set_ask(on: bool) {
     ASK_ON.store(on, Ordering::Relaxed);
+}
+
+#[tauri::command]
+pub fn agents_set_ask_reads(on: bool) {
+    ASK_READS.store(on, Ordering::Relaxed);
 }
 
 /* ---------- connecting the hooks ---------- */
@@ -873,6 +890,16 @@ mod tests {
         let key = format!("sk-ant-api03-{}", "a".repeat(40));
         assert!(!ask_summary("Bash", &json!({ "command": format!("curl -H 'x-api-key: {key}' x") })).contains(&key));
         assert!(ask_summary("Bash", &json!({ "command": "y".repeat(900) })).ends_with('…'));
+    }
+
+    #[test]
+    fn tells_reads_from_changes() {
+        for tool in ["Read", "Glob", "Grep", "LS", "NotebookRead"] {
+            assert!(reads_only(tool), "{tool}");
+        }
+        for tool in ["Bash", "Edit", "Write", "WebFetch", "WebSearch", "mcp__fs__read_file", "read"] {
+            assert!(!reads_only(tool), "{tool}");
+        }
     }
 
     #[test]
