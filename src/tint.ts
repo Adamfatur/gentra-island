@@ -73,6 +73,8 @@ export function artColors(src: string): Promise<{ tint: string | null; edge: str
       }
     };
     img.onerror = () => resolve(none);
+    // A page in the background may hold the image back; never wait on it forever.
+    window.setTimeout(() => resolve(none), 4000);
     img.src = src;
   });
 }

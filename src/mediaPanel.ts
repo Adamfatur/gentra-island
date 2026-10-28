@@ -73,6 +73,8 @@ export class MediaPanel {
   }
 
   show() {
+    // A cover whose colors couldn't be read last time gets another try.
+    void this.updateTint();
     this.render();
     window.clearInterval(this.tick);
     // Only the bar and the clock move while the tab is open.
@@ -96,6 +98,8 @@ export class MediaPanel {
     this.tintFor = art;
     const { tint: raw, edge } = art ? await artColors(art) : { tint: null, edge: null };
     if (this.tintFor !== art) return;
+    // Not read (the image didn't load in time): forget it, so the next update or opening the view tries again.
+    if (art && !edge) this.tintFor = "";
     this.edge = edge;
     // The panel and meter sit on near-black; keep the color clearly visible there.
     this.tint = raw ? readableAccent(raw, "#141418", 3) : null;

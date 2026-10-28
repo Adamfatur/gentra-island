@@ -357,6 +357,11 @@ const actions: Record<string, () => void> = {
     track = { title: "Kisah Klasik Untuk Masa Depan", artist: "Sheila on 7", album: "Kisah Klasik", app: "Spotify", playing: true, duration: 268, elapsed: 41, at: Date.now(), art: cover("#ff7a59", "#6a3df0", "#ffd166") };
     void emit("media", track);
   },
+  "YouTube di Chrome": () => {
+    localStorage.setItem("gentra:ytArt", "1");
+    track = { title: "Where the Old Wizard Follows the Fireflies | Quiet Fantasy Medieval Music", artist: "Fantasy Medieval Journey", album: "", app: "Google Chrome", playing: true, duration: 9726, elapsed: 139, at: Date.now(), art: cover("#1b6fd1", "#0b2a3a", "#7ad3ff") };
+    void emit("media", track);
+  },
   "Lagu berikutnya": () => {
     track = { title: "Lathi", artist: "Weird Genius", album: "", app: "YouTube", playing: true, duration: 219, elapsed: 0, at: Date.now(), art: null };
     void emit("media", track);
@@ -448,6 +453,11 @@ const scenes: Record<string, () => Promise<void>> = {
   media: async () => {
     play();
     await wait(3400);
+    void emit("open-tab", "media");
+  },
+  "media-chrome": async () => {
+    actions["YouTube di Chrome"]();
+    await wait(600);
     void emit("open-tab", "media");
   },
   "media-light": async () => {
