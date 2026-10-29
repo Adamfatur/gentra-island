@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.0.4
 
 - **Allow several reads at once.** When Claude Code asks to read more than one file at the same time, the request shows **Allow all** with the count. Commands and edits are never grouped: each one still gets its own answer. Thanks to autotomy.dev for the idea.
 - **Keep reads off the island.** A new switch in the AI view, **Show requests to read files**, sends those requests back to Claude Code's own window, so the island only interrupts you for commands and edits. It's on by default, as before.
